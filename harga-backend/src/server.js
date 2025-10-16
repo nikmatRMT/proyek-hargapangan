@@ -150,3 +150,5 @@ app.listen(PORT, () => {
   console.log(`✅ API running on http://localhost:${PORT}`);
   console.log(`   Allowed origins: ${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}`);
 });
+
+app.get("/health", (_req, res) => res.json({ ok: true }));

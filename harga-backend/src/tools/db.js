@@ -9,8 +9,6 @@ const {
   DB_NAME = 'harga_pasar',
 } = process.env;
 
-const useSSL = String(process.env.DB_SSL || 'false').toLowerCase() === 'true';
-
 export const mysqlOptions = {
   host: DB_HOST,
   port: Number(DB_PORT),
@@ -21,7 +19,6 @@ export const mysqlOptions = {
   connectionLimit: 10,
   queueLimit: 0,
   charset: 'utf8mb4',
-  ...(useSSL ? { ssl: { rejectUnauthorized: false } } : {}),
 };
 
 export const pool = mysql.createPool(mysqlOptions);
