@@ -51,20 +51,28 @@ app.use(express.urlencoded({ extended: true }));
 const _defaultOrigins = [
   'http://localhost:5173',
   'https://proyek-hargapangan-admin.netlify.app',
-].join(',');
-const allowList = (process.env.FRONTEND_ORIGIN || _defaultOrigins)
+];
+// Merge env FRONTEND_ORIGIN with defaults to be safer
+const envOrigins = (process.env.FRONTEND_ORIGIN || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
+const allowList = Array.from(new Set([..._defaultOrigins, ...envOrigins]));
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);                 // mis. curl/postman
     if (allowList.includes(origin)) return cb(null, true);
     return cb(new Error(`Origin ${origin} not allowed`));
   },
   credentials: true,
-}));
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+};
+
+app.use(cors(corsOptions));
+// Tangani preflight untuk semua route (OPTIONS)
+app.options('*', cors(corsOptions));
 
 /* ---------- Root + favicon (nice DX) ---------- */
 app.get('/', (_req, res) => {
