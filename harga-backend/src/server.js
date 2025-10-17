@@ -47,7 +47,12 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-const allowList = (process.env.FRONTEND_ORIGIN || 'http://localhost:5173')
+// Default origins: localhost + Netlify site
+const _defaultOrigins = [
+  'http://localhost:5173',
+  'https://proyek-hargapangan-admin.netlify.app',
+].join(',');
+const allowList = (process.env.FRONTEND_ORIGIN || _defaultOrigins)
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
