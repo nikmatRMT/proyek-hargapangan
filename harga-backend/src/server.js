@@ -59,10 +59,24 @@ const envOrigins = (process.env.FRONTEND_ORIGIN || '')
   .filter(Boolean);
 const allowList = Array.from(new Set([..._defaultOrigins, ...envOrigins]));
 
+function isAllowedOrigin(origin) {
+  try {
+    if (allowList.includes(origin)) return true;
+    const u = new URL(origin);
+    const host = u.hostname;
+    // Izinkan Netlify preview: <hash>--proyek-hargapangan-admin.netlify.app
+    if (host === 'proyek-hargapangan-admin.netlify.app') return true;
+    if (host.endsWith('--proyek-hargapangan-admin.netlify.app')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 const corsOptions = {
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);                 // mis. curl/postman
-    if (allowList.includes(origin)) return cb(null, true);
+    if (isAllowedOrigin(origin)) return cb(null, true);
     return cb(new Error(`Origin ${origin} not allowed`));
   },
   credentials: true,
@@ -125,7 +139,7 @@ app.get('/sse/prices', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  if (origin && allowList.includes(origin)) {
+  if (origin && isAllowedOrigin(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
