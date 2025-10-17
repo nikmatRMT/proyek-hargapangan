@@ -36,6 +36,11 @@ const uploadStaticPath = process.env.VERCEL === '1'
   ? path.join(os.tmpdir(), 'uploads')       // Vercel: gunakan /tmp/uploads
   : path.join(process.cwd(), 'tmp', 'uploads'); // Lokal: tmp/uploads di project
 
+// Pastikan direktori uploads tersedia (khususnya saat di Vercel menggunakan os.tmpdir())
+try {
+  fs.mkdirSync(uploadStaticPath, { recursive: true });
+} catch (_) {}
+
 app.use('/uploads', express.static(uploadStaticPath));
 /* ---------- Security & basics ---------- */
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -77,9 +82,6 @@ app.use(
 );
 
 app.use('/m/users', mobileUsersRouter);
-
-/* ---------- Static uploads (foto/avatar) ---------- */
-app.use('/uploads', express.static(path.resolve('tmp/uploads')));
 
 /* ---------- Health & routes list ---------- */
 app.get('/__routes', (_req, res) => {

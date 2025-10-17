@@ -3,14 +3,23 @@ import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { pool } from '../tools/db.js';
 import requireMobileAuth from '../middleware/requireMobileAuth.js';
 
 const router = Router();
 
-// simpan di tmp/uploads/avatar
-const AVATAR_DIR = path.resolve('tmp/uploads/avatar');
-fs.mkdirSync(AVATAR_DIR, { recursive: true });
+// Lokasi upload: gunakan os.tmpdir() pada Vercel (read-only di /var/task)
+const isVercel = process.env.VERCEL === '1';
+const UPLOAD_ROOT = isVercel
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(process.cwd(), 'tmp', 'uploads');
+const AVATAR_DIR = path.join(UPLOAD_ROOT, 'avatar');
+try {
+  fs.mkdirSync(AVATAR_DIR, { recursive: true });
+} catch (_) {
+  // Abaikan jika tidak bisa membuat (akan dibuat saat pertama upload)
+}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, AVATAR_DIR),
@@ -24,14 +33,15 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Helper: hapus file lama jika masih di folder avatar
-function safeRemoveOld(oldPath) {
+function safeRemoveOld(oldPublicUrl) {
   try {
-    if (!oldPath) return;
-    // oldPath bentuknya "/uploads/avatar/xxx.jpg"
-    const abs = path.resolve(oldPath.replace(/^\/+/, '')); // hapus leading slash
-    if (abs.startsWith(path.resolve('uploads')) || abs.startsWith(path.resolve('tmp/uploads'))) {
-      // Kalau dulu diserve dari tmp/uploads, path relatifnya "/uploads/.."
-    }
+    if (!oldPublicUrl) return;
+    // Ekspektasi: oldPublicUrl = "/uploads/avatar/filename.ext"
+    const base = '/uploads/avatar/';
+    if (!String(oldPublicUrl).startsWith(base)) return;
+    const fname = path.basename(oldPublicUrl);
+    const abs = path.join(AVATAR_DIR, fname);
+    if (fs.existsSync(abs)) fs.unlinkSync(abs);
   } catch {}
 }
 
@@ -61,13 +71,8 @@ router.post('/me/avatar', requireMobileAuth, upload.single('avatar'), async (req
 
     await pool.query('UPDATE users SET foto=?, updated_at=NOW() WHERE id=?', [publicPath, me.id]);
 
-    // hapus lama jika masih di folder avatar tmp/uploads (opsional)
-    try {
-      if (old && /^\/?uploads\/avatar\//.test(old)) {
-        const abs = path.resolve(old.replace(/^\//, '')); // "uploads/avatar/.."
-        fs.existsSync(abs) && fs.unlinkSync(abs);
-      }
-    } catch {}
+    // hapus lama jika masih di folder avatar (opsional)
+    safeRemoveOld(old);
 
     const [[fresh]] = await pool.query(
       `SELECT id, nip, nama_lengkap AS name, username, role, is_active,
