@@ -6,12 +6,18 @@ const {
   DB_USER = 'root',
   DB_PASSWORD = '',
   DB_NAME = 'harga_pasar',
+  DB_SSL = 'false',
+  DB_SSL_CA = '',
+  DB_SSL_CA_BASE64 = '',
 } = process.env;
 
-// Aktifkan SSL bila DB_SSL=true (mis. Aiven)
-const ssl = process.env.DB_SSL === 'true'
-  ? { rejectUnauthorized: true, minVersion: 'TLSv1.2' }
-  : undefined;
+// Aktifkan SSL bila DB_SSL=true (mis. Aiven). Dukung CA melalui env string atau base64.
+let ssl = undefined;
+if (String(DB_SSL).toLowerCase() === 'true') {
+  ssl = { rejectUnauthorized: true, minVersion: 'TLSv1.2' };
+  const ca = DB_SSL_CA || (DB_SSL_CA_BASE64 ? Buffer.from(DB_SSL_CA_BASE64, 'base64').toString('utf8') : undefined);
+  if (ca) ssl.ca = ca;
+}
 
 // Opsi koneksi tunggal dan konsisten
 export const mysqlOptions = {

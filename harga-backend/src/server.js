@@ -61,6 +61,17 @@ app.use(cors({
   credentials: true,
 }));
 
+/* ---------- Root + favicon (nice DX) ---------- */
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    ok: true,
+    name: 'harga-backend',
+    routes: '/__routes',
+    ping: '/api/ping',
+  });
+});
+app.get('/favicon.ico', (_req, res) => res.status(204).end());
+
 /* ---------- Session (sebelum routes yang pakai req.session) ---------- */
 const useSecureCookie = allowList.some(o => o.startsWith('https://'));
 const sameSite = useSecureCookie ? 'none' : 'lax';
