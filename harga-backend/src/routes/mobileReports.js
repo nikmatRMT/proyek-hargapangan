@@ -3,6 +3,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import requireMobileAuth from '../middleware/requireMobileAuth.js';
 import { pool } from '../tools/db.js';
 import { bus } from '../events/bus.js';
@@ -10,8 +11,15 @@ import { bus } from '../events/bus.js';
 const router = Router();
 
 // === File upload (optional foto bukti) ===
-const uploadDir = path.resolve('tmp/uploads');
-fs.mkdirSync(uploadDir, { recursive: true });
+// Gunakan os.tmpdir() pada Vercel agar writable
+const isVercel = process.env.VERCEL === '1';
+const uploadRoot = isVercel
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(process.cwd(), 'tmp', 'uploads');
+const uploadDir = uploadRoot; // simpan langsung di folder uploads
+try {
+  fs.mkdirSync(uploadDir, { recursive: true });
+} catch (_) {}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
@@ -103,7 +111,7 @@ router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => 
       [
         marketId,
         komoditas.id,
-        req.user?.id ?? null,
+        req.mobileUser?.id ?? null,
         tanggal,
         price,
         notes,
