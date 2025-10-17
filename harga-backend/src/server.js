@@ -101,6 +101,13 @@ app.get('/', (_req, res) => {
 });
 app.get('/favicon.ico', (_req, res) => res.status(204).end());
 
+// Early health endpoints (do not require session/DB)
+app.get('/health', (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
+app.get('/api/health', (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
+app.get('/__routes-lite', (_req, res) => {
+  res.json({ ok: true, notes: 'use /api/__routes after session/DB ready' });
+});
+
 /* ---------- Session (sebelum routes yang pakai req.session) ---------- */
 const useSecureCookie = allowList.some(o => o.startsWith('https://'));
 const sameSite = useSecureCookie ? 'none' : 'lax';

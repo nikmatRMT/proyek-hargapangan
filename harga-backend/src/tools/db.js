@@ -29,6 +29,7 @@ export const mysqlOptions = {
   ssl,
   waitForConnections: true,
   connectionLimit: 10,
+  connectTimeout: 10000,
   charset: 'utf8mb4'
 };
 const pool = mysql.createPool(mysqlOptions);
