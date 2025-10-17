@@ -42,6 +42,8 @@ try {
 } catch (_) {}
 
 app.use('/uploads', express.static(uploadStaticPath));
+// Alias di bawah /api agar tetap terjangkau tanpa rewrite Vercel
+app.use('/api/uploads', express.static(uploadStaticPath));
 /* ---------- Security & basics ---------- */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
@@ -122,7 +124,7 @@ app.use(
 app.use('/m/users', mobileUsersRouter);
 
 /* ---------- Health & routes list ---------- */
-app.get('/__routes', (_req, res) => {
+const routesListHandler = (_req, res) => {
   const stack = (app._router?.stack || [])
     .filter((l) => l.route)
     .map((l) => ({
@@ -130,10 +132,12 @@ app.get('/__routes', (_req, res) => {
       methods: Object.keys(l.route.methods),
     }));
   res.json(stack);
-});
+};
+app.get('/__routes', routesListHandler);
+app.get('/api/__routes', routesListHandler);
 
 /* ---------- SSE: harga live ---------- */
-app.get('/sse/prices', (req, res) => {
+const ssePricesHandler = (req, res) => {
   const origin = req.headers.origin;
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -162,7 +166,9 @@ app.get('/sse/prices', (req, res) => {
     bus.off('prices:changed', handler);
     res.end();
   });
-});
+};
+app.get('/sse/prices', ssePricesHandler);
+app.get('/api/sse/prices', ssePricesHandler);
 
 /* ---------- Mobile API (opsional) ---------- */
 app.use('/m/auth', mobileAuthRouter);
@@ -170,6 +176,8 @@ app.use('/m/reports', mobileReportsRouter);
 
 /* ---------- WEB (admin) ---------- */
 app.use('/auth', authRouter);
+// Alias di bawah /api agar aman tanpa rewrite Vercel
+app.use('/api/auth', authRouter);
 app.use('/api/me', requireAuth, meRouter);
 
 // Sumber data
