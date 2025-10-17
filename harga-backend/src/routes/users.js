@@ -5,7 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { pool } from '../tools/db.js';
-
+import os from 'os';
 const router = Router();
 const normRole = (r) => (String(r || '').toLowerCase() === 'admin' ? 'admin' : 'petugas');
 
@@ -17,9 +17,17 @@ async function countActiveAdmins() {
 /* =========================
    Konfigurasi Upload Avatar
    ========================= */
-const AVATAR_ROOT = path.resolve('tmp/uploads');
-const AVATAR_DIR  = path.resolve(AVATAR_ROOT, 'avatar');
-fs.mkdirSync(AVATAR_DIR, { recursive: true });
+const isVercel = process.env.VERCEL === '1';
+const AVATAR_ROOT = isVercel
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(process.cwd(), 'tmp', 'uploads');
+const AVATAR_DIR = path.join(AVATAR_ROOT, 'avatar');
+
+try {
+  fs.mkdirSync(AVATAR_DIR, { recursive: true });
+} catch (e) {
+  // abaikan jika gagal membuat direktori di Vercel
+}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, AVATAR_DIR),

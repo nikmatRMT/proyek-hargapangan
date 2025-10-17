@@ -145,10 +145,21 @@ app.use('/api/import-flex', importFlexRouter);
 app.use('/api/users', requireAuth, requireRole('admin'), usersRouter);
 
 /* ---------- Start ---------- */
-const PORT = Number(process.env.PORT || 4000);
-app.listen(PORT, () => {
-  console.log(`✅ API running on http://localhost:${PORT}`);
-  console.log(`   Allowed origins: ${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}`);
+// Health check harus satu kali saja sebelum sesi & DB
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
+// Middleware error agar pesan error muncul jelas di log Vercel
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: err?.message || 'Internal error' });
 });
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
+// Hanya memanggil listen() saat dijalankan lokal (bukan di Vercel)
+if (process.env.VERCEL !== '1') {
+  const port = process.env.PORT || 8080;
+  app.listen(port, () => console.log(`API listening on ${port}`));
+}
+
+// Ekspor default app agar dapat diimpor di api/index.js
+export default app;
+

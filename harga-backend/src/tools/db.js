@@ -1,4 +1,3 @@
-// src/tools/db.js
 import mysql from 'mysql2/promise';
 
 const {
@@ -9,22 +8,26 @@ const {
   DB_NAME = 'harga_pasar',
 } = process.env;
 
+// Aktifkan SSL bila DB_SSL=true (mis. Aiven)
+const ssl = process.env.DB_SSL === 'true'
+  ? { rejectUnauthorized: true, minVersion: 'TLSv1.2' }
+  : undefined;
+
+// Opsi koneksi tunggal dan konsisten
 export const mysqlOptions = {
   host: DB_HOST,
   port: Number(DB_PORT),
   user: DB_USER,
   password: DB_PASSWORD,
   database: DB_NAME,
+  ssl,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  charset: 'utf8mb4',
+  charset: 'utf8mb4'
 };
 
-export const pool = mysql.createPool(mysqlOptions);
+// Gunakan mysqlOptions untuk membuat pool
+const pool = mysql.createPool(mysqlOptions);
 
-// helper singkat
-export async function query(sql, params) {
-  const [rows] = await pool.query(sql, params);
-  return rows;
-}
+// Helper query
+export const query = (sql, params) => pool.execute(sql, params);
