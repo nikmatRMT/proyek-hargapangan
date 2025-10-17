@@ -118,7 +118,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev_secret',
     resave: false,
     saveUninitialized: false,
-    store: new MySQLStore(mysqlOptions),
+    store: (process.env.SKIP_SESSION === '1' ? undefined : new MySQLStore(mysqlOptions)),
     cookie: {
       httpOnly: true,
       sameSite,                // https → 'none', lokal → 'lax'
