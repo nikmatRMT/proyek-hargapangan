@@ -108,13 +108,12 @@ app.get('/__routes', (_req, res) => {
 /* ---------- SSE: harga live ---------- */
 app.get('/sse/prices', (req, res) => {
   const origin = req.headers.origin;
-  const allow = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  if (origin === allow) {
-    res.setHeader('Access-Control-Allow-Origin', allow);
+  if (origin && allowList.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
 
