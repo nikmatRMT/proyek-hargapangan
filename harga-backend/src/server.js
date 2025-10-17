@@ -30,7 +30,6 @@ import mobileReportsRouter from './routes/mobileReports.js';
 import fs from 'fs';
 import os from 'os';
 
-app.use('/uploads', express.static(path.resolve('tmp/uploads')));
 
 const app = express();
 const uploadStaticPath = process.env.VERCEL === '1'
@@ -152,6 +151,7 @@ app.use('/api/users', requireAuth, requireRole('admin'), usersRouter);
 
 /* ---------- Start ---------- */
 // Health check harus satu kali saja sebelum sesi & DB
+
 
 // Middleware error agar pesan error muncul jelas di log Vercel
 app.use((err, _req, res, _next) => {
