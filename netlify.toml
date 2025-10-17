@@ -5,6 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  VITE_API_URL = "https://proyek-hargapangan.vercel.app"
+  VITE_USE_SSE = "false"
 
 [[headers]]
   for = "/assets/*"
