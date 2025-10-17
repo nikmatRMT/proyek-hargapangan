@@ -28,9 +28,16 @@ import mobileUsersRouter from './routes/mobileUsers.js';
 import mobileAuthRouter from './routes/mobileAuth.js';
 import mobileReportsRouter from './routes/mobileReports.js';
 import fs from 'fs';
-fs.mkdirSync(path.resolve('tmp/uploads'), { recursive: true });
-const app = express();
+import os from 'os';
 
+app.use('/uploads', express.static(path.resolve('tmp/uploads')));
+
+const app = express();
+const uploadStaticPath = process.env.VERCEL === '1'
+  ? path.join(os.tmpdir(), 'uploads')       // Vercel: gunakan /tmp/uploads
+  : path.join(process.cwd(), 'tmp', 'uploads'); // Lokal: tmp/uploads di project
+
+app.use('/uploads', express.static(uploadStaticPath));
 /* ---------- Security & basics ---------- */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
@@ -76,7 +83,6 @@ app.use('/m/users', mobileUsersRouter);
 app.use('/uploads', express.static(path.resolve('tmp/uploads')));
 
 /* ---------- Health & routes list ---------- */
-app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/__routes', (_req, res) => {
   const stack = (app._router?.stack || [])
     .filter((l) => l.route)
@@ -146,7 +152,6 @@ app.use('/api/users', requireAuth, requireRole('admin'), usersRouter);
 
 /* ---------- Start ---------- */
 // Health check harus satu kali saja sebelum sesi & DB
-app.get('/health', (_req, res) => res.json({ ok: true }));
 
 // Middleware error agar pesan error muncul jelas di log Vercel
 app.use((err, _req, res, _next) => {

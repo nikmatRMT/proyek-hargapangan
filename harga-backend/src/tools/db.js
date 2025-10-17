@@ -25,9 +25,8 @@ export const mysqlOptions = {
   connectionLimit: 10,
   charset: 'utf8mb4'
 };
-
-// Gunakan mysqlOptions untuk membuat pool
 const pool = mysql.createPool(mysqlOptions);
+export { pool };
 
 // Helper query
 export const query = (sql, params) => pool.execute(sql, params);
