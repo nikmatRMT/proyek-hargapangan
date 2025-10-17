@@ -1,7 +1,7 @@
 [build]
   base = "web-admin"
   command = "npm ci && npm run build"
-  publish = "web-admin/dist"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -11,3 +11,7 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
