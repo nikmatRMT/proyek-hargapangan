@@ -1,0 +1,467 @@
+// src/Dashboard.tsx
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  FileText, Calendar, MapPin, TrendingUp, TrendingDown,
+  Filter, ChevronDown, FileDown, FileSpreadsheet, Printer, Share2,
+} from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
+} from 'recharts';
+import { apiGet } from './api';
+
+// ====== TIPE DATA dari backend ======
+interface ReportRow {
+  id: number;
+  date: string;              // 'YYYY-MM-DD'
+  market_name: string;       // ex: 'Pasar Bauntung'
+  commodity_name: string;    // ex: 'Beras Premium'
+  unit: string;              // ex: 'kg'
+  price: number;             // ex: 13500
+  user_name: string;         // ex: 'Ahmad Fauzi'
+  gps_lat?: number | null;
+  gps_lng?: number | null;
+  photo_url?: string | null;
+}
+
+// ====== DATA DUMMY untuk chart (biar fokus test tabel dulu) ======
+interface PriceData {
+  id: number;
+  tanggal: string;
+  pasar: string;
+  komoditas: string;
+  harga: number;
+  petugas: string;
+  lokasi: string;
+  trend: 'up' | 'down' | 'stable';
+}
+interface ChartData { tanggal: string; harga: number; }
+interface MarketData { name: string; value: number; }
+interface KomoditasData { name: string; harga: number; persentase: number; }
+
+// helper: tanggal awal & akhir bulan berjalan
+function getMonthBounds(d = new Date()) {
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const start = new Date(y, m, 1).toISOString().slice(0, 10);
+  const end = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+  return { start, end };
+}
+
+const Dashboard: React.FC = () => {
+  const { start: defaultStart, end: defaultEnd } = getMonthBounds();
+
+  // ====== FILTER UI ======
+  const [selectedMarket, setSelectedMarket] = useState('Semua Pasar');
+  const [startDate, setStartDate] = useState(defaultStart);
+  const [endDate, setEndDate] = useState(defaultEnd);
+  const [marketDropdownOpen, setMarketDropdownOpen] = useState(false);
+  const [reportType, setReportType] = useState('harian');
+
+  const markets = [
+    'Semua Pasar',
+    'Pasar Bauntung',
+    'Pasar Ujung Murung',
+    'Pasar Lama',
+    'Pasar Sentra Antasari',
+    'Pasar Jati',
+    'Pasar Ulin Raya',
+    'Pasar Pagi Loktabat Utara',
+  ];
+
+  // ====== STATE DATA BACKEND ======
+  const [reports, setReports] = useState<ReportRow[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [errorReports, setErrorReports] = useState<string | null>(null);
+
+  // mapping nama pasar (UI) -> id query backend
+  const marketIdMap: Record<string, string> = {
+    'Pasar Bauntung': 'bauntung',
+    'Pasar Ujung Murung': 'ujung_murung',
+    'Pasar Lama': 'lama',
+    'Pasar Sentra Antasari': 'antasari',
+    'Pasar Jati': 'jati',
+    'Pasar Ulin Raya': 'ulin_raya',
+    'Pasar Pagi Loktabat Utara': 'loktabat_utara',
+  };
+
+  // ====== CHART DUMMY ======
+  const priceData: PriceData[] = [
+    { id: 1, tanggal: '2024-01-15', pasar: 'Pasar Bauntung', komoditas: 'Beras Premium', harga: 13500, petugas: 'Ahmad Fauzi', lokasi: '-3.4567, 114.8123', trend: 'up' },
+    { id: 2, tanggal: '2024-01-15', pasar: 'Pasar Bauntung', komoditas: 'Cabe Rawit', harga: 45000, petugas: 'Ahmad Fauzi', lokasi: '-3.4567, 114.8123', trend: 'down' },
+    { id: 3, tanggal: '2024-01-15', pasar: 'Pasar Ujung Murung', komoditas: 'Daging Ayam', harga: 35000, petugas: 'Siti Rahma', lokasi: '-3.4789, 114.8456', trend: 'stable' },
+    { id: 4, tanggal: '2024-01-16', pasar: 'Pasar Lama', komoditas: 'Telur Ayam', harga: 28000, petugas: 'Budi Santoso', lokasi: '-3.4234, 114.8234', trend: 'up' },
+    { id: 5, tanggal: '2024-01-16', pasar: 'Pasar Sentra Antasari', komoditas: 'Minyak Goreng', harga: 18000, petugas: 'Dewi Sari', lokasi: '-3.4901, 114.8567', trend: 'stable' },
+  ];
+
+  const berasChartData: ChartData[] = [
+    { tanggal: '01 Jan', harga: 12500 }, { tanggal: '05 Jan', harga: 12800 },
+    { tanggal: '10 Jan', harga: 13000 }, { tanggal: '15 Jan', harga: 13500 },
+    { tanggal: '20 Jan', harga: 13200 }, { tanggal: '25 Jan', harga: 13400 },
+    { tanggal: '30 Jan', harga: 13600 },
+  ];
+
+  const cabeChartData: ChartData[] = [
+    { tanggal: '01 Jan', harga: 52000 }, { tanggal: '05 Jan', harga: 48000 },
+    { tanggal: '10 Jan', harga: 46000 }, { tanggal: '15 Jan', harga: 45000 },
+    { tanggal: '20 Jan', harga: 44000 }, { tanggal: '25 Jan', harga: 43500 },
+    { tanggal: '30 Jan', harga: 42000 },
+  ];
+
+  const marketData: MarketData[] = [
+    { name: 'Pasar Bauntung', value: 35 },
+    { name: 'Pasar Ujung Murung', value: 25 },
+    { name: 'Pasar Lama', value: 20 },
+    { name: 'Pasar Sentra Antasari', value: 20 },
+  ];
+
+  const komoditasData: KomoditasData[] = [
+    { name: 'Beras Premium', harga: 13500, persentase: 15 },
+    { name: 'Cabe Rawit',  harga: 45000, persentase: 12 },
+    { name: 'Daging Ayam',  harga: 35000, persentase: 18 },
+    { name: 'Telur Ayam',   harga: 28000, persentase: 20 },
+    { name: 'Minyak Goreng',harga: 18000, persentase: 25 },
+    { name: 'Beras Medium', harga: 12000, persentase: 10 },
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+
+  // untuk chart dummy saja
+  const filteredDummy = useMemo(
+    () => priceData.filter((i) => selectedMarket === 'Semua Pasar' || i.pasar === selectedMarket),
+    [selectedMarket]
+  );
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+
+  // ====== FETCH /reports (tanpa login) ======
+  const fetchReports = async () => {
+    try {
+      setLoadingReports(true);
+      setErrorReports(null);
+
+      const qs = new URLSearchParams();
+      if (startDate) qs.append('from', startDate);
+      if (endDate) qs.append('to', endDate);
+      if (selectedMarket !== 'Semua Pasar') {
+        const m = marketIdMap[selectedMarket];
+        if (m) qs.append('market', m);
+      }
+
+      const data = await apiGet<ReportRow[]>(`/reports?${qs.toString()}`);
+      setReports(data);
+    } catch (e: any) {
+      setErrorReports(e?.message || 'Gagal memuat data laporan');
+      setReports([]);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, selectedMarket]);
+
+  // ====== RATA2 / MAX / MIN dari data backend ======
+  const avgPrice = reports.length ? Math.round(reports.reduce((s, r) => s + r.price, 0) / reports.length) : null;
+  const maxPrice = reports.length ? Math.max(...reports.map((r) => r.price)) : null;
+  const minPrice = reports.length ? Math.min(...reports.map((r) => r.price)) : null;
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-8 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Laporan Pemantauan Harga</h1>
+            <p className="text-sm text-gray-600 mt-1">Data laporan harga komoditas pasar</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center space-x-2">
+              <button onClick={fetchReports} className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                <span>Refresh</span>
+              </button>
+              <button className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors">
+                <FileDown className="w-4 h-4" />
+                <span>Export PDF</span>
+              </button>
+              <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Export Excel</span>
+              </button>
+              <button className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors">
+                <Printer className="w-4 h-4" />
+                <span>Cetak</span>
+              </button>
+              <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                <Share2 className="w-4 h-4 text-gray-500" />
+                <span>Bagikan</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Filter strip */}
+      <section className="bg-white border-b border-gray-200 px-8 py-4">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">Jenis Laporan:</span>
+            <select
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="harian">Laporan Harian</option>
+              <option value="mingguan">Laporan Mingguan</option>
+              <option value="bulanan">Laporan Bulanan</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-5 h-5 text-gray-500" />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-gray-500">-</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setMarketDropdownOpen(!marketDropdownOpen)}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <Filter className="w-4 h-4 text-gray-500" />
+              <span>{selectedMarket}</span>
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            </button>
+            {marketDropdownOpen && (
+              <div className="absolute top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                {markets.map((market) => (
+                  <button
+                    key={market}
+                    onClick={() => { setSelectedMarket(market); setMarketDropdownOpen(false); }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+                  >
+                    {market}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Content */}
+      <section className="p-8">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">Total Data</span>
+              <FileText className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900">{reports.length}</div>
+            <p className="text-xs text-gray-500 mt-1">Data harga tercatat</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">Rata-rata Harga</span>
+              <TrendingUp className="w-5 h-5 text-green-600" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900">
+              {avgPrice !== null ? formatCurrency(avgPrice) : '—'}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Semua komoditas</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">Harga Tertinggi</span>
+              <TrendingUp className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900">
+              {maxPrice !== null ? formatCurrency(maxPrice) : '—'}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">—</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">Harga Terendah</span>
+              <TrendingDown className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900">
+              {minPrice !== null ? formatCurrency(minPrice) : '—'}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">—</p>
+          </div>
+        </div>
+
+        {/* Charts Section (dummy) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Beras Chart */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Grafik Harga Beras</h3>
+              <p className="text-sm text-gray-600 mt-1">Trend harga beras premium (per kg)</p>
+            </div>
+            <div className="p-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={berasChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="tanggal" tick={{ fontSize: 12 }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} tickLine={false} />
+                  <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} />
+                  <Line type="monotone" dataKey="harga" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Cabe Chart */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Grafik Harga Cabe Rawit</h3>
+              <p className="text-sm text-gray-600 mt-1">Trend harga cabe rawit (per kg)</p>
+            </div>
+            <div className="p-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={cabeChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="tanggal" tick={{ fontSize: 12 }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} tickLine={false} />
+                  <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} />
+                  <Line type="monotone" dataKey="harga" stroke="#dc2626" strokeWidth={2} dot={{ fill: '#dc2626', r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Market Distribution Chart (dummy) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Distribusi Pasar</h3>
+              <p className="text-sm text-gray-600 mt-1">Persentase data per pasar</p>
+            </div>
+            <div className="p-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={marketData}
+                    cx="50%" cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {marketData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Perbandingan Harga Komoditas</h3>
+              <p className="text-sm text-gray-600 mt-1">Harga rata-rata per komoditas</p>
+            </div>
+            <div className="p-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={komoditasData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} tickLine={false} />
+                  <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} />
+                  <Bar dataKey="harga" fill="#2563eb" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Data Table (pakai data backend) */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Data Harga Komoditas</h2>
+            <p className="text-sm text-gray-600 mt-1">Data laporan harga komoditas pasar</p>
+          </div>
+
+          {loadingReports && <div className="p-6 text-sm text-gray-600">Memuat data…</div>}
+          {errorReports && <div className="p-6 text-sm text-red-600">{errorReports}</div>}
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-200">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200">Tanggal</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200">Pasar</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200">Komoditas</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200">Harga</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200">Petugas</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200">Lokasi (GPS)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Trend</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reports.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">{item.date}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">{item.market_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">
+                      {item.commodity_name} <span className="text-gray-500 text-xs">({item.unit})</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm border-r border-gray-200">
+                      <span className="font-medium text-gray-900">{formatCurrency(item.price)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">{item.user_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 border-r border-gray-200">
+                      {(item.gps_lat != null && item.gps_lng != null)
+                        ? (<div className="flex items-center space-x-1">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span>{item.gps_lat}, {item.gps_lng}</span>
+                           </div>)
+                        : '—'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className="text-gray-500">—</span>
+                    </td>
+                  </tr>
+                ))}
+
+                {!loadingReports && !errorReports && reports.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
+                      Belum ada data pada rentang ini.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Dashboard;

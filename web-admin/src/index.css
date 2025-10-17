@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens untuk komponen Sidebar */
+:root{
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+  --sidebar-ring: 215 20.2% 65.1%;
+  --sidebar-border: 214.3 31.8% 91.4%;
+}
+.bg-sidebar{ background-color: hsl(var(--sidebar)); }
+.text-sidebar-foreground{ color: hsl(var(--sidebar-foreground)); }
+.bg-sidebar-accent{ background-color: hsl(var(--sidebar-accent)); }
+.text-sidebar-accent-foreground{ color: hsl(var(--sidebar-accent-foreground)); }
+.ring-sidebar-ring{ --tw-ring-color: hsl(var(--sidebar-ring)); }
+.border-sidebar-border{ border-color: hsl(var(--sidebar-border)); }
+/* Membuka lebar container bawaan Tailwind/komponen lama hanya di dalam AppShell */
+.app-shell-full .container {
+  max-width: 100% !important;
+}
+
+/* Opsional: rapatkan grid kartu agar muat lebih banyak di layar lebar */
+.app-shell-full .grid-cols-responsive {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
