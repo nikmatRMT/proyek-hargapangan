@@ -1,9 +1,11 @@
 {
   "version": 2,
   "functions": {
-    "api/**/*.php": {
-      "runtime": "@vercel/php"
-    }
+    "api/php/**/*.php": { "runtime": "@vercel/php" },
+    "api/node/**/*.js": { "runtime": "nodejs16.x" }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index.php" }]
+  "rewrites": [
+    { "source": "/api/node/(.*)", "destination": "/api/node/$1" },
+    { "source": "/(.*)", "destination": "/api/php/index.php" }
+  ]
 }
