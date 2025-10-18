@@ -5,8 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import session from 'express-session';
-import MySQLStoreFactory from 'express-mysql-session';
-import MongoStore from 'connect-mongo';
+// import MySQLStoreFactory from 'express-mysql-session';
+// import MongoStore from 'connect-mongo';
 import { isMongo, connectMongo } from './tools/mongo.js';
 import path from 'path';
 
@@ -14,7 +14,6 @@ import path from 'path';
 import requireAuth from './middleware/requireAuth.js';
 import requireRole from './middleware/requireRole.js'; // dipakai untuk sebagian route lain
 import { bus } from './events/bus.js';
-import { mysqlOptions } from './tools/db.js'; // ⬅️ named import, sesuai file DB kamu
 
 // Routers (WEB)
 import authRouter from './routes/auth.js';
@@ -22,16 +21,10 @@ import meRouter from './routes/me.js';
 import marketsRouter from './routes/markets.js';
 import commoditiesRouter from './routes/commodities.js';
 import pricesRouter from './routes/prices.js';
-import importExcelRouter from './routes/importExcel.js';
-import importFlexRouter from './routes/importFlex.js';
 import usersRouter from './routes/users.js'; // ⬅️ SATU import saja
-import mobileUsersRouter from './routes/mobileUsers.js';
 // (opsional) API Mobile
-import mobileAuthRouter from './routes/mobileAuth.js';
-import mobileReportsRouter from './routes/mobileReports.js';
 import fs from 'fs';
 import os from 'os';
-import { pool } from './tools/db.js';
 
 // In Vercel serverless, default to skipping persistent session store to avoid cold-start timeouts
 if (process.env.VERCEL === '1' && !process.env.FORCE_SESSION) {
@@ -119,55 +112,46 @@ app.get('/favicon.ico', (_req, res) => res.status(204).end());
 // Early health endpoints (do not require session/DB)
 app.get('/health', (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
 app.get('/api/health', (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
-app.get('/api/__db-ping', async (_req, res) => {
-  try {
-    const t0 = Date.now();
-    const [rows] = await pool.query('SELECT 1 AS ok');
-    const ms = Date.now() - t0;
-    res.json({ ok: true, elapsed_ms: ms, rows });
-  } catch (e) {
-    console.error('[__db-ping] error:', e);
-    res.status(500).json({ ok: false, error: e?.message || 'DB error' });
-  }
-});
 app.get('/__routes-lite', (_req, res) => {
   res.json({ ok: true, notes: 'use /api/__routes after session/DB ready' });
 });
 
 /* ---------- Session (sebelum routes yang pakai req.session) ---------- */
-const useSecureCookie = allowList.some(o => o.startsWith('https://'));
-const sameSite = useSecureCookie ? 'none' : 'lax';
-const MySQLStore = MySQLStoreFactory(session);
+const useSecureCookie = allowList.some(o => o.startsWith('https://'))
+const sameSite = useSecureCookie ? 'none' : 'lax'
+
+let sessionStore;
+const wantSessionStore = process.env.SKIP_SESSION !== '1' && Boolean(process.env.MONGO_URI);
+if (wantSessionStore) {
+  try {
+    const { default: MongoStore } = await import('connect-mongo');
+    sessionStore = MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      dbName: process.env.MONGO_DB_NAME || 'harga_pasar_mongo',
+      ttl: 60 * 60 * 24 * 7,
+      autoRemove: 'native',
+    });
+  } catch (e) {
+    console.error('Session store init failed, continue without store:', e?.message || e);
+  }
+}
+
 app.use(
   session({
     name: process.env.COOKIE_NAME || 'sid',
     secret: process.env.SESSION_SECRET || 'dev_secret',
     resave: false,
     saveUninitialized: false,
-    store: (
-      process.env.SKIP_SESSION === '1'
-        ? undefined
-        : (
-            isMongo()
-              ? MongoStore.create({
-                  mongoUrl: process.env.MONGO_URI,
-                  dbName: process.env.MONGO_DB_NAME || 'harga_pasar_mongo',
-                  ttl: 60 * 60 * 24 * 7,
-                  autoRemove: 'native',
-                })
-              : new MySQLStore(mysqlOptions)
-          )
-    ),
+    proxy: true,
+    store: sessionStore,
     cookie: {
       httpOnly: true,
-      sameSite,                // https → 'none', lokal → 'lax'
-      secure: useSecureCookie, // https (Netlify/Tunnel) → true, lokal → false
+      sameSite,
+      secure: useSecureCookie,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
 );
-
-app.use('/m/users', mobileUsersRouter);
 
 /* ---------- Health & routes list ---------- */
 const routesListHandler = (_req, res) => {
@@ -217,8 +201,6 @@ app.get('/sse/prices', ssePricesHandler);
 app.get('/api/sse/prices', ssePricesHandler);
 
 /* ---------- Mobile API (opsional) ---------- */
-app.use('/m/auth', mobileAuthRouter);
-app.use('/m/reports', mobileReportsRouter);
 
 /* ---------- WEB (admin) ---------- */
 app.use('/auth', authRouter);
@@ -232,9 +214,6 @@ app.use('/api/commodities', commoditiesRouter);
 app.use('/api/prices', pricesRouter);
 
 // Import Excel
-app.use('/api/import-excel', importExcelRouter);
-app.use('/api/importExcel', importExcelRouter); // alias kompat
-app.use('/api/import-flex', importFlexRouter);
 
 // USERS
 // Gunakan hanya requireAuth di sini agar /api/users/me/avatar bisa diakses semua user yang login.

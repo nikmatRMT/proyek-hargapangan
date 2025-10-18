@@ -4,14 +4,31 @@ import bcrypt from 'bcrypt';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { pool } from '../tools/db.js';
 import os from 'os';
+import User from '../models/User.js';
+
 const router = Router();
+
 const normRole = (r) => (String(r || '').toLowerCase() === 'admin' ? 'admin' : 'petugas');
 
 async function countActiveAdmins() {
-  const [rows] = await pool.query("SELECT COUNT(*) AS n FROM users WHERE role='admin' AND is_active=1");
-  return rows?.[0]?.n ?? 0;
+  return User.countDocuments({ role: 'admin', is_active: true });
+}
+
+function asRow(doc = {}) {
+  return {
+    id: String(doc._id),
+    nip: doc.nip ?? null,
+    nama_lengkap: doc.nama_lengkap,
+    username: doc.username,
+    role: doc.role,
+    is_active: doc.is_active ? 1 : 0,
+    phone: doc.phone ?? null,
+    alamat: doc.alamat ?? null,
+    foto: doc.foto ?? null,
+    created_at: doc.created_at,
+    updated_at: doc.updated_at,
+  };
 }
 
 /* =========================
@@ -25,16 +42,14 @@ const AVATAR_DIR = path.join(AVATAR_ROOT, 'avatar');
 
 try {
   fs.mkdirSync(AVATAR_DIR, { recursive: true });
-} catch (e) {
-  // abaikan jika gagal membuat direktori di Vercel
-}
+} catch {}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, AVATAR_DIR),
   filename: (req, file, cb) => {
     const uid = req?.session?.user?.id || 'me';
     const ext =
-      file.mimetype === 'image/png'  ? '.png'  :
+      file.mimetype === 'image/png' ? '.png' :
       file.mimetype === 'image/webp' ? '.webp' : '.jpg';
     cb(null, `u${uid}-${Date.now()}${ext}`);
   },
@@ -42,7 +57,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
+  limits: { fileSize: 3 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (!/image\/(png|jpeg|webp)/.test(file.mimetype)) {
       return cb(new Error('File harus PNG/JPG/WebP'));
@@ -51,12 +66,12 @@ const upload = multer({
   },
 });
 
-function tryUnlinkOld(foto) {
+function tryUnlinkOld(foto?: string | null) {
+  if (!foto || typeof foto !== 'string') return;
+  if (!foto.startsWith('/uploads/avatar/')) return;
   try {
-    if (foto && typeof foto === 'string' && foto.startsWith('/uploads/avatar/')) {
-      const disk = path.resolve(AVATAR_ROOT, foto.replace('/uploads/', ''));
-      if (fs.existsSync(disk)) fs.unlinkSync(disk);
-    }
+    const disk = path.resolve(AVATAR_ROOT, foto.replace('/uploads/', ''));
+    if (fs.existsSync(disk)) fs.unlinkSync(disk);
   } catch {}
 }
 
@@ -64,16 +79,24 @@ function tryUnlinkOld(foto) {
 router.get('/', async (req, res) => {
   try {
     const role = String(req.query.role || 'all').toLowerCase();
-    let sql = `
-      SELECT id, nip, nama_lengkap, username, role, is_active, phone, alamat, foto, created_at, updated_at
-      FROM users
-    `;
-    if (role === 'admin') sql += " WHERE role='admin'";
-    else if (role === 'petugas') sql += " WHERE role='petugas'";
-    sql += " ORDER BY role='admin' DESC, created_at DESC";
+    const filter: any = {};
+    if (role === 'admin') filter.role = 'admin';
+    else if (role === 'petugas') filter.role = 'petugas';
 
-    const [rows] = await pool.query(sql);
-    res.json({ data: rows || [] });
+    const docs = await User.find(filter, {
+      nip: 1,
+      nama_lengkap: 1,
+      username: 1,
+      role: 1,
+      is_active: 1,
+      phone: 1,
+      alamat: 1,
+      foto: 1,
+      created_at: 1,
+      updated_at: 1,
+    }).sort({ role: -1, created_at: -1 }).lean();
+
+    res.json({ data: docs.map(asRow) });
   } catch (e) {
     console.error('GET /api/users', e);
     res.status(500).json({ message: 'Gagal mengambil data pengguna' });
@@ -102,21 +125,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'nama_lengkap dan username wajib diisi' });
     }
 
-    // Cek duplikasi lebih dulu agar tidak meledak jadi 500
-    const [[uByUsername]] = await pool.query(
-      'SELECT id FROM users WHERE username = ? LIMIT 1',
-      [username]
-    );
-    if (uByUsername) {
+    const dupUsername = await User.findOne({ username }).lean();
+    if (dupUsername) {
       return res.status(409).json({ message: 'Username sudah digunakan' });
     }
 
     if (nip) {
-      const [[uByNip]] = await pool.query(
-        'SELECT id FROM users WHERE nip = ? LIMIT 1',
-        [nip]
-      );
-      if (uByNip) {
+      const dupNip = await User.findOne({ nip }).lean();
+      if (dupNip) {
         return res.status(409).json({ message: 'NIP sudah digunakan' });
       }
     }
@@ -125,37 +141,25 @@ router.post('/', async (req, res) => {
     const password = (plain && String(plain).length >= 6) ? String(plain) : 'Petugas123!';
     const hash = await bcrypt.hash(password, 10);
 
-    const [ins] = await pool.query(
-      `INSERT INTO users (nip, nama_lengkap, username, password, role, is_active, phone, alamat, foto, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [nip || null, nama_lengkap, username, hash, role, is_active ? 1 : 0, phone, alamat, foto]
-    );
+    const doc = await User.create({
+      nip: nip || null,
+      nama_lengkap,
+      username,
+      password: hash,
+      role,
+      is_active: Boolean(is_active),
+      phone,
+      alamat,
+      foto,
+    });
 
-    const id = ins.insertId;
-    const [[row]] = await pool.query(
-      `SELECT id, nip, nama_lengkap, username, role, is_active, phone, alamat, foto, created_at, updated_at
-       FROM users WHERE id=?`,
-      [id]
-    );
-
-    return res.status(201).json({
-      data: row,
+    res.status(201).json({
+      data: asRow(doc.toObject()),
       defaultPassword: plain ? undefined : 'Petugas123!',
     });
   } catch (e) {
-    // Tangkap ER_DUP_ENTRY sebagai 409 dengan pesan yang pas
-    if (e?.code === 'ER_DUP_ENTRY') {
-      const msg = String(e?.sqlMessage || '').toLowerCase();
-      if (msg.includes("for key 'users.username'")) {
-        return res.status(409).json({ message: 'Username sudah digunakan' });
-      }
-      if (msg.includes("for key 'users.nip'")) {
-        return res.status(409).json({ message: 'NIP sudah digunakan' });
-      }
-      return res.status(409).json({ message: 'Data sudah ada (duplikat)' });
-    }
     console.error('POST /api/users', e);
-    return res.status(500).json({ message: 'Gagal membuat pengguna' });
+    res.status(500).json({ message: 'Gagal membuat pengguna' });
   }
 });
 
@@ -165,13 +169,11 @@ router.patch('/:id', async (req, res) => {
     const actor = req.session?.user;
     if (!actor) return res.status(401).json({ message: 'Unauthorized' });
 
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ message: 'ID tidak valid' });
-
-    const [[target]] = await pool.query('SELECT * FROM users WHERE id=?', [id]);
+    const id = String(req.params.id);
+    const target = await User.findById(id).lean();
     if (!target) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
 
-    const patch = {};
+    const patch: Record<string, any> = {};
     const allow = ['nama_lengkap', 'phone', 'alamat', 'is_active', 'nip', 'foto'];
     for (const k of allow) if (k in req.body) patch[k] = req.body[k];
 
@@ -180,39 +182,24 @@ router.patch('/:id', async (req, res) => {
       patch.role = normRole(req.body.role);
     }
 
-    // Cegah menghilangkan admin terakhir
     if ((target.role === 'admin') && (('role' in patch && patch.role !== 'admin') || ('is_active' in patch && !patch.is_active))) {
       const n = await countActiveAdmins();
       if (n <= 1) return res.status(400).json({ message: 'Tidak boleh menonaktifkan/menurunkan admin terakhir' });
     }
 
-    // Jika mengubah NIP → cek unik
     if ('nip' in patch && patch.nip) {
-      const [[dup]] = await pool.query('SELECT id FROM users WHERE nip=? AND id<>? LIMIT 1', [patch.nip, id]);
+      const dup = await User.findOne({ nip: patch.nip, _id: { $ne: id } }).lean();
       if (dup) return res.status(409).json({ message: 'NIP sudah digunakan' });
     }
 
-    const fields = Object.keys(patch);
-    if (!fields.length) {
-      const [[row]] = await pool.query(
-        `SELECT id, nip, nama_lengkap, username, role, is_active, phone, alamat, foto, created_at, updated_at
-         FROM users WHERE id=?`,
-        [id]
-      );
-      return res.json({ data: row });
+    if (Object.keys(patch).length === 0) {
+      const doc = await User.findById(id).lean();
+      return res.json({ data: asRow(doc) });
     }
 
-    const sets = fields.map(k => `${k}=?`).join(', ');
-    const args = fields.map(k => (k === 'is_active' ? (patch[k] ? 1 : 0) : patch[k]));
-    args.push(id);
-    await pool.query(`UPDATE users SET ${sets}, updated_at=NOW() WHERE id=?`, args);
-
-    const [[row]] = await pool.query(
-      `SELECT id, nip, nama_lengkap, username, role, is_active, phone, alamat, foto, created_at, updated_at
-       FROM users WHERE id=?`,
-      [id]
-    );
-    res.json({ data: row });
+    await User.findByIdAndUpdate(id, patch, { new: false });
+    const updated = await User.findById(id).lean();
+    res.json({ data: asRow(updated) });
   } catch (e) {
     console.error('PATCH /api/users/:id', e);
     res.status(500).json({ message: 'Gagal memperbarui pengguna' });
@@ -226,16 +213,14 @@ router.post('/:id/reset-password', async (req, res) => {
     if (!actor) return res.status(401).json({ message: 'Unauthorized' });
     if (actor.role !== 'admin') return res.status(403).json({ message: 'Hanya admin' });
 
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ message: 'ID tidak valid' });
-
-    const [[u]] = await pool.query('SELECT id FROM users WHERE id=?', [id]);
-    if (!u) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
+    const id = String(req.params.id);
+    const user = await User.findById(id).lean();
+    if (!user) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
 
     const { new_password } = req.body || {};
     const targetPass = (new_password && String(new_password).length >= 6) ? String(new_password) : 'Petugas123!';
     const hash = await bcrypt.hash(targetPass, 10);
-    await pool.query('UPDATE users SET password=?, updated_at=NOW() WHERE id=?', [hash, id]);
+    await User.findByIdAndUpdate(id, { password: hash });
 
     res.json({ ok: true, defaultPassword: new_password ? undefined : 'Petugas123!' });
   } catch (e) {
@@ -244,25 +229,23 @@ router.post('/:id/reset-password', async (req, res) => {
   }
 });
 
-/* ========== DELETE (opsional) ========== */
+/* ========== DELETE ========== */
 router.delete('/:id', async (req, res) => {
   try {
     const actor = req.session?.user;
     if (!actor) return res.status(401).json({ message: 'Unauthorized' });
     if (actor.role !== 'admin') return res.status(403).json({ message: 'Hanya admin' });
 
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ message: 'ID tidak valid' });
+    const id = String(req.params.id);
+    const user = await User.findById(id).lean();
+    if (!user) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
 
-    const [[u]] = await pool.query('SELECT id, role FROM users WHERE id=?', [id]);
-    if (!u) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
-
-    if (u.role === 'admin') {
+    if (user.role === 'admin') {
       const n = await countActiveAdmins();
       if (n <= 1) return res.status(400).json({ message: 'Tidak boleh menghapus admin terakhir' });
     }
 
-    await pool.query('DELETE FROM users WHERE id=?', [id]);
+    await User.deleteOne({ _id: id });
     res.json({ ok: true });
   } catch (e) {
     console.error('DELETE /api/users/:id', e);
@@ -270,8 +253,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-/* ========== UPLOAD AVATAR: akun yang sedang login ========== */
-/** FormData field: "avatar" */
+/* ========== UPLOAD AVATAR (akun login) ========== */
 router.post(
   '/me/avatar',
   (req, res, next) => {
@@ -285,23 +267,13 @@ router.post(
       const actor = req.session.user;
       if (!req.file) return res.status(400).json({ message: 'File avatar wajib' });
 
-      // foto lama
-      const [[current]] = await pool.query('SELECT foto FROM users WHERE id=?', [actor.id]);
-      const oldFoto = current?.foto || null;
-
+      const current = await User.findById(actor.id, { foto: 1 }).lean();
       const publicUrl = '/uploads/avatar/' + req.file.filename;
+      await User.findByIdAndUpdate(actor.id, { foto: publicUrl });
+      tryUnlinkOld(current?.foto ?? null);
 
-      await pool.query('UPDATE users SET foto=?, updated_at=NOW() WHERE id=?', [publicUrl, actor.id]);
-
-      tryUnlinkOld(oldFoto);
-
-      const [[user]] = await pool.query(
-        `SELECT id, nip, nama_lengkap, username, role, is_active, phone, alamat, foto, created_at, updated_at
-         FROM users WHERE id=?`,
-        [actor.id]
-      );
-
-      return res.json({ ok: true, user, foto: user.foto });
+      const updated = await User.findById(actor.id).lean();
+      res.json({ ok: true, user: asRow(updated), foto: asRow(updated).foto });
     } catch (e) {
       console.error('POST /api/users/me/avatar', e);
       res.status(500).json({ message: 'Gagal mengunggah avatar' });
@@ -309,8 +281,7 @@ router.post(
   }
 );
 
-/* ========== UPLOAD AVATAR: admin ganti foto user lain (opsional) ========== */
-/** FormData field: "avatar" */
+/* ========== UPLOAD AVATAR (admin ubah user lain) ========== */
 router.post(
   '/:id/photo',
   (req, res, next) => {
@@ -322,26 +293,18 @@ router.post(
   upload.single('avatar'),
   async (req, res) => {
     try {
-      const targetId = Number(req.params.id);
-      if (!Number.isFinite(targetId)) return res.status(400).json({ message: 'ID tidak valid' });
+      const id = String(req.params.id);
       if (!req.file) return res.status(400).json({ message: 'File avatar wajib' });
 
-      const [[current]] = await pool.query('SELECT foto FROM users WHERE id=?', [targetId]);
+      const current = await User.findById(id, { foto: 1 }).lean();
       if (!current) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
 
       const publicUrl = '/uploads/avatar/' + req.file.filename;
+      await User.findByIdAndUpdate(id, { foto: publicUrl });
+      tryUnlinkOld(current.foto ?? null);
 
-      await pool.query('UPDATE users SET foto=?, updated_at=NOW() WHERE id=?', [publicUrl, targetId]);
-
-      tryUnlinkOld(current.foto || null);
-
-      const [[user]] = await pool.query(
-        `SELECT id, nip, nama_lengkap, username, role, is_active, phone, alamat, foto, created_at, updated_at
-         FROM users WHERE id=?`,
-        [targetId]
-      );
-
-      return res.json({ ok: true, user, foto: user.foto });
+      const updated = await User.findById(id).lean();
+      res.json({ ok: true, user: asRow(updated), foto: asRow(updated).foto });
     } catch (e) {
       console.error('POST /api/users/:id/photo', e);
       res.status(500).json({ message: 'Gagal mengunggah avatar user' });
