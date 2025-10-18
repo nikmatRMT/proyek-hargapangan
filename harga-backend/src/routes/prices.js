@@ -41,24 +41,6 @@ router.get("/", async (req, res) => {
     // market bisa berisi id (numeric) ATAU nama_pasar (string)
     const marketParam = (marketId ?? market);
 
-    const where = [];
-    const params = [];
-
-    if (from) { where.push("lh.tanggal_lapor >= ?"); params.push(from); }
-    if (to)   { where.push("lh.tanggal_lapor <= ?"); params.push(to); }
-
-    if (marketParam && marketParam !== "all") {
-      const v = String(marketParam).trim();
-      if (/^\d+$/.test(v)) { where.push("lh.market_id = ?"); params.push(Number(v)); }
-      else                 { where.push("p.nama_pasar = ?"); params.push(v); }
-    }
-
-    if (commodityId) {
-      const v = String(commodityId).trim();
-      if (/^\d+$/.test(v)) { where.push("lh.komoditas_id = ?"); params.push(Number(v)); }
-      else                 { where.push("k.nama_komoditas = ?"); params.push(v); }
-    }
-
     const MAX_PAGE_SIZE = 2000;
     const limit   = Math.max(1, Math.min(MAX_PAGE_SIZE, toInt(pageSize, 50)));
     const pageNum = Math.max(1, toInt(page, 1));
