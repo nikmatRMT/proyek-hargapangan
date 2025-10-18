@@ -2,6 +2,7 @@
 namespace App;
 
 use MongoDB\Client as MongoClient;
+use MongoDB\BSON\UTCDateTime;
 // BSON classes are referenced dynamically to allow fallback when the PHP mongodb extension is not installed.
 use App\DataApiMongo;
 
@@ -68,6 +69,30 @@ class MongoBridge
     {
         if ($id instanceof \MongoDB\BSON\ObjectId) return $id;
         return new \MongoDB\BSON\ObjectId((string)$id);
+    }
+
+    /**
+     * Normalize various ID value shapes returned by Data API or native driver
+     * - if value is array with ['$oid'] -> return the oid string
+     * - if value is \MongoDB\BSON\ObjectId -> cast to string
+     * - otherwise return string cast
+     */
+    private static function normalizeIdValue($v): string
+    {
+        if ($v instanceof \MongoDB\BSON\ObjectId) return (string)$v;
+        if (is_array($v) && isset($v['$oid'])) return (string)$v['$oid'];
+        if (is_array($v) && isset($v['_id'])) return (string)$v['_id'];
+        return (string)$v;
+    }
+
+    private static function findOidInDoc(array $doc, array $candidates): string
+    {
+        foreach ($candidates as $k) {
+            if (array_key_exists($k, $doc) && $doc[$k] !== null && $doc[$k] !== '') {
+                return self::normalizeIdValue($doc[$k]);
+            }
+        }
+        return '';
     }
 
     // ===== Markets / Commodities mapping (numeric id for frontend) =====
@@ -208,8 +233,9 @@ class MongoBridge
             $commByOid = [];
             foreach (self::$commodityMap as $num => $c) $commByOid[(string)$c['_id']] = ['id' => $num, 'name' => $c['nama'], 'unit' => $c['unit']];
             foreach ($docs as $doc) {
-                $mid = (string)($doc['market_id'] ?? '');
-                $cid = (string)($doc['komoditas_id'] ?? '');
+                // try multiple candidate keys for market/commodity id because Data API shapes vary
+                $mid = self::findOidInDoc(is_array($doc) ? $doc : [], ['market_id', 'market']);
+                $cid = self::findOidInDoc(is_array($doc) ? $doc : [], ['komoditas_id', 'komoditas', 'commodity_id', 'commodity']);
                 $m = $marketByOid[$mid] ?? ['id' => null, 'name' => ''];
                 $c = $commByOid[$cid] ?? ['id' => null, 'name' => '', 'unit' => 'kg'];
                 $date = '';
