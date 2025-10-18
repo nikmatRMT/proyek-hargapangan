@@ -1,6 +1,10 @@
 // harga-backend/src/routes/prices.js
 import express from "express";
 import { pool } from "../tools/db.js";
+import { isMongo } from "../tools/mongo.js";
+import Report from "../models/Report.js";
+import Market from "../models/Market.js";
+import Commodity from "../models/Commodity.js";
 import XLSX from "xlsx";
 import { buildExampleWorkbook } from "../lib/excel.mjs";
 
@@ -55,15 +59,103 @@ router.get("/", async (req, res) => {
       else                 { where.push("k.nama_komoditas = ?"); params.push(v); }
     }
 
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
     const MAX_PAGE_SIZE = 2000;
     const limit   = Math.max(1, Math.min(MAX_PAGE_SIZE, toInt(pageSize, 50)));
     const pageNum = Math.max(1, toInt(page, 1));
     const offset  = (pageNum - 1) * limit;
     const order   = normalizeSort(sort);
 
-    // Hitung total
+    if (isMongo()) {
+      const mFilter = {};
+      if (from) mFilter.tanggal_lapor = { ...(mFilter.tanggal_lapor||{}), $gte: new Date(from) };
+      if (to)   mFilter.tanggal_lapor = { ...(mFilter.tanggal_lapor||{}), $lte: new Date(to) };
+
+      // market filter: by id or by name
+      if (marketId || market) {
+        const v = String(marketId ?? market).trim();
+        if (v && v !== 'all') {
+          if (/^[0-9a-fA-F]{24}$/.test(v)) {
+            mFilter.market_id = v;
+          } else {
+            const mk = await Market.findOne({ nama_pasar: v }).lean();
+            if (mk) mFilter.market_id = mk._id;
+          }
+        }
+      }
+
+      // commodity filter: by id or by name
+      if (commodityId) {
+        const v = String(commodityId).trim();
+        if (/^[0-9a-fA-F]{24}$/.test(v)) {
+          mFilter.komoditas_id = v;
+        } else {
+          const cm = await Commodity.findOne({ nama_komoditas: v }).lean();
+          if (cm) mFilter.komoditas_id = cm._id;
+        }
+      }
+
+      const total = await Report.countDocuments(mFilter);
+      const sortSpec = order === 'ASC' ? { tanggal_lapor: 1, _id: 1 } : { tanggal_lapor: -1, _id: -1 };
+
+      const rows = await Report.aggregate([
+        { $match: mFilter },
+        { $sort: sortSpec },
+        { $skip: offset },
+        { $limit: limit },
+        { $lookup: { from: 'markets', localField: 'market_id', foreignField: '_id', as: 'm' } },
+        { $lookup: { from: 'commodities', localField: 'komoditas_id', foreignField: '_id', as: 'c' } },
+        { $unwind: { path: '$m', preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: '$c', preserveNullAndEmptyArrays: true } },
+        { $project: {
+            id: '$_id',
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$tanggal_lapor' } },
+            tanggal: { $dateToString: { format: '%Y-%m-%d', date: '$tanggal_lapor' } },
+            price: '$harga',
+            harga: '$harga',
+            note: '$keterangan',
+            keterangan: '$keterangan',
+            photo_url: '$foto_url',
+            foto_url: '$foto_url',
+            gps_url: '$gps_url',
+            market_id: '$market_id',
+            market: '$m.nama_pasar',
+            market_name: '$m.nama_pasar',
+            commodity_id: '$komoditas_id',
+            commodity: '$c.nama_komoditas',
+            commodity_name: '$c.nama_komoditas',
+          }
+        }
+      ]);
+
+      // Stringify ObjectId fields for konsistensi
+      const mapped = rows.map(r => ({
+        ...r,
+        id: String(r.id),
+        market_id: r.market_id ? String(r.market_id) : null,
+        commodity_id: r.commodity_id ? String(r.commodity_id) : null,
+      }));
+
+      return res.json({ page: pageNum, pageSize: limit, total, rows: mapped });
+    }
+
+    // MySQL path (lama)
+    const where = [];
+    const params = [];
+    if (from) { where.push("lh.tanggal_lapor >= ?"); params.push(from); }
+    if (to)   { where.push("lh.tanggal_lapor <= ?"); params.push(to); }
+    if (marketId || market) {
+      const v = String(marketId ?? market).trim();
+      if (/^\d+$/.test(v)) { where.push("lh.market_id = ?"); params.push(Number(v)); }
+      else                 { where.push("p.nama_pasar = ?"); params.push(v); }
+    }
+    if (commodityId) {
+      const v = String(commodityId).trim();
+      if (/^\d+$/.test(v)) { where.push("lh.komoditas_id = ?"); params.push(Number(v)); }
+      else                 { where.push("k.nama_komoditas = ?"); params.push(v); }
+    }
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    // Hitung total (MySQL)
     const [cntRows] = await pool.query(
       `
       SELECT COUNT(*) AS total
@@ -76,7 +168,7 @@ router.get("/", async (req, res) => {
     );
     const total = Number(cntRows?.[0]?.total ?? 0);
 
-    // Data halaman (tanpa ubah logika, tambahkan alias kolom untuk kompat)
+    // Data halaman (MySQL)
     const [rows] = await pool.query(
       `
       SELECT

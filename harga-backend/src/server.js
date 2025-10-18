@@ -7,7 +7,7 @@ import morgan from 'morgan';
 import session from 'express-session';
 import MySQLStoreFactory from 'express-mysql-session';
 import MongoStore from 'connect-mongo';
-import { isMongo } from './tools/mongo.js';
+import { isMongo, connectMongo } from './tools/mongo.js';
 import path from 'path';
 
 // Middleware & helpers
@@ -48,6 +48,13 @@ const uploadStaticPath = process.env.VERCEL === '1'
 try {
   fs.mkdirSync(uploadStaticPath, { recursive: true });
 } catch (_) {}
+
+// Sambungkan ke Mongo bila dipakai sebagai backend data
+if (isMongo()) {
+  connectMongo().catch((e) => {
+    console.error('Gagal connect Mongo:', e?.message || e);
+  });
+}
 
 app.use('/uploads', express.static(uploadStaticPath));
 // Alias di bawah /api agar tetap terjangkau tanpa rewrite Vercel
