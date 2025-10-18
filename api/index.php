@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\DataStore;
 use App\ExcelLoader;
 use App\Utils;
+use App\MongoBridge;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -14,14 +15,22 @@ $route = parse_url($requestUri, PHP_URL_PATH) ?? '/';
 $route = $route === '' ? '/' : $route;
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+// --- Booting ---
+// If Mongo is available, we will use it as the primary data source.
+// Otherwise, we fall back to the Excel loader for local development.
+static $MONGO_AVAILABLE = false;
 static $BOOTED = false;
 static $EXCEL_SCANS = [];
 if (!$BOOTED) {
-    $loader = new ExcelLoader();
-    $rows = $loader->loadAll();
-    $ds = DataStore::get();
-    $ds->load($rows);
-    $EXCEL_SCANS = $loader->scanInfo;
+    $MONGO_AVAILABLE = MongoBridge::isAvailable();
+    if (!$MONGO_AVAILABLE) {
+        // Fallback to Excel loader
+        $loader = new ExcelLoader();
+        $rows = $loader->loadAll();
+        $ds = DataStore::get();
+        $ds->load($rows);
+        $EXCEL_SCANS = $loader->scanInfo;
+    }
     $BOOTED = true;
 }
 
@@ -40,6 +49,11 @@ if ($route === '/api/health' && $method === 'GET') {
 }
 
 if ($route === '/api/markets' && $method === 'GET') {
+    if ($MONGO_AVAILABLE) {
+        Utils::json(['data' => MongoBridge::getMarketsList()]);
+        exit;
+    }
+    // Fallback
     $ds = DataStore::get();
     $rows = [];
     foreach ($ds->markets as $id => $name) {
@@ -50,6 +64,11 @@ if ($route === '/api/markets' && $method === 'GET') {
 }
 
 if ($route === '/api/commodities' && $method === 'GET') {
+    if ($MONGO_AVAILABLE) {
+        Utils::json(['data' => MongoBridge::getCommoditiesList()]);
+        exit;
+    }
+    // Fallback
     $ds = DataStore::get();
     $rows = [];
     foreach ($ds->commodities as $id => $name) {
@@ -60,6 +79,13 @@ if ($route === '/api/commodities' && $method === 'GET') {
 }
 
 if ($route === '/api/prices' && $method === 'GET') {
+    if ($MONGO_AVAILABLE) {
+        // MongoBridge::listPrices expects the raw query params
+        $result = MongoBridge::listPrices($_GET);
+        Utils::json($result);
+        exit;
+    }
+    // Fallback
     $ds = DataStore::get();
     $rows = $ds->reports;
     $from = q('from');
@@ -122,6 +148,17 @@ if ($route === '/api/prices' && $method === 'GET') {
 
 if ($route === '/api/prices' && $method === 'PATCH') {
     $body = Utils::readJsonBody();
+    if ($MONGO_AVAILABLE) {
+        try {
+            $row = MongoBridge::upsertPrice($body);
+            Utils::json($row);
+        } catch (InvalidArgumentException $e) {
+            Utils::json(['message' => $e->getMessage()], 400);
+        }
+        exit;
+    }
+
+    // Fallback
     $id = isset($body['id']) ? (int)$body['id'] : null;
 
     if ($id) {
@@ -162,6 +199,17 @@ if ($route === '/api/prices' && $method === 'PATCH') {
 
 if ($route === '/api/prices/upsert' && $method === 'POST') {
     $body = Utils::readJsonBody();
+    if ($MONGO_AVAILABLE) {
+        try {
+            $row = MongoBridge::upsertPrice($body);
+            Utils::json($row);
+        } catch (InvalidArgumentException $e) {
+            Utils::json(['message' => $e->getMessage()], 400);
+        }
+        exit;
+    }
+
+    // Fallback
     $date = $body['date'] ?? null;
     $marketId = isset($body['market_id']) ? (int)$body['market_id'] : null;
     $commodityId = isset($body['commodity_id']) ? (int)$body['commodity_id'] : null;
