@@ -30,10 +30,15 @@ export const mysqlOptions = {
   waitForConnections: true,
   connectionLimit: 10,
   connectTimeout: 10000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
   charset: 'utf8mb4'
 };
 const pool = mysql.createPool(mysqlOptions);
 export { pool };
 
 // Helper query
-export const query = (sql, params) => pool.execute(sql, params);
+export const query = (sql, params, timeoutMs = 20000) => {
+  // Gunakan opsi timeout per-kueri agar tidak menggantung terlalu lama
+  return pool.execute({ sql, timeout: timeoutMs }, params);
+};

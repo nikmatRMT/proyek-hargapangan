@@ -31,6 +31,7 @@ import mobileAuthRouter from './routes/mobileAuth.js';
 import mobileReportsRouter from './routes/mobileReports.js';
 import fs from 'fs';
 import os from 'os';
+import { pool } from './tools/db.js';
 
 // In Vercel serverless, default to skipping persistent session store to avoid cold-start timeouts
 if (process.env.VERCEL === '1' && !process.env.FORCE_SESSION) {
@@ -111,6 +112,17 @@ app.get('/favicon.ico', (_req, res) => res.status(204).end());
 // Early health endpoints (do not require session/DB)
 app.get('/health', (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
 app.get('/api/health', (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
+app.get('/api/__db-ping', async (_req, res) => {
+  try {
+    const t0 = Date.now();
+    const [rows] = await pool.query('SELECT 1 AS ok');
+    const ms = Date.now() - t0;
+    res.json({ ok: true, elapsed_ms: ms, rows });
+  } catch (e) {
+    console.error('[__db-ping] error:', e);
+    res.status(500).json({ ok: false, error: e?.message || 'DB error' });
+  }
+});
 app.get('/__routes-lite', (_req, res) => {
   res.json({ ok: true, notes: 'use /api/__routes after session/DB ready' });
 });
