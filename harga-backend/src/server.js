@@ -5,8 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import session from 'express-session';
-// import MySQLStoreFactory from 'express-mysql-session';
-// import MongoStore from 'connect-mongo';
+import MongoStore from 'connect-mongo';
 import { isMongo, connectMongo } from './tools/mongo.js';
 import path from 'path';
 
@@ -124,7 +123,6 @@ let sessionStore;
 const wantSessionStore = process.env.SKIP_SESSION !== '1' && Boolean(process.env.MONGO_URI);
 if (wantSessionStore) {
   try {
-    const { default: MongoStore } = await import('connect-mongo');
     sessionStore = MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
       dbName: process.env.MONGO_DB_NAME || 'harga_pasar_mongo',
