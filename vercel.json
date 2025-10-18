@@ -1,6 +1,1 @@
-{
-  "functions": {
-    "api/**/*.php": { "runtime": "@vercel/php" }
-  },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index.php" }]
-}
+{"cleanUrls":true,"functions":{"api/**/*.php":{"runtime":"@vercel/php"}},"rewrites":[{"source":"/(.*)","destination":"/api/index.php"}]}
