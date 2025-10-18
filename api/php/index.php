@@ -98,6 +98,38 @@ if ($route === '/api/check-dataapi' && $method === 'GET') {
     exit;
 }
 
+// Temporary debug: show market/commodity maps and raw price documents
+if ($route === '/api/prices-debug' && $method === 'GET') {
+    $ok = MongoBridge::isAvailable();
+    $out = ['available' => $ok];
+    try {
+        // maps
+        $out['marketMap'] = MongoBridge::getMarketsList();
+        $out['commodityMap'] = MongoBridge::getCommoditiesList();
+
+        if ($ok) {
+            // get raw price docs via DataApi when available, else native
+            if (extension_loaded('mongodb')) {
+                $db = MongoBridge::db();
+                $docs = [];
+                foreach ($db->selectCollection('laporan_harga')->find([], ['limit' => 5, 'sort' => ['tanggal_lapor' => -1]]) as $d) {
+                    $docs[] = $d;
+                }
+                $out['prices_raw'] = $docs;
+            } else {
+                if (class_exists(App\DataApiMongo::class)) {
+                    $api = new App\DataApiMongo();
+                    $out['prices_raw'] = $api->find('laporan_harga', [], [], 5, ['tanggal_lapor' => -1]);
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        $out['error'] = $e->getMessage();
+    }
+    Utils::json($out);
+    exit;
+}
+
 if ($route === '/api/prices' && $method === 'GET') {
     if ($MONGO_AVAILABLE) {
         $result = MongoBridge::listPrices($_GET);
