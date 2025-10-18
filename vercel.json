@@ -1,7 +1,7 @@
 {
   "cleanUrls": true,
   "functions": {
-    "php-backend/api/**/*.php": {
+    "api/**/*.php": {
       "runtime": "vercel-php@0.7.0",
       "memory": 1024,
       "maxDuration": 60
@@ -10,7 +10,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/php-backend/api/index.php?route=$1"
+      "destination": "/api/index.php?route=$1"
     }
   ]
 }

@@ -2,15 +2,14 @@
 declare(strict_types=1);
 
 // Vercel serverless PHP entrypoint.
-// Rewrites should forward /api/(.*) -> /php-backend/api/index.php?route=$1
+// Rewrites forward /api/(.*) -> /api/index.php?route=$1
 
 use App\DataStore;
 use App\ExcelLoader;
 use App\MongoBridge;
 use App\Utils;
 
-// Composer autoload from repo root vendor/
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 Utils::cors();
 
@@ -131,3 +130,4 @@ if ($route === '/api/prices/upsert' && $method === 'POST') {
 
 // Default 404
 Utils::json(['message' => 'Not Found', 'route' => $route], 404);
+
