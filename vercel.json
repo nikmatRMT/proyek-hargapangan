@@ -4,7 +4,7 @@
     "harga-backend/api/**/*.js": {
       "memory": 1024,
       "maxDuration": 60,
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs22.x"
     }
   },
   "rewrites": [
