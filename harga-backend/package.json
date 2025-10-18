@@ -7,7 +7,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "import:excel": "node src/tools/import-excel.mjs",
-    "seed:admin": "node scripts/create-admin.js --username admin --password PasswordKuat123! --name Administrator"
+    "seed:admin": "node scripts/create-admin.js --username admin --password PasswordKuat123! --name Administrator",
+    "seed:mongo": "node scripts/seed-mongo.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
