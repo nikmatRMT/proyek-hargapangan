@@ -57,7 +57,8 @@ router.get("/", async (req, res) => {
 
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    const limit   = Math.max(1, Math.min(50000, toInt(pageSize, 50)));
+    const MAX_PAGE_SIZE = 2000;
+    const limit   = Math.max(1, Math.min(MAX_PAGE_SIZE, toInt(pageSize, 50)));
     const pageNum = Math.max(1, toInt(page, 1));
     const offset  = (pageNum - 1) * limit;
     const order   = normalizeSort(sort);

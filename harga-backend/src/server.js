@@ -32,6 +32,11 @@ import mobileReportsRouter from './routes/mobileReports.js';
 import fs from 'fs';
 import os from 'os';
 
+// In Vercel serverless, default to skipping persistent session store to avoid cold-start timeouts
+if (process.env.VERCEL === '1' && !process.env.FORCE_SESSION) {
+  process.env.SKIP_SESSION = process.env.SKIP_SESSION || '1';
+}
+
 
 const app = express();
 const uploadStaticPath = process.env.VERCEL === '1'

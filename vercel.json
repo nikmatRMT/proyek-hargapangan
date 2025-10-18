@@ -1,7 +1,6 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/harga-backend/api/index.js" }
+    { "source": "/api/(.*)", "destination": "/harga-backend/api/index.js" }
   ]
 }
-
