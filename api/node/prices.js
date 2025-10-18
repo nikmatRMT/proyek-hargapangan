@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     const db = await getDb();
     const params = parseQuery(req.query || {});
 
-    // Build mapping for numeric IDs
+    // Build mapping for numeric IDs (fetch all to ensure complete mapping)
     const markets = await db.collection('pasar').find({}).sort({ nama_pasar: 1 }).toArray();
     const comms = await db.collection('komoditas').find({}).sort({ nama_komoditas: 1 }).toArray();
     const numToMarket = new Map();
