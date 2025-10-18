@@ -7,8 +7,6 @@
     }
   },
   "rewrites": [
-    { "source": "/", "destination": "/api/index.php?route=/health" },
-    { "source": "/api", "destination": "/api/index.php?route=/api" },
-    { "source": "/api/(.*)", "destination": "/api/index.php?route=/api/$1" }
+    { "source": "/", "destination": "/api/index.php?route=/health" }
   ]
 }
