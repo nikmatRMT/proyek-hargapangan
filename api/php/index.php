@@ -73,6 +73,31 @@ if ($route === '/api/commodities' && $method === 'GET') {
     exit;
 }
 
+if ($route === '/api/check-dataapi' && $method === 'GET') {
+    $ok = MongoBridge::isAvailable();
+    $res = ['available' => $ok, 'method' => (extension_loaded('mongodb') ? 'native' : 'dataapi')];
+    try {
+        if ($ok) {
+            $markets = MongoBridge::getMarketsList();
+            $comms = MongoBridge::getCommoditiesList();
+            $prices = [];
+            if (class_exists(App\DataApiMongo::class)) {
+                $dataApi = new App\DataApiMongo();
+                $prices = $dataApi->find('laporan_harga', [], [], 5, ['tanggal_lapor' => -1]);
+            }
+            $res['samples'] = [
+                'markets' => array_slice($markets, 0, 5),
+                'commodities' => array_slice($comms, 0, 5),
+                'prices_raw' => $prices,
+            ];
+        }
+    } catch (Throwable $e) {
+        $res['error'] = $e->getMessage();
+    }
+    Utils::json($res);
+    exit;
+}
+
 if ($route === '/api/prices' && $method === 'GET') {
     if ($MONGO_AVAILABLE) {
         $result = MongoBridge::listPrices($_GET);
