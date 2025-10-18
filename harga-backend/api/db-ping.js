@@ -10,6 +10,10 @@ function readSsl() {
   return ssl;
 }
 
+export const config = {
+  runtime: 'nodejs22.x',
+};
+
 export default async function handler(_req, res) {
   const cfg = {
     host: process.env.DB_HOST,
@@ -33,4 +37,3 @@ export default async function handler(_req, res) {
     try { await conn?.end(); } catch {}
   }
 }
-
