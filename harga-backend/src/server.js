@@ -6,6 +6,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import session from 'express-session';
 import MySQLStoreFactory from 'express-mysql-session';
+import MongoStore from 'connect-mongo';
+import { isMongo } from './tools/mongo.js';
 import path from 'path';
 
 // Middleware & helpers
@@ -118,7 +120,20 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev_secret',
     resave: false,
     saveUninitialized: false,
-    store: (process.env.SKIP_SESSION === '1' ? undefined : new MySQLStore(mysqlOptions)),
+    store: (
+      process.env.SKIP_SESSION === '1'
+        ? undefined
+        : (
+            isMongo()
+              ? MongoStore.create({
+                  mongoUrl: process.env.MONGO_URI,
+                  dbName: process.env.MONGO_DB_NAME || 'harga_pasar_mongo',
+                  ttl: 60 * 60 * 24 * 7,
+                  autoRemove: 'native',
+                })
+              : new MySQLStore(mysqlOptions)
+          )
+    ),
     cookie: {
       httpOnly: true,
       sameSite,                // https → 'none', lokal → 'lax'
