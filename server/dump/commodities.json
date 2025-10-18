@@ -1,0 +1,107 @@
+[
+  {
+    "_id": "68f3472787dbc73b8fee88a5",
+    "nama_komoditas": "Beras",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88a6",
+    "nama_komoditas": "Minyak Goreng Kemasan",
+    "unit": "(Rp/Liter)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88a7",
+    "nama_komoditas": "Minyak Goreng Curah",
+    "unit": "(Rp/Liter)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88a8",
+    "nama_komoditas": "Tepung Terigu Kemasan",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88a9",
+    "nama_komoditas": "Tepung Terigu Curah",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88aa",
+    "nama_komoditas": "Gula Pasir",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88ab",
+    "nama_komoditas": "Telur Ayam",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88ac",
+    "nama_komoditas": "Daging Sapi",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88ad",
+    "nama_komoditas": "Daging Ayam",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88ae",
+    "nama_komoditas": "Kedelai",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88af",
+    "nama_komoditas": "Bawang Merah",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b0",
+    "nama_komoditas": "Bawang Putih",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b1",
+    "nama_komoditas": "Cabe Merah Besar",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b2",
+    "nama_komoditas": "Cabe Rawit",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b3",
+    "nama_komoditas": "Ikan Haruan/ Gabus",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b4",
+    "nama_komoditas": "Ikan Tongkol/Tuna",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b5",
+    "nama_komoditas": "Ikan Mas/Nila",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b6",
+    "nama_komoditas": "Ikan Patin",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b7",
+    "nama_komoditas": "Ikan Papuyu/Betok",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b8",
+    "nama_komoditas": "Ikan Bandeng",
+    "unit": "(Rp/Kg)"
+  },
+  {
+    "_id": "68f3472787dbc73b8fee88b9",
+    "nama_komoditas": "Ikan Kembung/Pindang",
+    "unit": "(Rp/Kg)"
+  }
+]

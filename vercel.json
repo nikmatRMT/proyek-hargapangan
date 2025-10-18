@@ -1,16 +1,16 @@
 {
   "cleanUrls": true,
   "functions": {
-    "harga-backend/api/**/*.js": {
+    "php-backend/api/**/*.php": {
+      "runtime": "vercel-php@0.7.0",
       "memory": 1024,
-      "maxDuration": 60,
-      "runtime": "nodejs22.x"
+      "maxDuration": 60
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/harga-backend/api/index.js"
+      "destination": "/php-backend/api/index.php?route=$1"
     }
   ]
 }
