@@ -2,13 +2,15 @@
 namespace App;
 
 use MongoDB\Client as MongoClient;
-use MongoDB\BSON\UTCDateTime;
-use MongoDB\BSON\ObjectId;
+// BSON classes are referenced dynamically to allow fallback when the PHP mongodb extension is not installed.
+use App\DataApiMongo;
 
 class MongoBridge
 {
     private static ?MongoClient $client = null;
     private static ?string $dbName = null;
+    private static ?DataApiMongo $dataApi = null;
+    private static ?bool $useDataApi = null;
 
     private static array $marketMap = [];      // [numId => ['_id'=>ObjectId,'nama'=>string]]
     private static array $marketLookup = [];   // [(string)ObjectId => numId]
@@ -18,11 +20,28 @@ class MongoBridge
     public static function isAvailable(): bool
     {
         try {
-            if (!extension_loaded('mongodb')) return false;
-            $cli = self::client();
-            // quick ping
-            $cli->listDatabases();
-            return true;
+            // Prefer native driver if available
+            if (extension_loaded('mongodb')) {
+                $cli = self::client();
+                $cli->listDatabases();
+                self::$useDataApi = false;
+                return true;
+            }
+            // Fallback to Data API if configured
+            $url = getenv('MONGODB_DATA_API_URL');
+            $key = getenv('MONGODB_DATA_API_KEY');
+            if ($url && $key) {
+                if (!self::$dataApi) self::$dataApi = new DataApiMongo();
+                // quick check: try a lightweight call
+                try {
+                    $res = self::$dataApi->findOne('pasar', []);
+                    self::$useDataApi = true;
+                    return true;
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            }
+            return false;
         } catch (\Throwable $e) {
             return false;
         }
@@ -45,22 +64,47 @@ class MongoBridge
         return self::client()->selectDatabase(self::$dbName ?: 'harga_pasar_mongo');
     }
 
-    private static function objectId(string $id): ObjectId
+    private static function objectId($id)
     {
-        return ($id instanceof ObjectId) ? $id : new ObjectId($id);
+        if ($id instanceof \MongoDB\BSON\ObjectId) return $id;
+        return new \MongoDB\BSON\ObjectId((string)$id);
     }
 
     // ===== Markets / Commodities mapping (numeric id for frontend) =====
     public static function loadMaps(): void
     {
         // sort by name for stable ordering
-        $db = self::db();
         self::$marketMap = [];
         self::$marketLookup = [];
         self::$commodityMap = [];
         self::$commodityLookup = [];
 
         $i = 1;
+        if (self::$useDataApi === null) self::isAvailable();
+        if (self::$useDataApi) {
+            if (!self::$dataApi) self::$dataApi = new DataApiMongo();
+            $markets = self::$dataApi->find('pasar', [], ['_id' => 1, 'nama_pasar' => 1], 100, ['nama_pasar' => 1]);
+            foreach ($markets as $d) {
+                $oid = (string)($d['_id'] ?? '');
+                $name = (string)($d['nama_pasar'] ?? '');
+                self::$marketMap[$i] = ['_id' => $oid, 'nama' => $name];
+                self::$marketLookup[$oid] = $i;
+                $i++;
+            }
+            $j = 1;
+            $comms = self::$dataApi->find('komoditas', [], ['_id' => 1, 'nama_komoditas' => 1, 'unit' => 1], 1000, ['nama_komoditas' => 1]);
+            foreach ($comms as $d) {
+                $oid = (string)($d['_id'] ?? '');
+                $name = (string)($d['nama_komoditas'] ?? '');
+                $unit = (string)($d['unit'] ?? 'kg');
+                self::$commodityMap[$j] = ['_id' => $oid, 'nama' => $name, 'unit' => $unit];
+                self::$commodityLookup[$oid] = $j;
+                $j++;
+            }
+            return;
+        }
+
+        $db = self::db();
         foreach ($db->selectCollection('pasar')->find([], ['sort' => ['nama_pasar' => 1]]) as $d) {
             $oid = (string)$d['_id'];
             $name = (string)($d['nama_pasar'] ?? '');
@@ -110,14 +154,14 @@ class MongoBridge
         return $out;
     }
 
-    private static function numericMarketToOid(int $marketId): ?ObjectId
+    private static function numericMarketToOid(int $marketId)
     {
         if (!self::$marketMap) self::loadMaps();
         $doc = self::$marketMap[$marketId] ?? null;
         return $doc ? ($doc['_id']) : null;
     }
 
-    private static function numericCommodityToOid(int $commodityId): ?ObjectId
+    private static function numericCommodityToOid(int $commodityId)
     {
         if (!self::$commodityMap) self::loadMaps();
         $doc = self::$commodityMap[$commodityId] ?? null;
@@ -128,9 +172,7 @@ class MongoBridge
     public static function listPrices(array $params): array
     {
         if (!self::$marketMap || !self::$commodityMap) self::loadMaps();
-        $db = self::db();
-        $coll = $db->selectCollection('laporan_harga');
-
+        if (self::$useDataApi === null) self::isAvailable();
         $from = $params['from'] ?? null;
         $to = $params['to'] ?? null;
         if (!empty($params['year']) && !empty($params['month'])) {
@@ -143,6 +185,61 @@ class MongoBridge
         $sort = strtolower((string)($params['sort'] ?? 'desc'));
         $page = (int)($params['page'] ?? 1);
         $pageSize = (int)($params['pageSize'] ?? 2000);
+
+        // Data API path
+        if (self::$useDataApi) {
+            if (!self::$dataApi) self::$dataApi = new DataApiMongo();
+            $filter = [];
+            if ($from || $to) {
+                $dt = [];
+                if ($from) $dt['$gte'] = ['$date' => date('Y-m-d\T00:00:00\Z', strtotime($from))];
+                if ($to) $dt['$lte'] = ['$date' => date('Y-m-d\T23:59:59\Z', strtotime($to))];
+                $filter['tanggal_lapor'] = $dt;
+            }
+            if ($marketId && strtolower((string)$marketId) !== 'all') {
+                $oid = self::numericMarketToOid((int)$marketId);
+                if ($oid) $filter['market_id'] = ['$oid' => (string)$oid];
+            }
+            $limit = $pageSize;
+            $docs = self::$dataApi->find('laporan_harga', $filter, [], $limit, ['tanggal_lapor' => ($sort === 'asc' ? 1 : -1)]);
+            $rows = [];
+            $marketByOid = [];
+            foreach (self::$marketMap as $num => $m) $marketByOid[(string)$m['_id']] = ['id' => $num, 'name' => $m['nama']];
+            $commByOid = [];
+            foreach (self::$commodityMap as $num => $c) $commByOid[(string)$c['_id']] = ['id' => $num, 'name' => $c['nama'], 'unit' => $c['unit']];
+            foreach ($docs as $doc) {
+                $mid = (string)($doc['market_id'] ?? '');
+                $cid = (string)($doc['komoditas_id'] ?? '');
+                $m = $marketByOid[$mid] ?? ['id' => null, 'name' => ''];
+                $c = $commByOid[$cid] ?? ['id' => null, 'name' => '', 'unit' => 'kg'];
+                $date = '';
+                if (!empty($doc['tanggal_lapor'])) {
+                    // DataApi returned date strings possibly; try to normalize to Y-m-d
+                    $dt = $doc['tanggal_lapor'];
+                    if (is_string($dt)) {
+                        $date = substr($dt, 0, 10);
+                    } elseif (is_array($dt) && isset($dt['$date'])) {
+                        $date = substr($dt['$date'], 0, 10);
+                    }
+                }
+                $rows[] = [
+                    'date' => $date,
+                    'market_id' => $m['id'],
+                    'market_name' => $m['name'],
+                    'commodity_id' => $c['id'],
+                    'commodity_name' => $c['name'],
+                    'unit' => $c['unit'] ?? 'kg',
+                    'price' => (int)($doc['harga'] ?? 0),
+                    'notes' => $doc['keterangan'] ?? null,
+                ];
+            }
+            $total = count($rows);
+            return ['rows' => $rows, 'total' => $total];
+        }
+
+        // Native driver path
+        $db = self::db();
+        $coll = $db->selectCollection('laporan_harga');
 
         $filter = [];
         if ($from || $to) {
@@ -183,7 +280,6 @@ class MongoBridge
                 $date = $doc['tanggal_lapor']->toDateTime()->format('Y-m-d');
             }
             $rows[] = [
-                // penting: jangan kirim id numerik row agar frontend pakai upsert by key
                 'date' => $date,
                 'market_id' => $m['id'],
                 'market_name' => $m['name'],
@@ -200,9 +296,7 @@ class MongoBridge
     public static function upsertPrice(array $body): array
     {
         if (!self::$marketMap || !self::$commodityMap) self::loadMaps();
-        $db = self::db();
-        $coll = $db->selectCollection('laporan_harga');
-
+        if (self::$useDataApi === null) self::isAvailable();
         $date = (string)($body['date'] ?? '');
         $marketNum = isset($body['market_id']) ? (int)$body['market_id'] : null;
         $commNum = isset($body['commodity_id']) ? (int)$body['commodity_id'] : null;
@@ -215,6 +309,46 @@ class MongoBridge
         $cid = self::numericCommodityToOid($commNum);
         if (!$mid || !$cid) throw new \InvalidArgumentException('market_id / commodity_id tidak valid');
 
+        if (self::$useDataApi) {
+            if (!self::$dataApi) self::$dataApi = new DataApiMongo();
+            // Build filter and update using extended JSON for ObjectId and date
+            $whenIso = date('Y-m-d\T00:00:00\Z', strtotime($date));
+            $filter = [
+                'market_id' => ['$oid' => (string)$mid],
+                'komoditas_id' => ['$oid' => (string)$cid],
+                'tanggal_lapor' => ['$date' => $whenIso],
+            ];
+            $nowIso = date('c');
+            $update = [
+                '$setOnInsert' => [
+                    'market_id' => ['$oid' => (string)$mid],
+                    'komoditas_id' => ['$oid' => (string)$cid],
+                    'tanggal_lapor' => ['$date' => $whenIso],
+                    'created_at' => ['$date' => $nowIso],
+                ],
+                '$set' => [
+                    'harga' => $price,
+                    'keterangan' => $body['notes'] ?? null,
+                    'updated_at' => ['$date' => $nowIso],
+                ],
+            ];
+            self::$dataApi->updateOne('laporan_harga', $filter, $update, true);
+            $m = self::$marketMap[$marketNum];
+            $c = self::$commodityMap[$commNum];
+            return [
+                'date' => $date,
+                'market_id' => $marketNum,
+                'market_name' => $m['nama'],
+                'commodity_id' => $commNum,
+                'commodity_name' => $c['nama'],
+                'unit' => $c['unit'] ?? 'kg',
+                'price' => $price,
+                'notes' => $body['notes'] ?? null,
+            ];
+        }
+
+        $db = self::db();
+        $coll = $db->selectCollection('laporan_harga');
         $when = new UTCDateTime(strtotime($date . ' 00:00:00') * 1000);
         $now = new UTCDateTime((int)(microtime(true) * 1000));
 
