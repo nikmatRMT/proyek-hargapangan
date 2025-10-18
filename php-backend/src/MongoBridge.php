@@ -108,7 +108,8 @@ class MongoBridge
         if (self::$useDataApi === null) self::isAvailable();
         if (self::$useDataApi) {
             if (!self::$dataApi) self::$dataApi = new DataApiMongo();
-            $markets = self::$dataApi->find('pasar', [], ['_id' => 1, 'nama_pasar' => 1], 100, ['nama_pasar' => 1]);
+            // fetch more markets in case some price rows reference markets beyond first 100
+            $markets = self::$dataApi->find('pasar', [], ['_id' => 1, 'nama_pasar' => 1], 1000, ['nama_pasar' => 1]);
             foreach ($markets as $d) {
                 $oid = (string)($d['_id'] ?? '');
                 $name = (string)($d['nama_pasar'] ?? '');
@@ -177,6 +178,28 @@ class MongoBridge
             ];
         }
         return $out;
+    }
+
+    private static function findMarketNumericByName(string $name): ?int
+    {
+        if (!$name) return null;
+        if (!self::$marketMap) self::loadMaps();
+        $norm = strtolower(trim($name));
+        foreach (self::$marketMap as $num => $m) {
+            if (strtolower(trim((string)$m['nama'])) === $norm) return $num;
+        }
+        return null;
+    }
+
+    private static function findCommodityNumericByName(string $name): ?int
+    {
+        if (!$name) return null;
+        if (!self::$commodityMap) self::loadMaps();
+        $norm = strtolower(trim($name));
+        foreach (self::$commodityMap as $num => $c) {
+            if (strtolower(trim((string)$c['nama'])) === $norm) return $num;
+        }
+        return null;
     }
 
     private static function numericMarketToOid(int $marketId)
