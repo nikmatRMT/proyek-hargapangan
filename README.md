@@ -36,6 +36,20 @@ Catatan SSE:
 
 - Implementasi SSE di PHP menggunakan polling file `php-backend/storage/last_event.json` sehingga cukup untuk auto-refresh di dashboard, tanpa dependency eksternal.
 
+Catatan deploy (Vercel)
+
+- Jika Anda men-deploy ke Vercel dan melihat peringatan "Provided `memory` setting in `vercel.json` is ignored on Active CPU billing", itu berarti pengaturan `memory` dikelola oleh billing Active CPU di dashboard Vercel dan tidak diperlukan di `vercel.json`. Repositori ini tidak menyertakan entri `memory` di `vercel.json`, jadi peringatan biasanya berasal dari konfigurasi dashboard lama atau pengaturan pengguna. Anda bisa mengabaikannya atau menghapus entri `memory` jika Anda mengelola konfigurasi deployment melalui file lain.
+
+Debug MongoDB on Vercel
+
+If you want to verify whether the PHP `mongodb` extension is available and whether the app can connect to your MongoDB Atlas URI, deploy and visit these debug endpoints (remove them after verification):
+
+- `/api/phpinfo.php` — prints loaded PHP extensions and phpinfo.
+- `/api/check-mongo.php` — attempts to use `MongoBridge::isAvailable()` and reports whether the extension and connection check passed.
+
+Remember to add `MONGODB_URI` (and optionally `MONGODB_DB`) in Vercel Environment Variables before testing. Remove these debug endpoints after you're done to avoid exposing environment details.
+
+
 Pembersihan util JS (Mongo)
 
 - Skrip sementara untuk import/cek Mongo sudah dibersihkan. Gunakan backend PHP untuk operasi rutin.
