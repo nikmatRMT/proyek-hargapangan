@@ -1,6 +1,6 @@
 // POST /api/node/login
 const { MongoClient } = require('mongodb');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'harga_pasar_mongo';
