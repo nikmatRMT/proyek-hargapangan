@@ -1,6 +1,8 @@
-# proyek-hargapangan
+# 🌾 Proyek Harga Pangan
 
-Backend PHP + Node.js serverless untuk sistem informasi harga pangan, dengan frontend React di Netlify.
+**Clean & Simple Backend API** untuk sistem informasi harga pangan dengan frontend React.
+
+**Version:** 2.0.0 (Clean Reset - October 2025)
 
 ## 🚀 Quick Start
 
@@ -18,65 +20,65 @@ git clone https://github.com/nikmatRMT/proyek-hargapangan.git
 cd proyek-hargapangan
 ```
 
-2. **Setup credentials (PENTING!):**
+2. **Install dependencies:**
 ```bash
-# Copy template files
-cp API-AUTH-DOCS.md.example API-AUTH-DOCS.md
-cp ENVIRONMENT-SETUP.md.example ENVIRONMENT-SETUP.md
-
-# Edit file dengan credentials asli (minta dari admin)
-# JANGAN commit file ini ke Git!
-```
-
-3. **Install dependencies:**
-```bash
-# PHP backend
-composer install
-
-# Node.js functions
+# Backend dependencies
 npm install
 
-# Web admin
+# Web admin (in separate terminal)
 cd web-admin
 npm install
 ```
 
-4. **Setup environment variables:**
+3. **Setup environment variables:**
 ```bash
 # Copy .env.example
 cp .env.example .env
 
-# Edit .env dengan MongoDB credentials Anda
-# Lihat ENVIRONMENT-SETUP.md untuk detail
+# Edit .env with your MongoDB credentials
+# See API-DOCS.md for required variables
 ```
 
-5. **Run local server:**
+4. **Run local development:**
 ```bash
-# PHP backend
-php -S localhost:4000 -t php-backend/public
+# Backend (Vercel CLI)
+vercel dev
 
-# Web admin (di terminal terpisah)
+# Web admin (in separate terminal)
 cd web-admin
 npm run dev
 ```
+
+5. **Open in browser:**
+- Backend: http://localhost:3000
+- Web Admin: http://localhost:5173
 
 ---
 
 ## 📁 Project Structure
 
 ```
+proyek-hargapangan/
 ├── api/
-│   ├── php/              # PHP serverless endpoints (Vercel)
-│   └── node/             # Node.js serverless endpoints (Vercel)
-├── php-backend/          # PHP source code
-│   ├── src/              # Core classes (DataStore, ExcelLoader, MongoBridge)
-│   └── public/           # Public entry point
-├── web-admin/            # React admin dashboard (Netlify)
-├── scripts/              # Utility scripts (MongoDB management)
-├── vendor/               # Composer dependencies
-├── .gitignore            # Git ignore rules (includes sensitive files!)
-└── SECURITY.md           # ⚠️ READ THIS for security guidelines
+│   ├── auth.js           # 🔐 All auth endpoints (login, me, logout)
+│   └── utils/
+│       ├── mongo.js      # 🗄️  MongoDB connection utility
+│       ├── cors.js       # 🌐 CORS handling
+│       └── auth.js       # 🔑 JWT authentication utility
+├── web-admin/            # 💻 React admin dashboard (Netlify)
+├── aplikasi-mobile/      # 📱 React Native mobile app
+├── package.json          # 📦 Node.js dependencies
+├── vercel.json           # ⚙️  Vercel configuration
+├── netlify.toml          # ⚙️  Netlify configuration
+├── API-DOCS.md           # 📚 API documentation
+└── README.md             # 📖 This file
 ```
+
+**Key Features:**
+- ✅ **Simple:** Only 3 backend files (was 15+)
+- ✅ **Clean:** No duplicate code, no debugging files
+- ✅ **JWT-based:** No session storage needed
+- ✅ **Serverless:** Vercel functions (auto-scaling)
 
 ---
 
@@ -114,37 +116,38 @@ File berikut mengandung **credentials sensitif** dan sudah di-exclude dari Git:
 
 ## 📡 API Endpoints
 
-### Public Endpoints (PHP)
-- `GET /api/markets` - Daftar pasar
-- `GET /api/commodities` - Daftar komoditas
-- `GET /api/prices` - Data harga (supports filtering)
-- `PATCH /api/prices/:id` - Update harga
-- `POST /api/prices/upsert` - Upsert by key
+### Authentication (JWT-based)
+- `POST /auth/login` - Login (returns JWT token)
+- `GET /auth/me` - Get current user (requires token)
+- `POST /auth/logout` - Logout (client-side token removal)
 
-### Authentication Endpoints (Node.js)
-- `POST /auth/login` - Login (returns token)
-- `GET /auth/me` - Get current user
-- `POST /auth/logout` - Logout
+**📖 Full API Documentation:** See `API-DOCS.md`
 
-### Import/Export
-- `POST /api/import-excel/upload` - Upload Excel file
-- `POST /api/import-excel/bulk` - Bulk import multi-month
+### Quick Example:
+```javascript
+// Login
+const { token } = await fetch('/auth/login', {
+  method: 'POST',
+  body: JSON.stringify({ username: 'admin', password: 'pass' })
+}).then(r => r.json());
 
-**📖 API Documentation:** `API-AUTH-DOCS.md.example`
+// Use token in subsequent requests
+fetch('/auth/me', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+```
 
 ---
 
 ## 🗄️ Database
 
-### MongoDB Collections:
-- `users` - User accounts
-- `sessions` - Authentication sessions
+### MongoDB Atlas Collections:
+- `users` - User accounts (with bcrypt hashed passwords)
 - `pasar` - Markets data
 - `komoditas` - Commodities data
 - `laporan_harga` - Price reports
 
-### Fallback:
-Jika MongoDB tidak tersedia, backend otomatis fallback ke Excel files di `server/data/`.
+**Note:** JWT-based auth doesn't need `sessions` collection (stateless).
 
 ---
 
@@ -152,48 +155,34 @@ Jika MongoDB tidak tersedia, backend otomatis fallback ke Excel files di `server
 
 ### Common Issues:
 
-1. **CORS Error:**
-   - Set `ALLOWED_ORIGINS` di Vercel environment variables
-   - Lihat: `TROUBLESHOOTING.md`
+1. **"No token provided"**
+   - Include `Authorization: Bearer <token>` header in requests
+   - Check token expiration (7 days validity)
 
-2. **Login Failed:**
-   - Check MongoDB connection
-   - Verify `MONGODB_URI` di Vercel dashboard
-   - Check credentials di `API-AUTH-DOCS.md` (local only)
+2. **"Invalid credentials"**
+   - Verify username and password
+   - Check user exists in MongoDB `users` collection
+   - Ensure password is bcrypt hashed
 
-3. **Double `/api/api/` in URL:**
-   - Fix `VITE_API_URL` di Netlify (remove trailing `/api`)
-   - Redeploy Netlify
+3. **CORS Error**
+   - Verify origin is in `ALLOWED_ORIGINS` env var
+   - Check Vercel environment variables
+   - Redeploy after changing env vars
 
-**📖 Full Guide:** `TROUBLESHOOTING.md`
+4. **"JWT_SECRET environment variable is not set"**
+   - Add `JWT_SECRET` to Vercel (min 32 chars)
+   - Generate: `openssl rand -base64 32`
+
+**📖 Full Docs:** See `API-DOCS.md` for detailed troubleshooting
 
 ---
 
 ## 📚 Documentation
 
-- `README.md` (this file) - Project overview
-- `SECURITY.md` - ⚠️ Security guidelines & incident response
-- `TROUBLESHOOTING.md` - Common issues & solutions
-- `API-AUTH-DOCS.md.example` - API documentation template
-- `ENVIRONMENT-SETUP.md.example` - Environment setup guide
-
----
-
-## 🛠️ Development Scripts
-
-```bash
-# Check MongoDB data integrity
-node scripts/check-ids.js
-
-# List all MongoDB documents
-node scripts/list-all.js
-
-# Check users collection
-node scripts/check-users.js
-
-# Fix laporan_harga data
-node scripts/fix-laporan.js
-```
+- `README.md` (this file) - Project overview & quick start
+- `API-DOCS.md` - Complete API documentation & examples
+- `SECURITY.md` - Security guidelines & incident response
+- `.env.example` - Environment variables template
 
 ---
 
@@ -201,44 +190,40 @@ node scripts/fix-laporan.js
 
 ### Vercel (Backend)
 ```bash
-MONGODB_URI=<your_mongodb_uri>
+# MongoDB
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/
 MONGODB_DB=harga_pasar_mongo
-MONGODB_DATA_API_URL=<data_api_url>
-MONGODB_DATA_API_KEY=<api_key>
-MONGODB_DATA_SOURCE=<cluster_name>
-ALLOWED_ORIGINS=<netlify_url>,http://localhost:5173
-FRONTEND_URL=<netlify_url>
+
+# JWT Authentication
+JWT_SECRET=your-super-secret-key-min-32-characters
+
+# CORS
+ALLOWED_ORIGINS=https://proyek-hargapangan-admin.netlify.app,netlify.app,localhost:5173
 ```
 
 ### Netlify (Frontend)
 ```bash
 VITE_API_URL=https://proyek-hargapangan.vercel.app
-VITE_USE_SSE=false
 ```
 
-**📖 Detailed Setup:** `ENVIRONMENT-SETUP.md.example`
+**📖 See:** `API-DOCS.md` for detailed setup instructions
 
 ---
 
 ## 🤝 Contributing
 
-1. Clone repository
-2. Setup credentials (minta dari admin - JANGAN commit!)
-3. Create feature branch
-4. Make changes
-5. **IMPORTANT:** Review commits untuk pastikan tidak ada credentials!
-6. Submit pull request
+1. Fork repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Make changes
+4. Test locally: `vercel dev`
+5. Commit: `git commit -m 'Add amazing feature'`
+6. Push: `git push origin feature/amazing-feature`
+7. Create Pull Request
 
-**Before commit:**
-```bash
-# Check for sensitive data
-git diff
-
-# Verify .gitignore working
-git status
-
-# See: SECURITY.md for checklist
-```
+**⚠️ Before commit:**
+- Check for sensitive data: `git diff`
+- Verify `.env` files not included
+- See `SECURITY.md` for guidelines
 
 ---
 

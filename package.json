@@ -1,15 +1,18 @@
 {
-  "name": "proyek-hargapangan-api",
-  "private": true,
-  "version": "0.1.0",
-  "description": "Node helpers for Vercel to read MongoDB when PHP runtime lacks ext-mongodb.",
-  "license": "UNLICENSED",
+  "name": "proyek-hargapangan-backend",
+  "version": "2.0.0",
+  "description": "Clean backend API untuk sistem harga pangan",
+  "type": "module",
   "engines": {
     "node": ">=18.x"
   },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
   "dependencies": {
-    "@mongodb-js/saslprep": "1.3.2",
     "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0"
   }
 }

@@ -1,15 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
-    { "source": "/auth/login", "destination": "/api/node/auth-login" },
-    { "source": "/auth/me", "destination": "/api/node/auth-me" },
-    { "source": "/auth/logout", "destination": "/api/node/auth-logout" },
-    { "source": "/api/auth/login", "destination": "/api/node/auth-login" },
-    { "source": "/api/auth/me", "destination": "/api/node/auth-me" },
-    { "source": "/api/auth/logout", "destination": "/api/node/auth-logout" },
-    { "source": "/api/api/(.*)", "destination": "/api/php/index.php" },
-    { "source": "/api/node/(.*)", "destination": "/api/node/$1" },
-    { "source": "/api/(.*)", "destination": "/api/php/index.php" }
+    { "source": "/auth/login", "destination": "/api/auth" },
+    { "source": "/auth/me", "destination": "/api/auth" },
+    { "source": "/auth/logout", "destination": "/api/auth" },
+    { "source": "/api/auth/login", "destination": "/api/auth" },
+    { "source": "/api/auth/me", "destination": "/api/auth" },
+    { "source": "/api/auth/logout", "destination": "/api/auth" }
   ]
 }
