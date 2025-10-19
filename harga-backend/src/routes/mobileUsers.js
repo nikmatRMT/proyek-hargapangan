@@ -10,10 +10,23 @@ const router = Router();
 
 // simpan di tmp/uploads/avatar
 const AVATAR_DIR = path.resolve('tmp/uploads/avatar');
-fs.mkdirSync(AVATAR_DIR, { recursive: true });
+
+// Ensure directory exists (with error handling for serverless environments)
+try {
+  fs.mkdirSync(AVATAR_DIR, { recursive: true });
+} catch (err) {
+  console.warn('Warning: Could not create avatar directory:', err.message);
+}
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, AVATAR_DIR),
+  destination: (_req, _file, cb) => {
+    try {
+      fs.mkdirSync(AVATAR_DIR, { recursive: true });
+      cb(null, AVATAR_DIR);
+    } catch (err) {
+      cb(new Error('Gagal membuat folder upload: ' + err.message));
+    }
+  },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname || '.jpg') || '.jpg';
     const id = req.mobileUser?.id || 'user';
