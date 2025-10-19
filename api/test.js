@@ -1,13 +1,18 @@
 import { getDB } from './utils/mongo.js';
-import { handleCors, addCorsHeaders } from './utils/cors.js';
 
 /**
  * Test endpoint to verify environment variables and MongoDB connection
  */
-export default async function handler(req) {
+export default async function handler(req, res) {
   // Handle CORS
-  const corsResponse = handleCors(req);
-  if (corsResponse) return corsResponse;
+  const origin = req.headers.origin || '';
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
 
   try {
     const result = {
@@ -39,21 +44,11 @@ export default async function handler(req) {
       };
     }
 
-    const response = new Response(JSON.stringify(result, null, 2), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    return addCorsHeaders(response, req);
+    return res.status(200).json(result);
   } catch (error) {
-    const response = new Response(JSON.stringify({
+    return res.status(500).json({
       error: error.message,
       stack: error.stack,
-    }, null, 2), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
     });
-
-    return addCorsHeaders(response, req);
   }
 }
