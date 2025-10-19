@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.DS_Store
+.env
+.env.local
+dist/
+build/
+.vercel
+tmp/uploads/
+aplikasi-mobile/node_modules/
+web-admin/node_modules/
+harga-backend/node_modules/
