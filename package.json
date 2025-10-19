@@ -2,9 +2,11 @@
   "name": "proyek-hargapangan-api",
   "private": true,
   "version": "0.1.0",
-  "description": "Node helpers for Vercel using MongoDB Data API.",
+  "description": "Node helpers for Vercel to read MongoDB when PHP runtime lacks ext-mongodb.",
   "license": "UNLICENSED",
   "dependencies": {
-    "bcryptjs": "^2.4.3"
+    "@mongodb-js/saslprep": "^1.1.5",
+    "bcryptjs": "^2.4.3",
+    "mongodb": "^6.20.0"
   }
 }

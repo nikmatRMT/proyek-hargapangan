@@ -1,5 +1,5 @@
 // api/node/auth-me.js
-import bcrypt from 'bcryptjs';
+import { MongoClient } from 'mongodb';
 
 function setCorsHeaders(req, res) {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -20,23 +20,19 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-async function findOneDataApi(collection, filter) {
-  const url = `${process.env.MONGODB_DATA_API_URL}/action/findOne`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': process.env.MONGODB_DATA_API_KEY,
-    },
-    body: JSON.stringify({
-      dataSource: process.env.MONGODB_DATA_SOURCE || 'Cluster0',
-      database: process.env.MONGODB_DB || 'harga_pasar_mongo',
-      collection,
-      filter,
-    }),
-  });
-  const data = await res.json();
-  return data.document || null;
+let cachedClient = null;
+
+async function connectMongo() {
+  if (cachedClient) return cachedClient;
+  
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is not set');
+  }
+  
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  cachedClient = client;
+  return client;
 }
 
 export default async function handler(req, res) {
@@ -59,7 +55,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const session = await findOneDataApi('sessions', { _id: token });
+    const client = await connectMongo();
+    const db = client.db(process.env.MONGODB_DB || 'harga_pasar_mongo');
+    const session = await db.collection('sessions').findOne({ _id: token });
 
     if (!session) {
       return res.status(401).json({ error: 'Invalid or expired token' });
@@ -67,6 +65,7 @@ export default async function handler(req, res) {
 
     // Check expiration
     if (new Date() > new Date(session.expiresAt)) {
+      await db.collection('sessions').deleteOne({ _id: token });
       return res.status(401).json({ error: 'Token expired' });
     }
 
