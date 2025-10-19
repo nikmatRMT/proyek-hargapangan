@@ -19,10 +19,23 @@ async function countActiveAdmins() {
    ========================= */
 const AVATAR_ROOT = path.resolve('tmp/uploads');
 const AVATAR_DIR  = path.resolve(AVATAR_ROOT, 'avatar');
-fs.mkdirSync(AVATAR_DIR, { recursive: true });
+
+// Ensure directory exists (with error handling for serverless environments)
+try {
+  fs.mkdirSync(AVATAR_DIR, { recursive: true });
+} catch (err) {
+  console.warn('Warning: Could not create avatar directory:', err.message);
+}
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, AVATAR_DIR),
+  destination: (_req, _file, cb) => {
+    try {
+      fs.mkdirSync(AVATAR_DIR, { recursive: true });
+      cb(null, AVATAR_DIR);
+    } catch (err) {
+      cb(new Error('Gagal membuat folder upload: ' + err.message));
+    }
+  },
   filename: (req, file, cb) => {
     const uid = req?.session?.user?.id || 'me';
     const ext =
