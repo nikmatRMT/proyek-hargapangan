@@ -2,7 +2,6 @@
   "name": "proyek-hargapangan-backend",
   "version": "2.0.0",
   "description": "Clean backend API untuk sistem harga pangan",
-  "type": "module",
   "engines": {
     "node": ">=18.x"
   },
