@@ -1,10 +1,19 @@
 {
+  "version": 2,
   "buildCommand": "npm install",
   "installCommand": "npm install",
   "functions": {
     "src/server.js": {
       "memory": 1024,
-      "maxDuration": 60
+      "maxDuration": 60,
+      "runtime": "nodejs18.x"
     }
+  },
+  "env": {
+    "MONGO_URI": "@mongo_uri",
+    "MONGO_DB_NAME": "@mongo_db_name",
+    "SESSION_SECRET": "@session_secret",
+    "FRONTEND_ORIGIN": "@frontend_origin",
+    "NODE_ENV": "production"
   }
 }
