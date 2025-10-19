@@ -1,5 +1,4 @@
 // api/node/auth-login.js
-import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
 
 function setCorsHeaders(req, res) {
@@ -21,15 +20,42 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-let cachedClient = null;
+// MongoDB Data API client (more stable in serverless)
+async function findOneDataApi(collection, filter) {
+  const url = `${process.env.MONGODB_DATA_API_URL}/action/findOne`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': process.env.MONGODB_DATA_API_KEY,
+    },
+    body: JSON.stringify({
+      dataSource: process.env.MONGODB_DATA_SOURCE || 'Cluster0',
+      database: process.env.MONGODB_DB || 'harga_pasar_mongo',
+      collection,
+      filter,
+    }),
+  });
+  const data = await res.json();
+  return data.document || null;
+}
 
-async function connectMongo() {
-  if (cachedClient) return cachedClient;
-  
-  const client = new MongoClient(process.env.MONGODB_URI);
-  await client.connect();
-  cachedClient = client;
-  return client;
+async function insertOneDataApi(collection, document) {
+  const url = `${process.env.MONGODB_DATA_API_URL}/action/insertOne`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': process.env.MONGODB_DATA_API_KEY,
+    },
+    body: JSON.stringify({
+      dataSource: process.env.MONGODB_DATA_SOURCE || 'Cluster0',
+      database: process.env.MONGODB_DB || 'harga_pasar_mongo',
+      collection,
+      document,
+    }),
+  });
+  return await res.json();
 }
 
 export default async function handler(req, res) {
@@ -50,9 +76,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Username dan password harus diisi' });
     }
 
-    const client = await connectMongo();
-    const db = client.db(process.env.MONGODB_DB);
-    const user = await db.collection('users').findOne({ username });
+    // Find user with Data API
+    const user = await findOneDataApi('users', { username });
 
     if (!user) {
       return res.status(401).json({ error: 'Username atau password salah' });
@@ -63,22 +88,26 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Username atau password salah' });
     }
 
-    // Create session token
-    const token = Buffer.from(`${user._id}:${Date.now()}`).toString('base64');
+    // Create session token (simple: userId:timestamp base64)
+    const userId = user._id?.$oid || user._id?.toString() || String(user._id);
+    const token = Buffer.from(`${userId}:${Date.now()}`).toString('base64');
+    
     const session = {
-      userId: user._id.toString(),
+      _id: token,
+      userId,
       username: user.username,
       role: user.role || 'user',
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 jam
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };
 
-    await db.collection('sessions').insertOne({ _id: token, ...session });
+    // Insert session with Data API
+    await insertOneDataApi('sessions', session);
 
     return res.status(200).json({
       token,
       user: {
-        id: user._id.toString(),
+        id: userId,
         username: user.username,
         nama: user.nama,
         role: user.role || 'user'
