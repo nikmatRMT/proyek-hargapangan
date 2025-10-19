@@ -67,10 +67,14 @@ proyek-hargapangan/
 │       └── auth.js       # 🔑 JWT authentication utility
 ├── web-admin/            # 💻 React admin dashboard (Netlify)
 ├── aplikasi-mobile/      # 📱 React Native mobile app
+├── docs/                 # 📚 Documentation
+│   ├── API-DOCS.md       # API documentation
+│   ├── SETUP-JWT-SECRET.md # JWT setup guide
+│   ├── SECURITY.md       # Security guidelines
+│   └── RESET-PLAN.md     # Reset documentation
 ├── package.json          # 📦 Node.js dependencies
 ├── vercel.json           # ⚙️  Vercel configuration
 ├── netlify.toml          # ⚙️  Netlify configuration
-├── API-DOCS.md           # 📚 API documentation
 └── README.md             # 📖 This file
 ```
 
@@ -121,7 +125,7 @@ File berikut mengandung **credentials sensitif** dan sudah di-exclude dari Git:
 - `GET /auth/me` - Get current user (requires token)
 - `POST /auth/logout` - Logout (client-side token removal)
 
-**📖 Full API Documentation:** See `API-DOCS.md`
+**📖 Full API Documentation:** See `docs/API-DOCS.md`
 
 ### Quick Example:
 ```javascript
@@ -173,15 +177,17 @@ fetch('/auth/me', {
    - Add `JWT_SECRET` to Vercel (min 32 chars)
    - Generate: `openssl rand -base64 32`
 
-**📖 Full Docs:** See `API-DOCS.md` for detailed troubleshooting
+**📖 Full Docs:** See `docs/API-DOCS.md` for detailed troubleshooting
 
 ---
 
 ## 📚 Documentation
 
 - `README.md` (this file) - Project overview & quick start
-- `API-DOCS.md` - Complete API documentation & examples
-- `SECURITY.md` - Security guidelines & incident response
+- `docs/API-DOCS.md` - Complete API documentation & examples
+- `docs/SETUP-JWT-SECRET.md` - JWT secret setup instructions
+- `docs/SECURITY.md` - Security guidelines & incident response
+- `docs/RESET-PLAN.md` - Project reset documentation
 - `.env.example` - Environment variables template
 
 ---
@@ -206,7 +212,7 @@ ALLOWED_ORIGINS=https://proyek-hargapangan-admin.netlify.app,netlify.app,localho
 VITE_API_URL=https://proyek-hargapangan.vercel.app
 ```
 
-**📖 See:** `API-DOCS.md` for detailed setup instructions
+**📖 See:** `docs/API-DOCS.md` for detailed setup instructions
 
 ---
 
@@ -223,7 +229,7 @@ VITE_API_URL=https://proyek-hargapangan.vercel.app
 **⚠️ Before commit:**
 - Check for sensitive data: `git diff`
 - Verify `.env` files not included
-- See `SECURITY.md` for guidelines
+- See `docs/SECURITY.md` for guidelines
 
 ---
 
