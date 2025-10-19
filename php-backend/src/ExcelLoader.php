@@ -70,7 +70,7 @@ class ExcelLoader
         return $sheet->toArray(null, true, true, false);
     }
 
-    private function parseStructured(string $file, string $defaultMarket): array
+    public function parseStructured(string $file, string $defaultMarket): array
     {
         $outRows = [];
         $scans = [];
@@ -159,7 +159,7 @@ class ExcelLoader
         return ['rows' => $outRows, 'scans' => $scans];
     }
 
-    private function parseSimple(string $file, string $defaultMarket): array
+    public function parseSimple(string $file, string $defaultMarket): array
     {
         $outRows = [];
         $scans = [];
@@ -237,4 +237,3 @@ class ExcelLoader
         return ['rows' => $outRows, 'scans' => $scans];
     }
 }
-

@@ -27,3 +27,4 @@ pnpm-debug.log*
 # temp files
 *.dll
 php_mongodb-*-x86_64/
+.vercel

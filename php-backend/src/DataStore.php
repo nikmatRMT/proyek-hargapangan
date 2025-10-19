@@ -37,8 +37,7 @@ class DataStore
         $this->markets = [];
         $this->commodities = [];
 
-        $id = 1;
-        $out = [];
+        // First pass: build market and commodity maps
         foreach ($rows as $r) {
             $market = (string)($r['market_name'] ?? '');
             $commodity = (string)($r['commodity_name'] ?? '');
@@ -54,15 +53,16 @@ class DataStore
             }
         }
 
+        // Second pass: normalize rows with the created maps
+        $id = 1;
+        $out = [];
         foreach ($rows as $r) {
-            $marketId = $this->marketNameToId[$r['market_name'] ?? ''] ?? null;
-            $commodityId = $this->commodityNameToId[$r['commodity_name'] ?? ''] ?? null;
             $out[] = [
                 'id' => $id++,
                 'date' => (string)($r['date'] ?? ''),
-                'market_id' => $marketId,
+                'market_id' => $this->marketNameToId[$r['market_name'] ?? ''] ?? null,
                 'market_name' => (string)($r['market_name'] ?? ''),
-                'commodity_id' => $commodityId,
+                'commodity_id' => $this->commodityNameToId[$r['commodity_name'] ?? ''] ?? null,
                 'commodity_name' => (string)($r['commodity_name'] ?? ''),
                 'unit' => (string)($r['unit'] ?? 'kg'),
                 'price' => (int)($r['price'] ?? 0),
@@ -158,4 +158,3 @@ class DataStore
         return [];
     }
 }
-
