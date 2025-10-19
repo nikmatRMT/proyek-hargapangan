@@ -1,35 +1,20 @@
+// src/hooks/useMarkets.ts
 import { useEffect, useState } from "react";
-import { getMarkets, type Market } from "@/api";
+import { fetchMarkets } from "@/api";
+
+export type Market = { id: number; nama_pasar: string };
 
 export function useMarkets() {
   const [markets, setMarkets] = useState<Market[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
-
-  async function refresh() {
-    setLoading(true);
-    setError("");
-    try {
-      const raw = await getMarkets();
-      // raw bisa {data: [...] } atau langsung array, sesuaikan:
-      const list: any[] = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
-      // Normalisasi key supaya konsisten
-      const norm = list.map((m) => ({
-        id: Number(m.id),
-        nama: m.nama ?? m.name ?? m.nama_pasar ?? "",
-        name: m.name ?? m.nama ?? m.nama_pasar ?? "",
-        nama_pasar: m.nama_pasar ?? m.nama ?? m.name ?? "",
-      })) as Market[];
-      setMarkets(norm);
-    } catch (e: any) {
-      setError(e?.message || "Gagal memuat pasar");
-      setMarkets([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { refresh(); }, []);
-
-  return { markets, loading, error, refresh };
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const list = await fetchMarkets();
+        if (alive) setMarkets(Array.isArray(list) ? list : []);
+      } catch { if (alive) setMarkets([]); }
+    })();
+    return () => { alive = false; };
+  }, []);
+  return [{ id: 0, nama_pasar: "Semua Pasar" }, ...markets];
 }

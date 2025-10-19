@@ -83,7 +83,7 @@ export const SidebarProvider = React.forwardRef<
 
   return (
     <SidebarContext.Provider value={ctx}>
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         <div
           style={{ '--sidebar-width': SIDEBAR_WIDTH, '--sidebar-width-icon': SIDEBAR_WIDTH_ICON, ...style } as React.CSSProperties}
           className={cn('group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar', className)}
@@ -344,41 +344,18 @@ const sidebarMenuButtonVariants = cva(
 
 export const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<'button'> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
-  } & VariantProps<typeof sidebarMenuButtonVariants>
+  React.ComponentProps<'button'> & { asChild?: boolean; isActive?: boolean; tooltip?: string | React.ComponentProps<typeof TooltipContent> } & VariantProps<typeof sidebarMenuButtonVariants>
 >(({ asChild = false, isActive = false, variant = 'default', size = 'default', tooltip, className, ...props }, ref) => {
   const Comp = asChild ? Slot : 'button'
   const { isMobile, state } = useSidebar()
+  const button = <Comp ref={ref} data-sidebar="menu-button" data-size={size} data-active={isActive} className={cn(sidebarMenuButtonVariants({ variant, size }), className)} {...props} />
 
-  const button = (
-    <Comp
-      ref={ref}
-      data-sidebar="menu-button"
-      data-size={size}
-      data-active={isActive}
-      className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-      {...props}
-    />
-  )
-
-  // tidak ada tooltip → langsung balikin button
   if (!tooltip) return button
-
-  // normalisasi konten tooltip
-  const contentProps =
-    typeof tooltip === 'string' ? { children: tooltip } : tooltip
-
-  // tampilkan tooltip hanya ketika sidebar collapsed (desktop)
-  if (state !== 'collapsed' || isMobile) return button
-
+  const contentProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip
   return (
     <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
-      {/* HAPUS side / align karena tidak didukung tipe-nya */}
-      <TooltipContent {...contentProps} />
+      <TooltipContent side="right" align="center" hidden={state !== 'collapsed' || isMobile} {...contentProps} />
     </Tooltip>
   )
 })
@@ -425,36 +402,17 @@ export const SidebarMenuBadge = React.forwardRef<HTMLDivElement, React.Component
 ))
 SidebarMenuBadge.displayName = 'SidebarMenuBadge'
 
-export const SidebarMenuSkeleton = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<'div'> & { showIcon?: boolean }
->(({ className, showIcon = false, ...props }, ref) => {
-  const width = React.useMemo(() => `${Math.floor(Math.random() * 40) + 50}%`, [])
-  // taruh CSS variable di wrapper, bukan di <Skeleton />
-  const varStyle = { ['--skeleton-width' as any]: width } as React.CSSProperties
-
-  return (
-    <div
-      ref={ref}
-      data-sidebar="menu-skeleton"
-      className={cn('rounded-md h-8 flex gap-2 px-2 items-center', className)}
-      {...props}
-    >
-      {showIcon && (
-        <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />
-      )}
-
-      {/* wrapper yang bawa CSS var */}
-      <div style={varStyle}>
-        <Skeleton
-          className="h-4 flex-1 max-w-[--skeleton-width]"
-          data-sidebar="menu-skeleton-text"
-        />
+export const SidebarMenuSkeleton = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'> & { showIcon?: boolean }>(
+  ({ className, showIcon = false, ...props }, ref) => {
+    const width = React.useMemo(() => `${Math.floor(Math.random() * 40) + 50}%`, [])
+    return (
+      <div ref={ref} data-sidebar="menu-skeleton" className={cn('rounded-md h-8 flex gap-2 px-2 items-center', className)} {...props}>
+        {showIcon && <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
+        <Skeleton className="h-4 flex-1 max-w-[--skeleton-width]" data-sidebar="menu-skeleton-text" style={{ '--skeleton-width': width } as React.CSSProperties} />
       </div>
-    </div>
-  )
-})
-
+    )
+  }
+)
 SidebarMenuSkeleton.displayName = 'SidebarMenuSkeleton'
 
 export const SidebarMenuSub = React.forwardRef<HTMLUListElement, React.ComponentProps<'ul'>>(({ className, ...props }, ref) => (

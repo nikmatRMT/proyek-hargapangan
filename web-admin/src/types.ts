@@ -1,6 +1,6 @@
 // src/types.ts
 export type Unit = 'kg' | 'liter' | string;
-export type Role = 'super_admin' | 'admin' | 'petugas';
+
 export interface ReportRow {
   id: number;
   date: string;                 // 'YYYY-MM-DD'

@@ -15,34 +15,13 @@ function joinUrl(path: string) {
 async function readJsonResponse(res: Response) {
   const text = await res.text();
   const ct = (res.headers.get('content-type') || '').toLowerCase();
-
-  // 1) Body kosong (mis. 204 No Content / HEAD)
-  if (!text) {
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return {};
+  if (!ct.includes('application/json')) {
+    throw new Error(`Respon bukan JSON (HTTP ${res.status}). Body: ${text.slice(0, 200)}`);
   }
-
-  // 2) Konten JSON (termasuk "+json" atau ada charset)
-  const isJson = ct.includes('application/json') || ct.includes('+json') || /\bjson\b/.test(ct);
-  if (isJson) {
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new Error('Server mengirim JSON tidak valid.');
-    }
-  }
-
-  // 3) Non-JSON: kemungkinan halaman error dari proxy/CDN
-  if (!res.ok) {
-    const preview = text.replace(/\s+/g, ' ').slice(0, 200);
-    throw new Error(`HTTP ${res.status}${preview ? ` — ${preview}` : ''}`);
-  }
-
-  // 4) Fallback terakhir: coba parse, kalau gagal kembalikan raw
   try {
-    return JSON.parse(text);
+    return text ? JSON.parse(text) : {};
   } catch {
-    return { raw: text };
+    throw new Error('Server mengirim JSON tidak valid.');
   }
 }
 
@@ -59,8 +38,7 @@ async function http(path: string, opts: FetchOpts = {}) {
 
   const res = await fetch(joinUrl(path), {
     method,
-    // Default kirim cookie sesi lintas domain (Netlify -> Vercel)
-    credentials: (credentials ?? 'include') as RequestCredentials,
+    credentials,
     headers: {
       ...(isJson ? { 'Content-Type': 'application/json' } : {}),
       ...headers,
