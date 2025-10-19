@@ -79,7 +79,10 @@ export function MarketPie({ data, title = "Distribusi Pasar", height = 260 }: Pr
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }) => {
+                const p = typeof percent === 'number' ? percent : Number(percent ?? 0);
+                return `${name} ${(p * 100).toFixed(0)}%`;
+              }}
               outerRadius={90}
               dataKey="value"
               isAnimationActive={false}

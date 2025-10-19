@@ -1,6 +1,10 @@
 // src/types.ts
 export type Unit = 'kg' | 'liter' | string;
 
+// Role yang digunakan di aplikasi (sinkron dengan backend: 'admin' dan 'petugas';
+// tambahkan 'super_admin' untuk kompatibilitas mock AuthProvider)
+export type Role = 'admin' | 'petugas' | 'super_admin';
+
 export interface ReportRow {
   id: number;
   date: string;                 // 'YYYY-MM-DD'

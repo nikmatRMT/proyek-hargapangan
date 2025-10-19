@@ -1,6 +1,7 @@
 'use client'
 import * as React from 'react'
-export function TooltipProvider({ children }: { children: React.ReactNode }) {
+export function TooltipProvider({ children, ..._props }: { children: React.ReactNode; delayDuration?: number }) {
+  // delayDuration diabaikan di versi minimal ini
   return <>{children}</>
 }
 export function Tooltip({ children }: { children: React.ReactNode }) {
