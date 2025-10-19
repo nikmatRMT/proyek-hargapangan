@@ -107,8 +107,9 @@ async function handleMe(req) {
 
     // Optionally fetch fresh user data from database
     const usersCollection = await getCollection('users');
+    const { ObjectId } = await import('mongodb');
     const user = await usersCollection.findOne(
-      { _id: { $oid: userData.id } },
+      { _id: new ObjectId(userData.id) },
       { projection: { password: 0 } }
     );
 

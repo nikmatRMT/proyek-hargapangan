@@ -11,6 +11,7 @@
     { "source": "/auth/logout", "destination": "/api/auth" },
     { "source": "/api/auth/login", "destination": "/api/auth" },
     { "source": "/api/auth/me", "destination": "/api/auth" },
-    { "source": "/api/auth/logout", "destination": "/api/auth" }
+    { "source": "/api/auth/logout", "destination": "/api/auth" },
+    { "source": "/api/test", "destination": "/api/test" }
   ]
 }
