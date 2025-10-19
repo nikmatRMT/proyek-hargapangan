@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "buildCommand": "npm install",
   "rewrites": [
     { "source": "/auth/login", "destination": "/api/node/auth-login" },
     { "source": "/auth/me", "destination": "/api/node/auth-me" },
