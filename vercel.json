@@ -1,49 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "web-admin/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    },
-    {
-      "src": "harga-backend/src/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "harga-backend/**"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "^/api/.*",
-      "dest": "harga-backend/src/server.js"
-    },
-    {
-      "src": "^/auth/.*",
-      "dest": "harga-backend/src/server.js"
-    },
-    {
-      "src": "^/m/.*",
-      "dest": "harga-backend/src/server.js"
-    },
-    {
-      "src": "^/sse/.*",
-      "dest": "harga-backend/src/server.js"
-    },
-    {
-      "src": "^/uploads/.*",
-      "dest": "harga-backend/src/server.js"
-    },
-    {
-      "src": "^/health.*",
-      "dest": "harga-backend/src/server.js"
-    },
-    {
-      "src": "^/.*",
-      "dest": "web-admin/dist/index.html"
-    }
-  ]
+  "buildCommand": "cd web-admin && npm install && npm run build",
+  "outputDirectory": "web-admin/dist"
 }
