@@ -69,7 +69,14 @@ app.use(
 app.use('/m/users', mobileUsersRouter);
 
 /* ---------- Static uploads (foto/avatar) ---------- */
-app.use('/uploads', express.static(path.resolve('tmp/uploads')));
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? path.resolve('/tmp/uploads')
+  : path.resolve('tmp/uploads');
+try {
+  app.use('/uploads', express.static(uploadDir));
+} catch (err) {
+  console.warn('Static uploads directory not available:', err.message);
+}
 
 /* ---------- Health & routes list ---------- */
 app.get('/health', (_req, res) => res.json({ ok: true }));
