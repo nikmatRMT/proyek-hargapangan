@@ -12,41 +12,49 @@
 ### 1. Buka Vercel Dashboard
 👉 https://vercel.com/nikmatrmt/proyek-hargapangan/settings/environment-variables
 
-### 2. Pastikan Ada 6 Variables Ini:
+### 2. Pastikan Ada 3 Variables Ini (MINIMUM):
 
 | Variable Name | Value | Required |
 |---------------|-------|----------|
-| `MONGODB_DATA_API_URL` | `https://ap-southeast-1.aws.data.mongodb-api.com/app/data-xxxxx/endpoint/data/v1` | ✅ WAJIB |
-| `MONGODB_DATA_API_KEY` | `your-api-key-here` | ✅ WAJIB |
-| `MONGODB_DATA_SOURCE` | `Cluster0` | ✅ WAJIB |
+| `MONGODB_URI` | `mongodb+srv://username:password@cluster.mongodb.net/` | ✅ WAJIB |
 | `MONGODB_DB` | `harga_pasar_mongo` | ✅ WAJIB |
 | `ALLOWED_ORIGINS` | `https://proyek-hargapangan-admin.netlify.app,netlify.app` | ✅ WAJIB |
+
+**Optional (untuk fallback ke Data API jika native driver gagal):**
+| Variable Name | Value | Required |
+|---------------|-------|----------|
+| `MONGODB_DATA_API_URL` | `https://ap-southeast-1.aws.data.mongodb-api.com/app/...` | Optional |
+| `MONGODB_DATA_API_KEY` | `your-api-key-here` | Optional |
+| `MONGODB_DATA_SOURCE` | `Cluster0` | Optional |
 | `FRONTEND_URL` | `https://proyek-hargapangan-admin.netlify.app` | Optional |
 
-### 3. Cara Mendapatkan MongoDB Data API Credentials
+### 3. Cara Mendapatkan MONGODB_URI
 
 #### A. Buka MongoDB Atlas Dashboard
 👉 https://cloud.mongodb.com
 
-#### B. Klik Cluster → Data API
-1. Tab **Data API** di menu kiri
-2. **Enable Data API** jika belum aktif
-3. **Create API Key**:
-   - Name: `vercel-api-key`
-   - Click **Generate API Key**
-   - ⚠️ **COPY API KEY** (tidak bisa dilihat lagi!)
+#### B. Connect to Cluster
+1. Klik **Connect** pada cluster Anda
+2. Pilih **Drivers** (Node.js)
+3. Copy **Connection String**
 
-#### C. Get Data API URL
-Format: `https://{region}.aws.data.mongodb-api.com/app/{app-id}/endpoint/data/v1`
-
-Contoh:
+Format:
 ```
-https://ap-southeast-1.aws.data.mongodb-api.com/app/data-vuzikpv/endpoint/data/v1
+mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
 ```
 
-#### D. Data Source Name
-- Biasanya: `Cluster0`
-- Lihat di **Database** → cluster name
+#### C. Replace Credentials
+- Ganti `<username>` dengan MongoDB username
+- Ganti `<password>` dengan password
+- Pastikan tidak ada karakter `<` `>` yang tersisa
+
+#### D. Test Connection
+Di terminal:
+```bash
+mongosh "mongodb+srv://username:password@cluster.mongodb.net/"
+```
+
+Jika berhasil connect, berarti connection string benar!
 
 ---
 
@@ -79,13 +87,15 @@ https://ap-southeast-1.aws.data.mongodb-api.com/app/data-vuzikpv/endpoint/data/v
 
 ## 📋 Checklist
 
-- [ ] Buka MongoDB Atlas → Data API
-- [ ] Enable Data API
-- [ ] Create API Key
-- [ ] Copy API Key (simpan!)
-- [ ] Copy Data API URL
+- [ ] Buka MongoDB Atlas → Connect
+- [ ] Copy Connection String (mongodb+srv://...)
+- [ ] Replace username & password
 - [ ] Buka Vercel Settings → Environment Variables
-- [ ] Add 6 variables (lihat tabel di atas)
+- [ ] Add 3 variables minimum:
+  - [ ] MONGODB_URI (connection string)
+  - [ ] MONGODB_DB (harga_pasar_mongo)
+  - [ ] ALLOWED_ORIGINS (netlify.app)
+- [ ] Check: Production, Preview, Development
 - [ ] Save changes
 - [ ] Redeploy (Deployments tab)
 - [ ] Tunggu 2-3 menit
