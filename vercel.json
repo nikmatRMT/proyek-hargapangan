@@ -1,6 +1,9 @@
 {
   "version": 2,
   "rewrites": [
+    { "source": "/auth/login", "destination": "/api/node/auth-login" },
+    { "source": "/auth/me", "destination": "/api/node/auth-me" },
+    { "source": "/auth/logout", "destination": "/api/node/auth-logout" },
     { "source": "/api/node/(.*)", "destination": "/api/node/$1" },
     { "source": "/api/(.*)", "destination": "/api/php/index.php" }
   ]
