@@ -5,6 +5,7 @@
   "description": "Node helpers for Vercel to read MongoDB when PHP runtime lacks ext-mongodb.",
   "license": "UNLICENSED",
   "dependencies": {
+    "@mongodb-js/saslprep": "^1.1.5",
     "bcryptjs": "^2.4.3",
     "mongodb": "^6.20.0"
   }
