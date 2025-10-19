@@ -4,13 +4,20 @@
 - ✅ CORS headers ditambahkan ke semua `/auth/*` endpoints
 - ✅ Handle OPTIONS preflight request
 - ✅ Fallback CORS jika `ALLOWED_ORIGINS` tidak di-set
-- ✅ **NEW:** Add `@mongodb-js/saslprep` dependency untuk MongoDB auth
+- ✅ Add `@mongodb-js/saslprep` dependency untuk MongoDB auth
+- ✅ **NEW:** Konsolidasi serverless functions (7 functions, was 15+)
 
 ## 📦 Latest Commits:
 ```
+5fb8f2b - Fix: Reduce serverless functions count to fit Hobby plan limit
 598829c - Fix: Add @mongodb-js/saslprep dependency for MongoDB authentication
 fe7029e - Fix: Add CORS headers to auth endpoints and remove debug files
 ```
+
+## 🏗️ Architecture:
+- **PHP Endpoints** (1 function): `/api/*` → handles markets, commodities, prices
+- **Node.js Auth** (6 functions): `/auth/*` → handles login, logout, me
+- **Total: 7 functions** (well under Hobby plan limit of 12)
 
 ## ⏳ Tunggu Deployment Vercel (~2 menit)
 
