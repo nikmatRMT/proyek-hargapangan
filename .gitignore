@@ -16,6 +16,10 @@ tmp/uploads/
 # local secrets folder
 secrets/
 
+# Documentation with sensitive data
+API-AUTH-DOCS.md
+ENVIRONMENT-SETUP.md
+
 # logs
 npm-debug.log*
 yarn-debug.log*

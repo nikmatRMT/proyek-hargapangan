@@ -1,0 +1,221 @@
+````markdown
+# Environment Variables Setup
+
+⚠️ **SECURITY WARNING:** File ini adalah template. Jangan commit nilai asli credentials!
+
+## Vercel Environment Variables
+
+Buka **Vercel Dashboard** → **Your Project** → **Settings** → **Environment Variables**
+
+Tambahkan variable berikut:
+
+### 1. MongoDB URI (untuk Node.js endpoints)
+```
+Name: MONGODB_URI
+Value: mongodb+srv://<USERNAME>:<PASSWORD>@<CLUSTER>.mongodb.net/?retryWrites=true&w=majority
+Environment: Production, Preview, Development
+```
+📝 Dapatkan dari MongoDB Atlas → Database → Connect → Connect your application
+
+### 2. MongoDB Database Name
+```
+Name: MONGODB_DB
+Value: <your_database_name>
+Environment: Production, Preview, Development
+```
+
+### 3. MongoDB Data API URL (untuk PHP endpoints - fallback)
+```
+Name: MONGODB_DATA_API_URL
+Value: https://data.mongodb-api.com/app/<YOUR_APP_ID>/endpoint/data/v1
+Environment: Production, Preview, Development
+```
+📝 Dapatkan dari MongoDB Atlas → App Services → Data API
+
+### 4. MongoDB Data API Key
+```
+Name: MONGODB_DATA_API_KEY
+Value: <YOUR_API_KEY>
+Environment: Production, Preview, Development
+```
+📝 Generate di MongoDB Atlas → App Services → API Keys
+
+### 5. MongoDB Data Source
+```
+Name: MONGODB_DATA_SOURCE
+Value: <your_cluster_name>
+Environment: Production, Preview, Development
+```
+
+### 6. Allowed Origins (untuk CORS)
+```
+Name: ALLOWED_ORIGINS
+Value: https://your-frontend.netlify.app,http://localhost:5173,http://localhost:3000
+Environment: Production, Preview, Development
+```
+⚠️ **PENTING:** Ganti dengan domain frontend Anda yang sebenarnya
+
+### 7. Frontend URL
+```
+Name: FRONTEND_URL
+Value: https://your-frontend.netlify.app
+Environment: Production, Preview, Development
+```
+
+---
+
+## Netlify Environment Variables (untuk web-admin)
+
+Buka **Netlify Dashboard** → **Your Site** → **Site settings** → **Environment variables**
+
+Tambahkan variable berikut:
+
+### 1. API Base URL
+```
+Key: VITE_API_URL
+Value: https://your-backend.vercel.app
+Scopes: All scopes
+```
+⚠️ **PENTING:** Ganti dengan URL Vercel backend Anda
+
+### 2. (Optional) SSE Toggle
+```
+Key: VITE_USE_SSE
+Value: false
+Scopes: All scopes
+```
+
+---
+
+## Cara Set di Vercel (Step by Step)
+
+1. Login ke https://vercel.com
+2. Pilih project Anda
+3. Klik tab **Settings**
+4. Pilih **Environment Variables** di sidebar
+5. Klik **Add New**
+6. Masukkan:
+   - **Name**: nama variable (contoh: `MONGODB_URI`)
+   - **Value**: nilai variable (ganti dengan nilai asli Anda)
+   - **Environment**: pilih semua (Production, Preview, Development)
+7. Klik **Save**
+8. Ulangi untuk semua variable di atas
+
+**PENTING:** Setelah menambahkan environment variables, Anda perlu **Redeploy** project:
+- Go to **Deployments** tab
+- Klik menu (3 dots) pada deployment terakhir
+- Pilih **Redeploy**
+
+---
+
+## Cara Set di Netlify (Step by Step)
+
+1. Login ke https://app.netlify.com
+2. Pilih site Anda
+3. Klik **Site settings**
+4. Pilih **Environment variables** di sidebar
+5. Klik **Add a variable**
+6. Masukkan:
+   - **Key**: `VITE_API_URL`
+   - **Value**: `https://your-backend.vercel.app` (ganti dengan URL Anda)
+   - **Scopes**: pilih semua
+7. Klik **Create variable**
+
+**PENTING:** Setelah menambahkan variables, trigger rebuild:
+- Go to **Deploys** tab
+- Klik **Trigger deploy** → **Clear cache and deploy site**
+
+---
+
+## Cara Mendapatkan MongoDB Credentials
+
+### MongoDB URI:
+1. Login ke https://cloud.mongodb.com
+2. Pilih cluster Anda
+3. Klik **Connect** → **Connect your application**
+4. Pilih **Driver: Node.js**
+5. Copy connection string
+6. Ganti `<password>` dengan password database user Anda
+
+### Data API URL & Key:
+1. Di MongoDB Atlas, pilih **App Services** (tab kiri)
+2. Buat app baru atau pilih existing app
+3. Pilih **Data API** (tab kiri)
+4. Enable Data API
+5. Copy **URL Endpoint**
+6. Buat **API Key** di tab **Authentication**
+
+---
+
+## Verifikasi
+
+Setelah set environment variables dan redeploy:
+
+### Test Vercel Backend:
+```bash
+curl https://your-backend.vercel.app/api/markets
+curl https://your-backend.vercel.app/api/commodities
+curl https://your-backend.vercel.app/api/prices
+```
+
+### Test Netlify Frontend:
+Buka browser: `https://your-frontend.netlify.app`
+
+---
+
+## Troubleshooting
+
+### Jika masih error 500:
+1. Pastikan semua env variables sudah terisi dengan benar
+2. Redeploy di Vercel
+3. Tunggu 1-2 menit untuk deployment selesai
+4. Check logs di Vercel Dashboard → **Deployments** → klik deployment → **View Function Logs**
+
+### Jika login endpoint masih error:
+- Check apakah `MONGODB_URI` sudah benar (test koneksi di MongoDB Compass)
+- Pastikan bcryptjs sudah terinstall (cek `package.json`)
+- Lihat function logs untuk error detail
+
+### Jika CORS error:
+- Pastikan `ALLOWED_ORIGINS` sudah diisi dengan domain frontend Anda
+- Redeploy backend setelah set ALLOWED_ORIGINS
+- Clear browser cache dan reload frontend
+
+---
+
+## Template Environment Variables
+
+### Vercel (.env untuk local development):
+```bash
+# Copy ke file .env di root project (untuk local testing)
+MONGODB_URI=mongodb+srv://<USERNAME>:<PASSWORD>@<CLUSTER>.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB=<database_name>
+MONGODB_DATA_API_URL=https://data.mongodb-api.com/app/<APP_ID>/endpoint/data/v1
+MONGODB_DATA_API_KEY=<YOUR_API_KEY>
+MONGODB_DATA_SOURCE=<cluster_name>
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+FRONTEND_URL=http://localhost:5173
+```
+
+### Netlify (.env untuk local development web-admin):
+```bash
+# Copy ke file web-admin/.env
+VITE_API_URL=http://localhost:4000
+VITE_USE_SSE=false
+```
+
+---
+
+## Security Checklist
+
+- [ ] ✅ Jangan commit file `.env` dengan nilai asli
+- [ ] ✅ Gunakan `.env.example` untuk template
+- [ ] ✅ Set environment variables di dashboard Vercel/Netlify, bukan di code
+- [ ] ✅ Rotate API keys secara berkala (minimal 6 bulan sekali)
+- [ ] ✅ Gunakan password strong untuk MongoDB user
+- [ ] ✅ Whitelist IP address di MongoDB Atlas (jika perlu)
+- [ ] ✅ Set CORS allowed origins, jangan gunakan `*` di production
+- [ ] ✅ Enable MongoDB audit logs
+- [ ] ✅ Review logs secara berkala untuk aktivitas mencurigakan
+
+````
