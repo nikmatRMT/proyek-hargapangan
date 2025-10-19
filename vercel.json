@@ -1,17 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "npm run build --prefix web-admin",
+  "public": false,
+  "buildCommand": "cd web-admin && npm install && npm run build",
   "outputDirectory": "web-admin/dist",
-  "env": {
-    "NODE_ENV": "production"
-  },
+  "installCommand": "npm --prefix harga-backend install",
   "builds": [
     {
       "src": "harga-backend/src/server.js",
       "use": "@vercel/node",
       "config": {
-        "zeroConfig": true,
-        "maxDuration": 60
+        "maxDuration": 60,
+        "zeroConfig": true
       }
     }
   ],
@@ -37,12 +36,13 @@
       "dest": "harga-backend/src/server.js"
     },
     {
-      "src": "/health",
+      "src": "/health.*",
       "dest": "harga-backend/src/server.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "web-admin/dist/$1"
+      "src": "/.*",
+      "status": 200,
+      "dest": "web-admin/dist/index.html"
     }
   ]
 }
