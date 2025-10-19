@@ -26,9 +26,13 @@ export default async function handler(req, res) {
   if (allowedOrigins.length > 0) {
     const matched = allowedOrigins.find(o => origin.includes(o.replace(/^https?:\/\//, '')));
     if (matched || allowedOrigins.includes('*')) {
-      res.setHeader('Access-Control-Allow-Origin', origin || '*');
+      res.setHeader('Access-Control-Allow-Origin', origin || matched || '*');
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
+  } else {
+    // Fallback: allow origin from request
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
