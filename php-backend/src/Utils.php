@@ -66,12 +66,44 @@ class Utils
 
     public static function cors(): void
     {
-        $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-        header('Access-Control-Allow-Origin: ' . $origin);
-        header('Vary: Origin');
-        header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-        header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+        // Ambil daftar origin yang diizinkan dari environment variable
+        $allowedOriginsEnv = getenv('ALLOWED_ORIGINS') ?: '';
+        $allowedOrigins = array_filter(
+            array_map('trim', explode(',', $allowedOriginsEnv)),
+            fn($o) => !empty($o)
+        );
+        
+        // Fallback: izinkan semua origin jika ALLOWED_ORIGINS tidak diset
+        if (empty($allowedOrigins)) {
+            $allowedOrigins = ['*'];
+        }
+        
+        $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        
+        // Cek apakah request origin ada di whitelist
+        $allowed = false;
+        if (in_array('*', $allowedOrigins, true)) {
+            $allowed = true;
+            $originToSend = $requestOrigin ?: '*';
+        } else {
+            foreach ($allowedOrigins as $allowedOrigin) {
+                if ($requestOrigin === $allowedOrigin || 
+                    str_contains($requestOrigin, str_replace(['https://', 'http://'], '', $allowedOrigin))) {
+                    $allowed = true;
+                    $originToSend = $requestOrigin;
+                    break;
+                }
+            }
+        }
+        
+        if ($allowed) {
+            header('Access-Control-Allow-Origin: ' . $originToSend);
+            header('Vary: Origin');
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+            header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+        }
+        
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(204);
             exit;
