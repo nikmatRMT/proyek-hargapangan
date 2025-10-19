@@ -1,5 +1,5 @@
 // api/node/auth-me.js
-// Alias untuk /auth/me → redirect ke /api/node/me
+import { MongoClient } from 'mongodb';
 
 function setCorsHeaders(req, res) {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -12,7 +12,6 @@ function setCorsHeaders(req, res) {
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
   } else {
-    // Fallback: allow origin from request
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
@@ -21,16 +20,65 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
+let cachedClient = null;
+
+async function connectMongo() {
+  if (cachedClient) return cachedClient;
+  
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  cachedClient = client;
+  return client;
+}
+
 export default async function handler(req, res) {
-  // Set CORS headers first
   setCorsHeaders(req, res);
   
-  // Handle OPTIONS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
   
-  // Forward request ke endpoint me yang sebenarnya
-  const meModule = await import('./me.js');
-  return meModule.default(req, res);
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const client = await connectMongo();
+    const db = client.db(process.env.MONGODB_DB);
+    const session = await db.collection('sessions').findOne({ _id: token });
+
+    if (!session) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Check expiration
+    if (new Date() > new Date(session.expiresAt)) {
+      await db.collection('sessions').deleteOne({ _id: token });
+      return res.status(401).json({ error: 'Token expired' });
+    }
+
+    // Return user info
+    return res.status(200).json({
+      user: {
+        id: session.userId,
+        username: session.username,
+        role: session.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Auth check error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
+  }
 }
