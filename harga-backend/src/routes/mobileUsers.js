@@ -8,8 +8,10 @@ import requireMobileAuth from '../middleware/requireMobileAuth.js';
 
 const router = Router();
 
-// simpan di tmp/uploads/avatar
-const AVATAR_DIR = path.resolve('tmp/uploads/avatar');
+// Use /tmp in serverless, tmp/ locally
+const AVATAR_DIR = process.env.NODE_ENV === 'production' 
+  ? path.resolve('/tmp/uploads/avatar')
+  : path.resolve('tmp/uploads/avatar');
 
 // Ensure directory exists (with error handling for serverless environments)
 try {

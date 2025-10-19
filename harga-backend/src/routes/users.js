@@ -17,7 +17,9 @@ async function countActiveAdmins() {
 /* =========================
    Konfigurasi Upload Avatar
    ========================= */
-const AVATAR_ROOT = path.resolve('tmp/uploads');
+const AVATAR_ROOT = process.env.NODE_ENV === 'production'
+  ? path.resolve('/tmp/uploads')
+  : path.resolve('tmp/uploads');
 const AVATAR_DIR  = path.resolve(AVATAR_ROOT, 'avatar');
 
 // Ensure directory exists (with error handling for serverless environments)
