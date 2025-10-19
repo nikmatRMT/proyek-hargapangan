@@ -20,7 +20,8 @@ export function SheetContent({
   side = 'left',
   children,
   ...props
-}: (React.HTMLAttributes<HTMLDivElement> & { side?: 'left' | 'right' })) {
+}: React.HTMLAttributes<HTMLDivElement> & { side?: 'left' | 'right' }) {
+  const { style, ...otherProps } = props;
   return (
     <div
       className={cn(
@@ -28,7 +29,8 @@ export function SheetContent({
         side === 'left' ? 'left-0' : 'right-0',
         className
       )}
-      {...props}
+      style={style}
+      {...otherProps}
     >
       {children}
     </div>
