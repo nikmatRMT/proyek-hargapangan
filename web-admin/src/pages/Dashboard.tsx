@@ -1,6 +1,6 @@
 // src/pages/Dashboard.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { FileSpreadsheet, Printer, Share2 } from "lucide-react";
+import { FileSpreadsheet, Trash2 } from "lucide-react";
 
 import {
   getMarkets,
@@ -477,13 +477,18 @@ export default function Dashboard() {
             </button>
 
             <button
-              className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg text-sm"
-              title="Cetak"
+              onClick={() => {
+                const confirm = window.confirm(
+                  '⚠️ PERHATIAN!\n\nFitur Delete Data akan menghapus data permanen dari database.\n\nUntuk mengelola data, gunakan MongoDB Atlas Dashboard.\n\nLanjutkan ke MongoDB Atlas?'
+                );
+                if (confirm) {
+                  window.open('https://cloud.mongodb.com', '_blank');
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+              title="Delete data bulanan"
             >
-              <Printer className="w-4 h-4" /> Cetak
-            </button>
-            <button className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm" title="Bagikan">
-              <Share2 className="w-4 h-4 text-gray-500" /> Bagikan
+              <Trash2 className="w-4 h-4" /> Delete
             </button>
           </div>
         </div>
