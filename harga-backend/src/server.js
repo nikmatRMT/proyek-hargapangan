@@ -54,21 +54,27 @@ console.log('[CORS] Allowed origins:', allowedOrigins);
 app.use(
   cors({
     origin: (origin, callback) => {
+      // TEMPORARY DEBUG: Log to stderr which Vercel DOES capture
+      console.error('[CORS DEBUG] origin=', origin, 'allowedOrigins=', JSON.stringify(allowedOrigins));
+      
       // Allow requests with no origin (same-origin, mobile apps, Postman, etc.)
       if (!origin) {
-        console.log('[CORS] No origin header - allowing (same-origin or direct)');
+        console.error('[CORS DEBUG] No origin - ALLOWED');
         return callback(null, true);
       }
       
-      console.log('[CORS] Checking origin:', origin, '| Allowed:', allowedOrigins.includes(origin));
+      // TEMPORARY: Allow all origins to test if CORS is the only issue
+      console.error('[CORS DEBUG] Temporarily allowing all origins');
+      callback(null, true);
       
-      if (allowedOrigins.includes(origin)) {
-        console.log('[CORS] ✅ Allowed origin:', origin);
-        callback(null, true);
-      } else {
-        console.warn('[CORS] ❌ Blocked origin:', origin);
-        callback(new Error('Not allowed by CORS'));
-      }
+      // Original logic (commented out for debugging):
+      // if (allowedOrigins.includes(origin)) {
+      //   console.log('[CORS] ✅ Allowed origin:', origin);
+      //   callback(null, true);
+      // } else {
+      //   console.warn('[CORS] ❌ Blocked origin:', origin);
+      //   callback(new Error('Not allowed by CORS'));
+      // }
     },
     credentials: true,
     optionsSuccessStatus: 200, // For legacy browsers
