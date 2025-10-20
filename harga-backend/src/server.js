@@ -54,30 +54,25 @@ console.log('[CORS] Allowed origins:', allowedOrigins);
 app.use(
   cors({
     origin: (origin, callback) => {
-      // TEMPORARY DEBUG: Log to stderr which Vercel DOES capture
-      console.error('[CORS DEBUG] origin=', origin, 'allowedOrigins=', JSON.stringify(allowedOrigins));
-      
-      // Allow requests with no origin (same-origin, mobile apps, Postman, etc.)
+      // Allow requests with no origin (same-origin in Vercel, mobile apps, Postman)
+      // In Vercel, frontend and backend are on same domain, so origin is undefined
       if (!origin) {
-        console.error('[CORS DEBUG] No origin - ALLOWED');
+        console.error('[CORS] No origin header - allowing (same-origin)');
         return callback(null, true);
       }
       
-      // TEMPORARY: Allow all origins to test if CORS is the only issue
-      console.error('[CORS DEBUG] Temporarily allowing all origins');
-      callback(null, true);
+      console.error('[CORS] Checking origin:', origin);
       
-      // Original logic (commented out for debugging):
-      // if (allowedOrigins.includes(origin)) {
-      //   console.log('[CORS] ✅ Allowed origin:', origin);
-      //   callback(null, true);
-      // } else {
-      //   console.warn('[CORS] ❌ Blocked origin:', origin);
-      //   callback(new Error('Not allowed by CORS'));
-      // }
+      if (allowedOrigins.includes(origin)) {
+        console.error('[CORS] ✅ Allowed origin:', origin);
+        callback(null, true);
+      } else {
+        console.error('[CORS] ❌ Blocked origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
     },
     credentials: true,
-    optionsSuccessStatus: 200, // For legacy browsers
+    optionsSuccessStatus: 200,
   })
 );
 
@@ -116,10 +111,11 @@ app.use(
     store: sessionStore,
     cookie: {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: isProduction, // true only on HTTPS (production/Vercel)
+      sameSite: 'lax', // 'lax' allows cookies on same-site navigation
+      secure: isProduction, // true on HTTPS (Vercel)
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
+      domain: isProduction ? '.vercel.app' : undefined, // Share cookie across Vercel subdomains
     },
   })
 );
