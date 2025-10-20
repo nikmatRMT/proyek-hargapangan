@@ -299,7 +299,24 @@ router.delete('/:id', async (req, res) => {
 });
 
 /* ========== UPLOAD AVATAR: akun yang sedang login ========== */
-/** FormData field: "avatar" */
+/** FormData field: "avatar" | "file" | "photo" | "image" */
+// Helper middleware untuk mengambil file dari berbagai field name
+const getUploadedFile = (req, res, next) => {
+  const acceptedFields = ['avatar', 'file', 'photo', 'image'];
+  upload.any()(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    
+    // Cari file dari field yang diterima
+    if (req.files && req.files.length > 0) {
+      const uploadedFile = req.files.find(f => acceptedFields.includes(f.fieldname));
+      if (uploadedFile) {
+        req.file = uploadedFile; // Simpan di req.file seperti upload.single()
+      }
+    }
+    next();
+  });
+};
+
 router.post(
   '/me/avatar',
   (req, res, next) => {
@@ -307,7 +324,7 @@ router.post(
     if (!actor) return res.status(401).json({ message: 'Unauthorized' });
     next();
   },
-  upload.single('avatar'),
+  getUploadedFile,
   async (req, res) => {
     try {
       const actor = req.session.user;
@@ -348,8 +365,56 @@ router.post(
   }
 );
 
+// Alias untuk /me/avatar (frontend sering coba endpoint ini juga)
+router.post('/me/photo', 
+  (req, res, next) => {
+    const actor = req.session?.user;
+    if (!actor) return res.status(401).json({ message: 'Unauthorized' });
+    next();
+  },
+  getUploadedFile,
+  async (req, res) => {
+    try {
+      const actor = req.session.user;
+      if (!req.file) return res.status(400).json({ message: 'File avatar wajib' });
+
+      const { users } = collections();
+      const current = await users.findOne({ id: actor.id }, { projection: { foto: 1 } });
+      const oldFotoUrl = current?.foto || null;
+
+      // Generate filename dengan user ID dan timestamp
+      const ext = req.file.mimetype === 'image/png' ? '.png' : 
+                  req.file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+      const filename = `avatars/user-${actor.id}-${Date.now()}${ext}`;
+
+      // Upload ke Vercel Blob
+      const blob = await uploadToBlob(req.file.buffer, filename, {
+        contentType: req.file.mimetype,
+      });
+
+      // Update database dengan URL dari Vercel Blob
+      await users.updateOne(
+        { id: actor.id }, 
+        { $set: { foto: blob.url, updated_at: new Date() } }
+      );
+
+      // Hapus foto lama dari Vercel Blob (jika ada)
+      if (oldFotoUrl) {
+        await deleteFromBlob(oldFotoUrl);
+      }
+
+      const user = await users.findOne({ id: actor.id }, { projection: { _id: 0 } });
+
+      return res.json({ ok: true, user, foto: user.foto });
+    } catch (e) {
+      console.error('POST /api/users/me/photo', e);
+      res.status(500).json({ message: 'Gagal mengunggah avatar' });
+    }
+  }
+);
+
 /* ========== UPLOAD AVATAR: admin ganti foto user lain (opsional) ========== */
-/** FormData field: "avatar" */
+/** FormData field: "avatar" | "file" | "photo" | "image" */
 router.post(
   '/:id/photo',
   (req, res, next) => {
@@ -358,7 +423,7 @@ router.post(
     if (actor.role !== 'admin') return res.status(403).json({ message: 'Hanya admin' });
     next();
   },
-  upload.single('avatar'),
+  getUploadedFile,
   async (req, res) => {
     try {
       const targetId = Number(req.params.id);
