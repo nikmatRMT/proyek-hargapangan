@@ -40,9 +40,28 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS - Support multiple domains
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://proyek-hargapangan.vercel.app',
+  'https://harpa-banua.vercel.app',
+  process.env.FRONTEND_ORIGIN, // Allow custom env var
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn('[CORS] Blocked origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
@@ -129,13 +148,14 @@ app.get('/__routes', (_req, res) => {
 /* ---------- SSE: harga live ---------- */
 app.get('/sse/prices', (req, res) => {
   const origin = req.headers.origin;
-  const allow = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  if (origin === allow) {
-    res.setHeader('Access-Control-Allow-Origin', allow);
+  
+  // Allow all origins in allowedOrigins list
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
 
