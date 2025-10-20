@@ -107,7 +107,8 @@ router.post('/', async (req, res) => {
 
     // Normalize input - trim whitespace and lowercase username
     const username = usernameRaw ? String(usernameRaw).trim().toLowerCase() : null;
-    const nip = nipRaw ? String(nipRaw).trim() : null;
+    // NIP opsional - jika kosong atau whitespace saja, set null
+    const nip = (nipRaw && String(nipRaw).trim()) ? String(nipRaw).trim() : null;
 
     console.log('[CREATE USER] Request body:', { 
       nama_lengkap, 
@@ -218,7 +219,17 @@ router.patch('/:id', async (req, res) => {
 
     const patch = {};
     const allow = ['nama_lengkap', 'phone', 'alamat', 'is_active', 'nip', 'foto'];
-    for (const k of allow) if (k in req.body) patch[k] = req.body[k];
+    for (const k of allow) {
+      if (k in req.body) {
+        // Normalize: empty string or whitespace only → null
+        if (k === 'nip' || k === 'phone' || k === 'alamat') {
+          const val = req.body[k];
+          patch[k] = (val && String(val).trim()) ? String(val).trim() : null;
+        } else {
+          patch[k] = req.body[k];
+        }
+      }
+    }
 
     if ('role' in req.body) {
       if (actor.role !== 'admin') return res.status(403).json({ message: 'Hanya admin yang boleh mengubah role' });
@@ -231,7 +242,7 @@ router.patch('/:id', async (req, res) => {
       if (n <= 1) return res.status(400).json({ message: 'Tidak boleh menonaktifkan/menurunkan admin terakhir' });
     }
 
-    // Jika mengubah NIP → cek unik
+    // Jika mengubah NIP → cek unik (hanya jika tidak null)
     if ('nip' in patch && patch.nip) {
       const dup = await users.findOne({ nip: patch.nip, id: { $ne: id } });
       if (dup) return res.status(409).json({ message: 'NIP sudah digunakan' });

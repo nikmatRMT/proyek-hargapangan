@@ -80,14 +80,17 @@ export const usersService = {
     role?: Role;               // default petugas
     password?: string;         // optional
   }): Promise<UserRow> {
+    // Normalize: empty string → null
+    const normalizeOptional = (val: any) => (val && String(val).trim()) ? String(val).trim() : null;
+    
     const body = await http(`/api/users`, {
       method: 'POST',
       body: JSON.stringify({
         username: payload.username,
         nama_lengkap: payload.name,
-        nip: payload.nip ?? null,
-        phone: payload.phone ?? null,
-        alamat: payload.alamat ?? null,
+        nip: normalizeOptional(payload.nip),
+        phone: normalizeOptional(payload.phone),
+        alamat: normalizeOptional(payload.alamat),
         role: payload.role ?? 'petugas',
         password: payload.password,
         is_active: 1,
@@ -107,9 +110,18 @@ export const usersService = {
       nip: string | null;
     }>
   ): Promise<UserRow> {
+    // Normalize: empty string → null
+    const normalizeOptional = (val: any) => (val && String(val).trim()) ? String(val).trim() : null;
+    
     const p: any = { ...patch };
     if ('name' in p) { p.nama_lengkap = p.name; delete p.name; }
     if ('is_active' in p) p.is_active = Number(p.is_active ? 1 : 0);
+    
+    // Normalize optional fields
+    if ('nip' in p) p.nip = normalizeOptional(p.nip);
+    if ('phone' in p) p.phone = normalizeOptional(p.phone);
+    if ('alamat' in p) p.alamat = normalizeOptional(p.alamat);
+    
     const body = await http(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(p) });
     return toFrontRow(body?.data ?? body);
   },
