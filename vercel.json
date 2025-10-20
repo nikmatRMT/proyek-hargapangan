@@ -45,6 +45,10 @@
       "handle": "filesystem"
     },
     {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt))",
+      "dest": "/web-admin/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/web-admin/index.html"
     }
