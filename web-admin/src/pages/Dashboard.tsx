@@ -21,6 +21,7 @@ import ReportsTable from "../components/ReportsTable";
 import { SORT_OPTIONS, sortReports } from "../constants/sort";
 import type { SortKey } from "../constants/sort";
 import ImportExcel from "../components/ImportExcel";
+import { StorageWarning } from "../components/StorageWarning";
 
 /* =========================
    Helper lokal untuk EXPORT
@@ -380,6 +381,11 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* Storage Warning Banner */}
+      <div className="px-8 pt-4">
+        <StorageWarning />
+      </div>
 
       {/* Filter + Aksi */}
       <section className="bg-white border-b border-gray-200 px-8 py-4">

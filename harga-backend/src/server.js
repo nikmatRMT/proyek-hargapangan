@@ -27,6 +27,8 @@ import mobileUsersRouter from './routes/mobileUsers.js';
 // (opsional) API Mobile
 import mobileAuthRouter from './routes/mobileAuth.js';
 import mobileReportsRouter from './routes/mobileReports.js';
+// Stats & Monitoring
+import statsRouter from './routes/stats.js';
 
 const app = express();
 
@@ -160,6 +162,9 @@ app.get('/sse/prices', (req, res) => {
 /* ---------- Mobile API (opsional) ---------- */
 app.use('/m/auth', mobileAuthRouter);
 app.use('/m/reports', mobileReportsRouter);
+
+/* ---------- Stats & Monitoring ---------- */
+app.use('/api/stats', requireAuth, statsRouter);
 
 /* ---------- WEB (admin) ---------- */
 app.use('/auth', authRouter);

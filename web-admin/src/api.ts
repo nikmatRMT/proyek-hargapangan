@@ -54,6 +54,25 @@ async function http(path: string, opts: FetchOpts = {}) {
 }
 
 // =====================
+// Generic HTTP methods
+// =====================
+export function get(path: string) {
+  return http(path, { credentials: 'include' });
+}
+
+export function post(path: string, body?: any) {
+  return http(path, { method: 'POST', body, credentials: 'include' });
+}
+
+export function put(path: string, body?: any) {
+  return http(path, { method: 'PUT', body, credentials: 'include' });
+}
+
+export function del(path: string) {
+  return http(path, { method: 'DELETE', credentials: 'include' });
+}
+
+// =====================
 // Tipe ringan untuk dashboard
 // =====================
 export type Market = { id: number; nama?: string; name?: string; nama_pasar?: string };

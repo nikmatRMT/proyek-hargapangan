@@ -16,7 +16,7 @@ import {
   SidebarFooter,
   SidebarInset,
 } from './sidebar';
-import { BarChart3, Users, Settings, Home, User as UserIcon, LogOut } from 'lucide-react';
+import { BarChart3, Users, Settings, Home, User as UserIcon, LogOut, Database } from 'lucide-react';
 import { API_BASE, logoutWeb } from '@/api';
 import { withMeAvatar } from '@/lib/avatar';
 
@@ -32,6 +32,7 @@ type MenuItem = {
 const MENU: MenuItem[] = [
   { title: 'Dashboard', url: '/', icon: Home },
   { title: 'Kelola Petugas', url: '/users', icon: Users, requiredRole: ['admin', 'super_admin'] },
+  { title: 'Backup & Storage', url: '/backup', icon: Database, requiredRole: ['admin', 'super_admin'] },
   { title: 'Profil Saya', url: '/profile', icon: UserIcon },
   { title: 'Pengaturan', url: '/settings', icon: Settings, requiredRole: ['super_admin'] },
 ];

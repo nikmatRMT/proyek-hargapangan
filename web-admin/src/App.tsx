@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
+import Backup from "./pages/Backup";
 import Login from "./pages/Login";
 import { AppShell } from "./components/layout/AppShell";
 import { bumpMe } from "./lib/avatar"; // ⬅️ tambah
@@ -76,6 +77,7 @@ const App = () => {
       {path === "/" && <Dashboard />}
       {path === "/users" && <Users />}
       {path === "/profile" && <Profile />}
+      {path === "/backup" && <Backup />}
     </AppShell>
   );
 };
