@@ -2,9 +2,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { collections, getNextSeq } from '../tools/db.js';
+import { uploadToBlob, deleteFromBlob } from '../lib/blob.js';
 
 const router = Router();
 const normRole = (r) => (String(r || '').toLowerCase() === 'admin' ? 'admin' : 'petugas');
@@ -15,37 +14,10 @@ async function countActiveAdmins() {
 }
 
 /* =========================
-   Konfigurasi Upload Avatar
+   Konfigurasi Upload Avatar - VERCEL BLOB
    ========================= */
-const AVATAR_ROOT = process.env.NODE_ENV === 'production'
-  ? path.resolve('/tmp/uploads')
-  : path.resolve('tmp/uploads');
-const AVATAR_DIR  = path.resolve(AVATAR_ROOT, 'avatar');
-
-// Ensure directory exists (with error handling for serverless environments)
-try {
-  fs.mkdirSync(AVATAR_DIR, { recursive: true });
-} catch (err) {
-  console.warn('Warning: Could not create avatar directory:', err.message);
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    try {
-      fs.mkdirSync(AVATAR_DIR, { recursive: true });
-      cb(null, AVATAR_DIR);
-    } catch (err) {
-      cb(new Error('Gagal membuat folder upload: ' + err.message));
-    }
-  },
-  filename: (req, file, cb) => {
-    const uid = req?.session?.user?.id || 'me';
-    const ext =
-      file.mimetype === 'image/png'  ? '.png'  :
-      file.mimetype === 'image/webp' ? '.webp' : '.jpg';
-    cb(null, `u${uid}-${Date.now()}${ext}`);
-  },
-});
+// Gunakan memoryStorage agar file disimpan di buffer (tidak ke disk)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -57,15 +29,6 @@ const upload = multer({
     cb(null, true);
   },
 });
-
-function tryUnlinkOld(foto) {
-  try {
-    if (foto && typeof foto === 'string' && foto.startsWith('/uploads/avatar/')) {
-      const disk = path.resolve(AVATAR_ROOT, foto.replace('/uploads/', ''));
-      if (fs.existsSync(disk)) fs.unlinkSync(disk);
-    }
-  } catch {}
-}
 
 /* ========== LIST ========== */
 router.get('/', async (req, res) => {
@@ -350,16 +313,30 @@ router.post(
       const actor = req.session.user;
       if (!req.file) return res.status(400).json({ message: 'File avatar wajib' });
 
-      // foto lama
-  const { users } = collections();
-  const current = await users.findOne({ id: actor.id }, { projection: { foto: 1 } });
-  const oldFoto = current?.foto || null;
+      const { users } = collections();
+      const current = await users.findOne({ id: actor.id }, { projection: { foto: 1 } });
+      const oldFotoUrl = current?.foto || null;
 
-      const publicUrl = '/uploads/avatar/' + req.file.filename;
+      // Generate filename dengan user ID dan timestamp
+      const ext = req.file.mimetype === 'image/png' ? '.png' : 
+                  req.file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+      const filename = `avatars/user-${actor.id}-${Date.now()}${ext}`;
 
-  await users.updateOne({ id: actor.id }, { $set: { foto: publicUrl, updated_at: new Date() } });
+      // Upload ke Vercel Blob
+      const blob = await uploadToBlob(req.file.buffer, filename, {
+        contentType: req.file.mimetype,
+      });
 
-      tryUnlinkOld(oldFoto);
+      // Update database dengan URL dari Vercel Blob
+      await users.updateOne(
+        { id: actor.id }, 
+        { $set: { foto: blob.url, updated_at: new Date() } }
+      );
+
+      // Hapus foto lama dari Vercel Blob (jika ada)
+      if (oldFotoUrl) {
+        await deleteFromBlob(oldFotoUrl);
+      }
 
       const user = await users.findOne({ id: actor.id }, { projection: { _id: 0 } });
 
@@ -388,15 +365,32 @@ router.post(
       if (!Number.isFinite(targetId)) return res.status(400).json({ message: 'ID tidak valid' });
       if (!req.file) return res.status(400).json({ message: 'File avatar wajib' });
 
-  const { users } = collections();
-  const current = await users.findOne({ id: targetId }, { projection: { foto: 1 } });
-  if (!current) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
+      const { users } = collections();
+      const current = await users.findOne({ id: targetId }, { projection: { foto: 1 } });
+      if (!current) return res.status(404).json({ message: 'Pengguna tidak ditemukan' });
 
-      const publicUrl = '/uploads/avatar/' + req.file.filename;
+      const oldFotoUrl = current?.foto || null;
 
-  await users.updateOne({ id: targetId }, { $set: { foto: publicUrl, updated_at: new Date() } });
+      // Generate filename dengan target user ID dan timestamp
+      const ext = req.file.mimetype === 'image/png' ? '.png' : 
+                  req.file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+      const filename = `avatars/user-${targetId}-${Date.now()}${ext}`;
 
-      tryUnlinkOld(current.foto || null);
+      // Upload ke Vercel Blob
+      const blob = await uploadToBlob(req.file.buffer, filename, {
+        contentType: req.file.mimetype,
+      });
+
+      // Update database dengan URL dari Vercel Blob
+      await users.updateOne(
+        { id: targetId }, 
+        { $set: { foto: blob.url, updated_at: new Date() } }
+      );
+
+      // Hapus foto lama dari Vercel Blob (jika ada)
+      if (oldFotoUrl) {
+        await deleteFromBlob(oldFotoUrl);
+      }
 
       const user = await users.findOne({ id: targetId }, { projection: { _id: 0 } });
 
