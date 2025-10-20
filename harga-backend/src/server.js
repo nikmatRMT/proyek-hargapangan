@@ -42,6 +42,8 @@ app.use(
   })
 );
 
+const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
+
 /* ---------- Session (sebelum routes yang pakai req.session) ---------- */
 app.use(
   session({
@@ -60,8 +62,9 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production', // true only on HTTPS (production)
+      secure: isProduction, // true only on HTTPS (production/Vercel)
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
     },
   })
 );
@@ -69,7 +72,7 @@ app.use(
 app.use('/m/users', mobileUsersRouter);
 
 /* ---------- Static uploads (foto/avatar) ---------- */
-const uploadDir = process.env.NODE_ENV === 'production' 
+const uploadDir = isProduction
   ? path.resolve('/tmp/uploads')
   : path.resolve('tmp/uploads');
 try {
