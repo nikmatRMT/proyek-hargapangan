@@ -45,6 +45,20 @@ app.use(
 const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
 /* ---------- Session (sebelum routes yang pakai req.session) ---------- */
+const sessionStore = MongoStore.create({
+  mongoUrl: mongoUri,
+  dbName: mongoDbName,
+  collectionName: 'sessions',
+  ttl: 60 * 60 * 24 * 7, // 7 days
+  autoRemove: 'interval',
+  autoRemoveInterval: 10,
+});
+
+// Log session store errors
+sessionStore.on('error', (error) => {
+  console.error('[SESSION STORE ERROR]', error);
+});
+
 app.use(
   session({
     name: process.env.COOKIE_NAME || 'sid',
@@ -52,14 +66,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     proxy: isProduction, // Trust Vercel proxy
-    store: MongoStore.create({
-      mongoUrl: mongoUri,
-      dbName: mongoDbName,
-      collectionName: 'sessions',
-      ttl: 60 * 60 * 24 * 7, // 7 days
-      autoRemove: 'interval',
-      autoRemoveInterval: 10,
-    }),
+    store: sessionStore,
     cookie: {
       httpOnly: true,
       sameSite: 'lax',

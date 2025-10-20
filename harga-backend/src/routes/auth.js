@@ -23,8 +23,22 @@ router.post('/login', async (req, res) => {
     }
 
     req.session.user = { id: u.id, username: u.username, role: u.role };
-    res.json({
-      user: { id: u.id, username: u.username, nama_lengkap: u.nama_lengkap, role: u.role }
+    
+    // Force save session before sending response
+    req.session.save((err) => {
+      if (err) {
+        console.error('[LOGIN] Session save error:', err);
+        return res.status(500).json({ message: 'Gagal menyimpan session' });
+      }
+      
+      console.log('[LOGIN] Session saved successfully:', { 
+        sessionID: req.sessionID,
+        user: req.session.user 
+      });
+      
+      res.json({
+        user: { id: u.id, username: u.username, nama_lengkap: u.nama_lengkap, role: u.role }
+      });
     });
   } catch (e) {
     console.error('AUTH LOGIN ERR', e);
