@@ -46,7 +46,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/web-admin/$1"
+      "dest": "/web-admin/index.html"
     }
   ]
 }
