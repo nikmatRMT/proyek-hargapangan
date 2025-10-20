@@ -9,14 +9,23 @@ const router = Router();
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body ?? {};
-    if (!username || !password) return res.status(400).json({ message: 'username & password wajib diisi' });
+    if (!username || !password) return res.status(400).json({ message: 'username/NIP & password wajib diisi' });
 
     const { users } = collections();
-    const u = await users.findOne({ username: String(username) });
-    if (!u || !u.is_active) return res.status(401).json({ message: 'Username atau password salah' });
+    
+    // Cari user berdasarkan username ATAU NIP (case-insensitive untuk username)
+    const identifier = String(username).trim();
+    const u = await users.findOne({
+      $or: [
+        { username: { $regex: new RegExp(`^${identifier}$`, 'i') } }, // Username (case-insensitive)
+        { nip: identifier }  // NIP (exact match)
+      ]
+    });
+    
+    if (!u || !u.is_active) return res.status(401).json({ message: 'Username/NIP atau password salah' });
 
     const ok = await bcrypt.compare(password, u.password);
-    if (!ok) return res.status(401).json({ message: 'Username atau password salah' });
+    if (!ok) return res.status(401).json({ message: 'Username/NIP atau password salah' });
 
     if (!['admin', 'super_admin'].includes(u.role)) {
       return res.status(403).json({ message: 'Hanya admin yang boleh masuk web-admin' });

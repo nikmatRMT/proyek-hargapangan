@@ -27,7 +27,7 @@ export default function Login() {
 
   function validateForm() {
     if (!formData.username.trim()) {
-      setError('Username tidak boleh kosong');
+      setError('Username/NIP tidak boleh kosong');
       return false;
     }
     if (!formData.password) {
@@ -84,7 +84,7 @@ export default function Login() {
     } catch (err: any) {
       const msg = (err?.message || '').toLowerCase();
       if (msg.includes('unauthorized') || msg.includes('401')) {
-        setError('Username atau password salah');
+        setError('Username/NIP atau password salah');
       } else if (msg.includes('forbidden') || msg.includes('403')) {
         setError('Akses ditolak. Hubungi admin untuk memastikan akun Anda memiliki izin.');
       } else {
@@ -118,7 +118,7 @@ export default function Login() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Masuk ke Akun</CardTitle>
             <CardDescription className="text-center">
-              Masukkan username dan password untuk mengakses sistem
+              Masukkan username/NIP dan password untuk mengakses sistem
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -131,7 +131,7 @@ export default function Login() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">Username / NIP</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-gray-400" />
@@ -140,7 +140,7 @@ export default function Login() {
                     id="username"
                     name="username"
                     type="text"
-                    placeholder="Masukkan username"
+                    placeholder="Masukkan username atau NIP (18 digit)"
                     value={formData.username}
                     onChange={handleInputChange}
                     className="pl-10"
