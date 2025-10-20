@@ -41,7 +41,7 @@ export default function Backup() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/stats/storage') as StorageResponse;
+      const res = await api.get('/api/stats/storage') as StorageResponse;
       if (res.ok) {
         setStorage(res.storage);
         setCollections(res.collections || []);

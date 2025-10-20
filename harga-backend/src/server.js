@@ -44,6 +44,7 @@ app.use(express.urlencoded({ extended: true }));
 // CORS - Support multiple domains
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:4000',
   'https://harpa-banua.vercel.app',
   process.env.FRONTEND_ORIGIN, // Allow custom env var
 ].filter(Boolean);
@@ -51,10 +52,14 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
-      if (!origin) return callback(null, true);
+      // Allow requests with no origin (same-origin, mobile apps, Postman, etc.)
+      if (!origin) {
+        console.log('[CORS] No origin header - allowing (same-origin or direct)');
+        return callback(null, true);
+      }
       
       if (allowedOrigins.includes(origin)) {
+        console.log('[CORS] Allowed origin:', origin);
         callback(null, true);
       } else {
         console.warn('[CORS] Blocked origin:', origin);

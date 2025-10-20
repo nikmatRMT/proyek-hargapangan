@@ -28,7 +28,7 @@ export function StorageWarning() {
 
   const fetchStorageStats = async () => {
     try {
-      const res = await api.get('/stats/storage');
+      const res = await api.get('/api/stats/storage');
       if (res.ok && res.storage) {
         setStorage(res.storage);
       }
