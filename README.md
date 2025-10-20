@@ -15,7 +15,7 @@ proyek-hargapangan/
 
 ## 🚀 Deployment
 
-- **Frontend (web-admin)**: https://proyek-hargapangan.vercel.app
+- **Frontend (web-admin)**: https://harpa-banua.vercel.app
 - **Backend (harga-backend)**: Hosted on Vercel (same domain)
 - **Database**: MongoDB Atlas
 
