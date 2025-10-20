@@ -44,7 +44,6 @@ app.use(express.urlencoded({ extended: true }));
 // CORS - Support multiple domains
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://proyek-hargapangan.vercel.app',
   'https://harpa-banua.vercel.app',
   process.env.FRONTEND_ORIGIN, // Allow custom env var
 ].filter(Boolean);
