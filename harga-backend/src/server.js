@@ -30,6 +30,9 @@ import mobileReportsRouter from './routes/mobileReports.js';
 
 const app = express();
 
+// Trust Vercel proxy for secure cookies
+app.set('trust proxy', 1);
+
 /* ---------- Security & basics ---------- */
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
@@ -52,6 +55,7 @@ const sessionStore = MongoStore.create({
   ttl: 60 * 60 * 24 * 7, // 7 days
   autoRemove: 'interval',
   autoRemoveInterval: 10,
+  touchAfter: 24 * 3600, // lazy session update
 });
 
 // Log session store errors
@@ -59,13 +63,20 @@ sessionStore.on('error', (error) => {
   console.error('[SESSION STORE ERROR]', error);
 });
 
+console.log('[SESSION CONFIG]', {
+  mongoUri: mongoUri ? 'SET' : 'NOT_SET',
+  secret: (process.env.SESSION_SECRET || 'dev_secret').substring(0, 10) + '...',
+  isProduction,
+  vercelEnv: process.env.VERCEL ? 'YES' : 'NO',
+});
+
 app.use(
   session({
-    name: process.env.COOKIE_NAME || 'sid',
-    secret: process.env.SESSION_SECRET || 'dev_secret',
+    name: 'sid',
+    secret: process.env.SESSION_SECRET || 'dev_secret_fallback_change_in_production',
     resave: false,
     saveUninitialized: false,
-    proxy: isProduction, // Trust Vercel proxy
+    proxy: true, // ALWAYS trust proxy in Vercel
     store: sessionStore,
     cookie: {
       httpOnly: true,
