@@ -234,7 +234,11 @@ export default function Backup() {
       {/* Backup Actions */}
       <div className="border rounded-lg p-6 bg-card">
         <h2 className="text-lg font-semibold mb-4">🔄 Backup & Export</h2>
-        <BackupExportForm markets={markets} onExport={handleExport} />
+        {markets.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Memuat daftar pasar...</p>
+        ) : (
+          <BackupExportForm markets={markets} onExport={handleExport} />
+        )}
       </div>
 
       {/* Delete Data Section */}

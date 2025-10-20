@@ -162,7 +162,7 @@ export default function BackupExportForm({ markets, onExport }: BackupExportForm
           className="w-full border rounded px-3 py-2"
         >
           <option value="all">Semua Pasar</option>
-          {markets.map((m) => (
+          {Array.isArray(markets) && markets.map((m) => (
             <option key={m.id} value={m.id}>
               {m.nama_pasar}
             </option>
