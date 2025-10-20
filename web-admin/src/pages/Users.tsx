@@ -158,12 +158,23 @@ export default function UsersPage() {
     e.preventDefault();
     setFormError('');
     if (!createForm.username || !createForm.name) { setFormError('Nama & username wajib diisi'); return; }
+    
+    // Validasi NIP: wajib 18 digit angka
+    if (!createForm.nip || createForm.nip.trim() === '') {
+      setFormError('NIP wajib diisi'); 
+      return;
+    }
+    if (!/^\d{18}$/.test(createForm.nip.trim())) {
+      setFormError('NIP harus 18 digit angka'); 
+      return;
+    }
+    
     const password = createForm.password?.trim() || 'password';
 
     setFormLoading(true);
     try {
       await usersService.create({
-        nip: createForm.nip?.trim(),
+        nip: createForm.nip.trim(),
         username: createForm.username.trim(),
         password,
         name: createForm.name.trim(),
@@ -194,6 +205,16 @@ export default function UsersPage() {
     setFormError('');
     if (!selectedUser) return;
     if (!editForm.name) { setFormError('Nama wajib diisi'); return; }
+    
+    // Validasi NIP: wajib 18 digit angka
+    if (!editForm.nip || (editForm.nip as string).trim() === '') {
+      setFormError('NIP wajib diisi'); 
+      return;
+    }
+    if (!/^\d{18}$/.test((editForm.nip as string).trim())) {
+      setFormError('NIP harus 18 digit angka'); 
+      return;
+    }
 
     setFormLoading(true);
     try {
@@ -202,7 +223,7 @@ export default function UsersPage() {
         phone: (editForm.phone ?? '') as string,
         role: editForm.role as Role,
         is_active: (editForm.is_active ?? 1) as 0 | 1,
-        nip: (editForm.nip as string) ?? null,
+        nip: ((editForm.nip as string) ?? '').trim(),
       });
       setIsEditDialogOpen(false); setSelectedUser(null); setEditForm({});
       setSuccess('Data pengguna berhasil diperbarui'); setTimeout(()=>setSuccess(''),2000);
@@ -484,8 +505,20 @@ export default function UsersPage() {
                 <Input id="crt-username" value={createForm.username} onChange={(e)=>setCreateForm(p=>({...p, username:e.target.value}))} placeholder="username unik" autoComplete="off" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="crt-nip">NIP (opsional)</Label>
-                <Input id="crt-nip" value={createForm.nip} onChange={(e)=>setCreateForm(p=>({...p, nip:e.target.value}))} placeholder="1990..." />
+                <Label htmlFor="crt-nip">NIP <span className="text-red-500">*</span></Label>
+                <Input 
+                  id="crt-nip" 
+                  value={createForm.nip} 
+                  onChange={(e)=>{
+                    const val = e.target.value.replace(/\D/g, ''); // Hanya angka
+                    if (val.length <= 18) setCreateForm(p=>({...p, nip:val}));
+                  }} 
+                  placeholder="18 digit angka (contoh: 199001012020011001)" 
+                  maxLength={18}
+                  pattern="\d{18}"
+                  required 
+                />
+                <p className="text-xs text-gray-500">Wajib 18 digit angka</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="crt-phone">No. HP (opsional)</Label>
@@ -636,8 +669,20 @@ export default function UsersPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-nip">NIP</Label>
-                <Input id="edit-nip" value={String(editForm.nip ?? '')} onChange={(e)=>setEditForm(p=>({...p, nip:e.target.value}))} placeholder="Opsional, disarankan unik" />
+                <Label htmlFor="edit-nip">NIP <span className="text-red-500">*</span></Label>
+                <Input 
+                  id="edit-nip" 
+                  value={String(editForm.nip ?? '')} 
+                  onChange={(e)=>{
+                    const val = e.target.value.replace(/\D/g, ''); // Hanya angka
+                    if (val.length <= 18) setEditForm(p=>({...p, nip:val}));
+                  }} 
+                  placeholder="18 digit angka (contoh: 199001012020011001)" 
+                  maxLength={18}
+                  pattern="\d{18}"
+                  required 
+                />
+                <p className="text-xs text-gray-500">Wajib 18 digit angka</p>
               </div>
             </div>
             <DialogFooter>

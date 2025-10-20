@@ -107,7 +107,7 @@ router.post('/', async (req, res) => {
 
     // Normalize input - trim whitespace and lowercase username
     const username = usernameRaw ? String(usernameRaw).trim().toLowerCase() : null;
-    // NIP opsional - jika kosong atau whitespace saja, set null
+    // NIP wajib 18 digit
     const nip = (nipRaw && String(nipRaw).trim()) ? String(nipRaw).trim() : null;
 
     console.log('[CREATE USER] Request body:', { 
@@ -121,6 +121,14 @@ router.post('/', async (req, res) => {
 
     if (!nama_lengkap || !username) {
       return res.status(400).json({ message: 'nama_lengkap dan username wajib diisi' });
+    }
+
+    // Validasi NIP: wajib 18 digit angka
+    if (!nip) {
+      return res.status(400).json({ message: 'NIP wajib diisi' });
+    }
+    if (!/^\d{18}$/.test(nip)) {
+      return res.status(400).json({ message: 'NIP harus 18 digit angka' });
     }
 
     const { users } = collections();
@@ -228,6 +236,16 @@ router.patch('/:id', async (req, res) => {
         } else {
           patch[k] = req.body[k];
         }
+      }
+    }
+
+    // Validasi NIP jika diubah: wajib 18 digit angka
+    if ('nip' in patch) {
+      if (!patch.nip) {
+        return res.status(400).json({ message: 'NIP wajib diisi' });
+      }
+      if (!/^\d{18}$/.test(patch.nip)) {
+        return res.status(400).json({ message: 'NIP harus 18 digit angka' });
       }
     }
 

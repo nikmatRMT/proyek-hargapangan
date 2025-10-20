@@ -74,13 +74,13 @@ export const usersService = {
   async create(payload: {
     username: string;
     name: string;
-    nip?: string | null;
+    nip: string;                // WAJIB - 18 digit
     phone?: string | null;
     alamat?: string | null;
     role?: Role;               // default petugas
     password?: string;         // optional
   }): Promise<UserRow> {
-    // Normalize: empty string → null
+    // Normalize: empty string → null (kecuali NIP yang wajib)
     const normalizeOptional = (val: any) => (val && String(val).trim()) ? String(val).trim() : null;
     
     const body = await http(`/api/users`, {
@@ -88,7 +88,7 @@ export const usersService = {
       body: JSON.stringify({
         username: payload.username,
         nama_lengkap: payload.name,
-        nip: normalizeOptional(payload.nip),
+        nip: payload.nip, // NIP wajib, tidak di-normalize
         phone: normalizeOptional(payload.phone),
         alamat: normalizeOptional(payload.alamat),
         role: payload.role ?? 'petugas',
@@ -107,20 +107,20 @@ export const usersService = {
       alamat: string | null;
       role: Role;
       is_active: 0 | 1 | boolean;
-      nip: string | null;
+      nip: string;              // WAJIB - 18 digit
     }>
   ): Promise<UserRow> {
-    // Normalize: empty string → null
+    // Normalize: empty string → null (kecuali NIP yang wajib)
     const normalizeOptional = (val: any) => (val && String(val).trim()) ? String(val).trim() : null;
     
     const p: any = { ...patch };
     if ('name' in p) { p.nama_lengkap = p.name; delete p.name; }
     if ('is_active' in p) p.is_active = Number(p.is_active ? 1 : 0);
     
-    // Normalize optional fields
-    if ('nip' in p) p.nip = normalizeOptional(p.nip);
+    // Normalize optional fields (NIP tidak di-normalize karena wajib)
     if ('phone' in p) p.phone = normalizeOptional(p.phone);
     if ('alamat' in p) p.alamat = normalizeOptional(p.alamat);
+    // NIP tetap as-is karena sudah divalidasi di frontend
     
     const body = await http(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(p) });
     return toFrontRow(body?.data ?? body);
