@@ -1,8 +1,8 @@
 {
-  "name": "harga-backend",
+  "name": "harpa-banua-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Backend DKP3 (Express + MongoDB + Excel import)",
+  "description": "HARPA BANUA Backend - Sistem Informasi Harga Pangan (Express + MongoDB + Excel import)",
   "engines": {
     "node": ">=18.0.0"
   },

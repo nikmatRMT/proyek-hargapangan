@@ -1,7 +1,8 @@
 {
-  "name": "aplikasi-mobile",
+  "name": "harpa-banua-mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "description": "HARPA BANUA Mobile - Sistem Informasi Harga Pangan",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",

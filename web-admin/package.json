@@ -1,8 +1,9 @@
 {
-  "name": "web-admin",
+  "name": "harpa-banua-admin",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "HARPA BANUA - Sistem Informasi Harga Pangan",
   "engines": {
     "node": ">=18.0.0"
   },
