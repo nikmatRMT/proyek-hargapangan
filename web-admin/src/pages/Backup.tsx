@@ -81,8 +81,8 @@ function buildRowsForExport(
   toISO?: string
 ) {
   const filtered = flat.filter((r: any) => {
-    const tanggal = r.date || r.tanggal;
-    const pasar = r.market || r.pasar || r.marketName || r.market_name;
+    const tanggal = r.tanggal;  // Use tanggal directly (not date)
+    const pasar = r.pasar;      // Use pasar directly (not market)
     if (!tanggal) return false;
     if (marketName !== "Semua Pasar" && pasar !== marketName) return false;
     if (fromISO && tanggal < fromISO) return false;
@@ -92,7 +92,7 @@ function buildRowsForExport(
 
   const byDate = new Map<string, MarketRow>();
   for (const r of filtered) {
-    const tanggal: string = r.date || r.tanggal;
+    const tanggal: string = r.tanggal;  // Use tanggal directly
     const day = new Date(tanggal).getDate();
     if (!byDate.has(tanggal)) {
       byDate.set(tanggal, {
@@ -122,10 +122,9 @@ function buildRowsForExport(
       });
     }
     const row = byDate.get(tanggal)!;
-    const namaKomoditas: string =
-      r.commodity || r.komoditas || r.commodityName || r.commodity_name || "";
+    const namaKomoditas: string = r.komoditas || "";  // Use komoditas directly
     const key = MAP[namaKomoditas] as keyof MarketRow | undefined;
-    const harga = Number(r.price ?? r.harga ?? 0);
+    const harga = Number(r.harga ?? 0);  // Use harga directly
     if (key && typeof row[key] === "number") (row[key] as number) = harga;
   }
 
@@ -137,7 +136,7 @@ function buildRowsForExport(
     });
 
   const firstISO: string | undefined =
-    filtered[0]?.date || filtered[0]?.tanggal || fromISO || toISO;
+    filtered[0]?.tanggal || fromISO || toISO;  // Use tanggal
   const monthLabel = firstISO
     ? monthLabelFromISO(firstISO)
     : monthLabelFromISO(new Date().toISOString().slice(0, 10));
@@ -261,15 +260,11 @@ export default function Backup() {
         return;
       }
 
-      // Format data untuk export (format yang SAMA dengan Dashboard)
+      // Format data untuk export (format EXACT SAMA dengan Dashboard)
       const flat = allData.map((r: any) => ({
-        date: r.date || r.tanggal,
         tanggal: r.date || r.tanggal,
-        market: r.market || r.pasar || r.marketName || r.market_name,
         pasar: r.market || r.pasar || r.marketName || r.market_name,
-        commodity: r.commodity || r.komoditas || r.commodityName || r.commodity_name,
         komoditas: r.commodity || r.komoditas || r.commodityName || r.commodity_name,
-        price: Number(r.price ?? r.harga ?? 0),
         harga: Number(r.price ?? r.harga ?? 0),
       }));
 

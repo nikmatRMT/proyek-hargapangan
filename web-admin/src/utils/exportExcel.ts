@@ -219,12 +219,25 @@ export async function exportMarketExcel(opts: {
 }) {
   const Workbook = await loadWorkbookCtor();
   const wb: any = new Workbook();
-  const ws = wb.addWorksheet('Sheet1');
+  
+  // Set workbook properties untuk avoid Excel warning
+  wb.creator = 'HARPA BANUA';
+  wb.lastModifiedBy = 'HARPA BANUA';
+  wb.created = new Date();
+  wb.modified = new Date();
+  wb.lastPrinted = new Date();
+  
+  const ws = wb.addWorksheet('Sheet1', {
+    properties: { tabColor: { argb: 'FF00FF00' } },
+    views: [{ state: 'normal' }]
+  });
 
   writeTableToWorksheet(ws, opts);
 
-  ws.views = [];
+  // Explicitly clear views and autoFilter
+  ws.views = [{ state: 'normal', showGridLines: true }];
   delete (ws as any).autoFilter;
+  ws.autoFilter = null;
 
   const buf = await wb.xlsx.writeBuffer();                 // ArrayBuffer | Buffer
   const arrayBuffer: ArrayBuffer =
@@ -243,11 +256,22 @@ export async function exportMonthsStackedSingleSheet(params: {
   const { tables, fileName = 'semua-pasar_stacked.xlsx' } = params;
   const Workbook = await loadWorkbookCtor();
   const wb: any = new Workbook();
-  const ws = wb.addWorksheet('Semua Pasar');
+  
+  // Set workbook properties
+  wb.creator = 'HARPA BANUA';
+  wb.lastModifiedBy = 'HARPA BANUA';
+  wb.created = new Date();
+  wb.modified = new Date();
+  
+  const ws = wb.addWorksheet('Semua Pasar', {
+    views: [{ state: 'normal' }]
+  });
 
   for (const t of tables) writeTableToWorksheet(ws, t);
 
-  ws.views = [];
+  ws.views = [{ state: 'normal', showGridLines: true }];
+  delete (ws as any).autoFilter;
+  ws.autoFilter = null;
   delete (ws as any).autoFilter;
 
   const buf = await wb.xlsx.writeBuffer();
