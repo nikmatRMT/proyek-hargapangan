@@ -1,7 +1,9 @@
 // src/pages/Backup.tsx
 import { useEffect, useState } from 'react';
-import { Download, Database, HardDrive, FileText, Cloud, RefreshCw } from 'lucide-react';
+import { Download, Database, HardDrive, FileText, Cloud, RefreshCw, Trash2 } from 'lucide-react';
 import * as api from '@/api';
+import BackupExportForm, { type ExportParams } from '@/components/BackupExportForm';
+import { exportMarketExcel } from '@/utils/exportExcel';
 
 interface StorageStats {
   dataSize: number;
@@ -33,10 +35,21 @@ export default function Backup() {
   const [collections, setCollections] = useState<CollectionStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [markets, setMarkets] = useState<any[]>([]);
 
   useEffect(() => {
     fetchStats();
+    fetchMarkets();
   }, []);
+
+  const fetchMarkets = async () => {
+    try {
+      const data = await api.get('/api/markets');
+      setMarkets(data || []);
+    } catch (e) {
+      console.error('[Backup] Failed to fetch markets:', e);
+    }
+  };
 
   const fetchStats = async () => {
     setLoading(true);
@@ -70,6 +83,40 @@ export default function Backup() {
       dateStyle: 'medium',
       timeStyle: 'short',
     });
+  };
+
+  const handleExport = async (params: ExportParams) => {
+    try {
+      // For Phase 2, we'll use backend endpoint for export
+      // This will be implemented in next step
+      alert(`📥 Export akan dimulai dengan parameter:\n\n` +
+        `Tanggal: ${params.startDate || 'Semua'} - ${params.endDate || 'Semua'}\n` +
+        `Pasar: ${params.marketId === 'all' ? 'Semua Pasar' : markets.find(m => m.id === params.marketId)?.nama_pasar}\n\n` +
+        `Backend endpoint /api/backup/export akan dibuat di commit berikutnya.`
+      );
+      
+      // TODO: Implement backend endpoint
+      // const query = new URLSearchParams();
+      // if (params.startDate) query.append('startDate', params.startDate);
+      // if (params.endDate) query.append('endDate', params.endDate);
+      // if (params.marketId !== 'all') query.append('market_id', params.marketId);
+      // 
+      // const blob = await api.post(`/api/backup/export?${query}`);
+      // saveBlob(blob, 'backup-harga.xlsx');
+    } catch (error: any) {
+      console.error('[Backup] Export error:', error);
+      throw error;
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirm = window.confirm(
+      '⚠️ PERHATIAN!\n\nFitur Delete Data akan menghapus data permanen dari database.\n\nUntuk saat ini, gunakan MongoDB Atlas Dashboard untuk mengelola data.\n\nLanjutkan ke MongoDB Atlas?'
+    );
+    
+    if (confirm) {
+      window.open('https://cloud.mongodb.com', '_blank');
+    }
   };
 
   const getStatusColor = (percentage: number): string => {
@@ -187,30 +234,26 @@ export default function Backup() {
 
       {/* Backup Actions */}
       <div className="border rounded-lg p-6 bg-card">
-        <h2 className="text-lg font-semibold mb-4">🔄 Backup Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => alert('Manual Export coming soon!')}
-            className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"
-          >
-            <Download className="w-6 h-6 text-blue-600" />
-            <div className="text-left">
-              <p className="font-semibold">Export ke Excel</p>
-              <p className="text-sm text-muted-foreground">Download data per bulan atau tahun</p>
-            </div>
-          </button>
+        <h2 className="text-lg font-semibold mb-4">🔄 Backup & Export</h2>
+        <BackupExportForm markets={markets} onExport={handleExport} />
+      </div>
 
-          <button
-            onClick={() => alert('Google Drive Integration coming soon!')}
-            className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"
-          >
-            <Cloud className="w-6 h-6 text-green-600" />
-            <div className="text-left">
-              <p className="font-semibold">Google Drive Auto-Archive</p>
-              <p className="text-sm text-muted-foreground">Setup automatic backup ke Google Drive</p>
-            </div>
-          </button>
-        </div>
+      {/* Delete Data Section */}
+      <div className="border rounded-lg p-6 bg-card border-red-200">
+        <h2 className="text-lg font-semibold mb-4 text-red-600">🗑️ Delete Data</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Hapus data lama untuk mengosongkan storage. Data yang dihapus tidak dapat dikembalikan.
+        </p>
+        <button
+          onClick={handleDelete}
+          className="flex items-center gap-3 px-4 py-3 border border-red-300 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+        >
+          <Trash2 className="w-5 h-5" />
+          <div className="text-left">
+            <p className="font-semibold">Delete Data Bulanan</p>
+            <p className="text-sm text-muted-foreground">Kelola dan hapus data dari MongoDB</p>
+          </div>
+        </button>
       </div>
 
       {/* Collections Breakdown */}
