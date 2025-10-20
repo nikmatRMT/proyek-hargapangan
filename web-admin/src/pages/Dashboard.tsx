@@ -185,6 +185,10 @@ export default function Dashboard() {
   // 🔁 kunci refresh paksa (SSE, import, edit)
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // ====== State terpisah untuk Import dan Delete ======
+  const [showImport, setShowImport] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+
   // ====== Daftar pasar (dipakai dropdown & ImportExcel) ======
   const [markets, setMarkets] = useState<Array<{ id: number; nama_pasar: string }>>([]);
   const [selectedMarketId, setSelectedMarketId] = useState<number | "all">("all");
@@ -343,9 +347,7 @@ export default function Dashboard() {
     }
   }
 
-  // ====== Import Data (ganti Export PDF) ======
-  const [showImport, setShowImport] = useState(false);
-  const toggleImport = () => setShowImport((s) => !s);
+  // ====== Import Data handler ======
   const handleImported = () => {
     setShowImport(false);
     // refresh ringan di sisi lokal
@@ -460,8 +462,11 @@ export default function Dashboard() {
           {/* Kolom 3: Aksi */}
           <div className="flex items-center justify-end gap-2">
             <button
-              onClick={toggleImport}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-sm"
+              onClick={() => {
+                setShowImport(!showImport);
+                setShowDelete(false); // Tutup Delete section
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
               title="Import data Excel ke database"
             >
               <FileSpreadsheet className="w-4 h-4" /> Import Data
@@ -478,11 +483,12 @@ export default function Dashboard() {
 
             <button
               onClick={() => {
-                // Toggle section + scroll to delete zone
-                setShowImport(true);
+                setShowDelete(!showDelete);
+                setShowImport(false); // Tutup Import section
+                // Scroll to delete zone setelah section muncul
                 setTimeout(() => {
                   const deleteSection = document.querySelector('.zona-bahaya-delete');
-                  if (deleteSection) {
+                  if (deleteSection && !showDelete) {
                     deleteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }, 100);
@@ -495,25 +501,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Panel Import + Zona Bahaya */}
+        {/* Panel Import (terpisah) */}
         {showImport && (
-          <>
-            <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-              <h3 className="font-medium mb-3">Import Data Excel</h3>
-              <ImportExcel
-                markets={markets}
-                selectedMarketId={selectedMarketId ?? "all"}
-                onDone={handleImported}
-              />
-            </div>
+          <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+            <h3 className="font-medium mb-3">Import Data Excel</h3>
+            <ImportExcel
+              markets={markets}
+              selectedMarketId={selectedMarketId ?? "all"}
+              onDone={handleImported}
+            />
+          </div>
+        )}
 
-            <div className="mt-4 p-4 border border-red-200 rounded-lg bg-red-50 zona-bahaya-delete">
-              <h3 className="font-semibold text-red-700 mb-3">
-                Zona Bahaya: Hapus Data Bulanan
-              </h3>
-              <DangerBulkDelete selectedMarketId={selectedMarketId} onDone={() => setRefreshKey(k => k + 1)} />
-            </div>
-          </>
+        {/* Zona Bahaya (terpisah) */}
+        {showDelete && (
+          <div className="mt-4 p-4 border border-red-200 rounded-lg bg-red-50 zona-bahaya-delete">
+            <h3 className="font-semibold text-red-700 mb-3">
+              Zona Bahaya: Hapus Data Bulanan
+            </h3>
+            <DangerBulkDelete selectedMarketId={selectedMarketId} onDone={() => setRefreshKey(k => k + 1)} />
+          </div>
         )}
       </section>
 
