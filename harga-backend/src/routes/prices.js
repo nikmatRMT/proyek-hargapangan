@@ -3,6 +3,7 @@ import express from "express";
 import { collections } from "../tools/db.js";
 import XLSX from "xlsx";
 import { buildExampleWorkbook } from "../lib/excel.mjs";
+import { deleteFromBlob } from "../lib/blob.js";
 
 const router = express.Router();
 const TABLE = "laporan_harga";
@@ -263,6 +264,33 @@ async function _deleteMonth(marketId, year, month) {
   const endMonth = month === 12 ? 1 : month + 1;
   const endYear = month === 12 ? year + 1 : year;
   const end = `${endYear}-${String(endMonth).padStart(2, '0')}-01`;
+  
+  // 1. Ambil semua records yang akan dihapus untuk cleanup foto
+  const recordsToDelete = await laporan_harga.find({ 
+    market_id: marketId, 
+    tanggal_lapor: { $gte: start, $lt: end } 
+  }).toArray();
+  
+  // 2. Kumpulkan semua foto URLs
+  const fotoUrls = recordsToDelete
+    .map(r => r.foto_url)
+    .filter(url => url && typeof url === 'string' && url.trim());
+  
+  // 3. Hapus foto dari Vercel Blob Storage
+  let deletedPhotos = 0;
+  for (const url of fotoUrls) {
+    try {
+      await deleteFromBlob(url);
+      deletedPhotos++;
+    } catch (err) {
+      console.error(`[_deleteMonth] Failed to delete photo ${url}:`, err.message);
+      // Continue dengan foto lainnya meskipun ada yang gagal
+    }
+  }
+  
+  console.log(`[_deleteMonth] Deleted ${deletedPhotos}/${fotoUrls.length} photos from Blob Storage`);
+  
+  // 4. Hapus records dari MongoDB
   const res = await laporan_harga.deleteMany({ market_id: marketId, tanggal_lapor: { $gte: start, $lt: end } });
   return Number(res?.deletedCount ?? 0);
 }
