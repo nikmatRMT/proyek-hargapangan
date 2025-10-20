@@ -1,54 +1,25 @@
 // src/routes/mobileUsers.js
 import { Router } from 'express';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
 import { collections } from '../tools/db.js';
 import requireMobileAuth from '../middleware/requireMobileAuth.js';
+import { uploadToBlob, deleteFromBlob } from '../lib/blob.js';
 
 const router = Router();
 
-// Use /tmp in serverless, tmp/ locally
-const AVATAR_DIR = process.env.NODE_ENV === 'production' 
-  ? path.resolve('/tmp/uploads/avatar')
-  : path.resolve('tmp/uploads/avatar');
+// Gunakan memoryStorage untuk Vercel Blob (tidak pakai disk)
+const storage = multer.memoryStorage();
 
-// Ensure directory exists (with error handling for serverless environments)
-try {
-  fs.mkdirSync(AVATAR_DIR, { recursive: true });
-} catch (err) {
-  console.warn('Warning: Could not create avatar directory:', err.message);
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    try {
-      fs.mkdirSync(AVATAR_DIR, { recursive: true });
-      cb(null, AVATAR_DIR);
-    } catch (err) {
-      cb(new Error('Gagal membuat folder upload: ' + err.message));
+const upload = multer({
+  storage,
+  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
+  fileFilter: (_req, file, cb) => {
+    if (!/image\/(png|jpeg|webp)/.test(file.mimetype)) {
+      return cb(new Error('File harus PNG/JPG/WebP'));
     }
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname || '.jpg') || '.jpg';
-    const id = req.mobileUser?.id || 'user';
-    const ts = Date.now();
-    cb(null, `avatar_${id}_${ts}${ext}`);
+    cb(null, true);
   },
 });
-const upload = multer({ storage });
-
-// Helper: hapus file lama jika masih di folder avatar
-function safeRemoveOld(oldPath) {
-  try {
-    if (!oldPath) return;
-    // oldPath bentuknya "/uploads/avatar/xxx.jpg"
-    const abs = path.resolve(oldPath.replace(/^\/+/, '')); // hapus leading slash
-    if (abs.startsWith(path.resolve('uploads')) || abs.startsWith(path.resolve('tmp/uploads'))) {
-      // Kalau dulu diserve dari tmp/uploads, path relatifnya "/uploads/.."
-    }
-  } catch {}
-}
 
 router.get('/me', requireMobileAuth, async (req, res) => {
   const id = req.mobileUser.id;
@@ -68,27 +39,36 @@ router.post('/me/avatar', requireMobileAuth, upload.single('avatar'), async (req
     if (!me?.id) return res.status(401).json({ message: 'Unauthorized' });
     if (!req.file) return res.status(400).json({ message: 'File avatar wajib diupload' });
 
-    // path publik untuk diserve via express.static('/uploads', ...)
-    const publicPath = `/uploads/avatar/${req.file.filename}`;
+    const { users } = collections();
+    const current = await users.findOne({ id: me.id }, { projection: { foto: 1 } });
+    const oldFotoUrl = current?.foto || null;
 
-    // ambil foto lama
-  const { users } = collections();
-  const current = await users.findOne({ id: me.id }, { projection: { foto: 1 } });
-  const old = current?.foto;
+    // Generate filename untuk Vercel Blob
+    const ext = req.file.mimetype === 'image/png' ? '.png' : 
+                req.file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+    const filename = `avatars/user-${me.id}-${Date.now()}${ext}`;
 
-  await users.updateOne({ id: me.id }, { $set: { foto: publicPath, updated_at: new Date() } });
+    // Upload ke Vercel Blob
+    const blob = await uploadToBlob(req.file.buffer, filename, {
+      contentType: req.file.mimetype,
+    });
 
-    // hapus lama jika masih di folder avatar tmp/uploads (opsional)
-    try {
-      if (old && /^\/?uploads\/avatar\//.test(old)) {
-        const abs = path.resolve(old.replace(/^\//, '')); // "uploads/avatar/.."
-        fs.existsSync(abs) && fs.unlinkSync(abs);
-      }
-    } catch {}
+    // Update database dengan URL dari Vercel Blob
+    await users.updateOne(
+      { id: me.id }, 
+      { $set: { foto: blob.url, updated_at: new Date() } }
+    );
+
+    // Hapus foto lama dari Vercel Blob (jika ada)
+    if (oldFotoUrl) {
+      await deleteFromBlob(oldFotoUrl).catch(err => {
+        console.warn('[Mobile Avatar] Failed to delete old foto from Blob:', err.message);
+      });
+    }
 
     const fresh = await users.findOne(
       { id: me.id },
-      { projection: { _id: 0, id: 1, nip: 1, nama_lengkap: 1, username: 1, role: 1, is_active: 1, phone: 1, alamat: 1, foto: 1, created_at: 1 } }
+      { projection: { _id: 0, id: 1, nip: 1, nama_lengkap: 1, username: 1, role: 1, is_active: 1, phone: 1, alamat: 1, foto: 1, updated_at: 1, created_at: 1 } }
     );
 
     res.json({ ok: true, user: { ...fresh, name: fresh?.nama_lengkap } });
