@@ -55,21 +55,27 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (same-origin in Vercel, mobile apps, Postman)
-      // In Vercel, frontend and backend are on same domain, so origin is undefined
       if (!origin) {
-        console.error('[CORS] No origin header - allowing (same-origin)');
+        console.error('[CORS] No origin - allowing (same-origin)');
         return callback(null, true);
       }
       
       console.error('[CORS] Checking origin:', origin);
       
+      // Check exact match first
       if (allowedOrigins.includes(origin)) {
-        console.error('[CORS] ✅ Allowed origin:', origin);
-        callback(null, true);
-      } else {
-        console.error('[CORS] ❌ Blocked origin:', origin);
-        callback(new Error('Not allowed by CORS'));
+        console.error('[CORS] ✅ Allowed (exact match):', origin);
+        return callback(null, true);
       }
+      
+      // Allow all Vercel preview/deployment URLs (*.vercel.app)
+      if (origin.endsWith('.vercel.app')) {
+        console.error('[CORS] ✅ Allowed (Vercel domain):', origin);
+        return callback(null, true);
+      }
+      
+      console.error('[CORS] ❌ Blocked:', origin);
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     optionsSuccessStatus: 200,
@@ -115,7 +121,8 @@ app.use(
       secure: isProduction, // true on HTTPS (Vercel)
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
-      domain: isProduction ? '.vercel.app' : undefined, // Share cookie across Vercel subdomains
+      // NO domain setting - let browser set it automatically for current domain
+      // This works for same-origin requests in Vercel
     },
   })
 );
