@@ -51,6 +51,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev_secret',
     resave: false,
     saveUninitialized: false,
+    proxy: isProduction, // Trust Vercel proxy
     store: MongoStore.create({
       mongoUrl: mongoUri,
       dbName: mongoDbName,
@@ -68,6 +69,18 @@ app.use(
     },
   })
 );
+
+// Debug session middleware
+app.use((req, res, next) => {
+  console.log('[SESSION DEBUG]', {
+    method: req.method,
+    path: req.path,
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user,
+    cookies: req.headers.cookie || 'NO_COOKIE',
+  });
+  next();
+});
 
 app.use('/m/users', mobileUsersRouter);
 
