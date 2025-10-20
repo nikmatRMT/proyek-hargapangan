@@ -95,35 +95,61 @@ router.post('/', async (req, res) => {
 
     const {
       nama_lengkap,
-      username,
+      username: usernameRaw,
       phone = null,
       alamat = null,
       role: roleRaw = 'petugas',
       password: plain = null,
       is_active = 1,
-      nip = null,
+      nip: nipRaw = null,
       foto = null,
     } = req.body || {};
 
-    console.log('[CREATE USER] Request body:', { nama_lengkap, username, nip, role: roleRaw });
+    // Normalize input - trim whitespace and lowercase username
+    const username = usernameRaw ? String(usernameRaw).trim().toLowerCase() : null;
+    const nip = nipRaw ? String(nipRaw).trim() : null;
+
+    console.log('[CREATE USER] Request body:', { 
+      nama_lengkap, 
+      username, 
+      usernameRaw, 
+      nip, 
+      nipRaw,
+      role: roleRaw 
+    });
 
     if (!nama_lengkap || !username) {
       return res.status(400).json({ message: 'nama_lengkap dan username wajib diisi' });
     }
 
     const { users } = collections();
-    // Cek duplikasi username
-    const uByUsername = await users.findOne({ username });
+    
+    // Count total users for debugging
+    const totalUsers = await users.countDocuments();
+    console.log('[CREATE USER] Total users in DB:', totalUsers);
+    
+    // Cek duplikasi username (case-insensitive)
+    const uByUsername = await users.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    });
     if (uByUsername) {
-      console.log('[CREATE USER] Username conflict:', { username, existingId: uByUsername.id });
-      return res.status(409).json({ message: 'Username sudah digunakan' });
+      console.log('[CREATE USER] Username conflict:', { 
+        requestedUsername: username,
+        existingUsername: uByUsername.username,
+        existingId: uByUsername.id 
+      });
+      return res.status(409).json({ message: `Username "${username}" sudah digunakan` });
     }
 
     if (nip) {
       const uByNip = await users.findOne({ nip });
       if (uByNip) {
-        console.log('[CREATE USER] NIP conflict:', { nip, existingId: uByNip.id });
-        return res.status(409).json({ message: 'NIP sudah digunakan' });
+        console.log('[CREATE USER] NIP conflict:', { 
+          requestedNIP: nip,
+          existingNIP: uByNip.nip,
+          existingId: uByNip.id 
+        });
+        return res.status(409).json({ message: `NIP "${nip}" sudah digunakan` });
       }
     }
 
@@ -155,9 +181,22 @@ router.post('/', async (req, res) => {
       defaultPassword: plain ? undefined : 'Petugas123!',
     });
   } catch (e) {
-    // Tangkap duplicate key
+    // Tangkap duplicate key dari MongoDB
     if (String(e?.message || '').toLowerCase().includes('duplicate key')) {
-      return res.status(409).json({ message: 'Data sudah ada (duplikat)' });
+      console.error('[CREATE USER] MongoDB duplicate key error:', {
+        error: e.message,
+        code: e.code,
+        keyPattern: e.keyPattern,
+        keyValue: e.keyValue,
+      });
+      
+      // Extract field yang duplicate dari error message
+      const field = e.keyPattern ? Object.keys(e.keyPattern)[0] : 'unknown';
+      const value = e.keyValue ? e.keyValue[field] : 'unknown';
+      
+      return res.status(409).json({ 
+        message: `Data sudah ada (duplikat): ${field} = "${value}"` 
+      });
     }
     console.error('POST /api/users', e);
     return res.status(500).json({ message: 'Gagal membuat pengguna' });
