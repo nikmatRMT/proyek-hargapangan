@@ -105,6 +105,8 @@ router.post('/', async (req, res) => {
       foto = null,
     } = req.body || {};
 
+    console.log('[CREATE USER] Request body:', { nama_lengkap, username, nip, role: roleRaw });
+
     if (!nama_lengkap || !username) {
       return res.status(400).json({ message: 'nama_lengkap dan username wajib diisi' });
     }
@@ -113,12 +115,14 @@ router.post('/', async (req, res) => {
     // Cek duplikasi username
     const uByUsername = await users.findOne({ username });
     if (uByUsername) {
+      console.log('[CREATE USER] Username conflict:', { username, existingId: uByUsername.id });
       return res.status(409).json({ message: 'Username sudah digunakan' });
     }
 
     if (nip) {
       const uByNip = await users.findOne({ nip });
       if (uByNip) {
+        console.log('[CREATE USER] NIP conflict:', { nip, existingId: uByNip.id });
         return res.status(409).json({ message: 'NIP sudah digunakan' });
       }
     }
