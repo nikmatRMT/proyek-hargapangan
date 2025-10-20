@@ -68,31 +68,18 @@ export function collections() {
 }
 
 export async function getNextSeq(name) {
-  const { counters } = collections();
+  // LANGSUNG pakai fallback karena counter collection tidak reliable di serverless
+  const collectionName = name;
+  const collection = getDb().collection(collectionName);
   
-  try {
-    const res = await counters.findOneAndUpdate(
-      { _id: name },
-      { $inc: { seq: 1 } },
-      { upsert: true, returnDocument: 'after' }
-    );
-    
-    const nextId = res.value?.seq || 1;
-    console.log(`[getNextSeq] ${name}:`, { nextId, counterDoc: res.value });
-    return nextId;
-  } catch (error) {
-    console.error(`[getNextSeq] Error for ${name}:`, error);
-    
-    // Fallback: get max id from collection
-    const collectionName = name;
-    const collection = getDb().collection(collectionName);
-    const maxDoc = await collection.find({}).project({ id: 1 }).sort({ id: -1 }).limit(1).toArray();
-    const maxId = maxDoc[0]?.id || 0;
-    const nextId = maxId + 1;
-    
-    console.log(`[getNextSeq] Fallback for ${name}:`, { maxId, nextId });
-    return nextId;
-  }
+  console.log(`[getNextSeq] Getting max ID from collection: ${collectionName}`);
+  
+  const maxDoc = await collection.find({}).project({ id: 1 }).sort({ id: -1 }).limit(1).toArray();
+  const maxId = maxDoc[0]?.id || 0;
+  const nextId = maxId + 1;
+  
+  console.log(`[getNextSeq] ${name}:`, { maxId, nextId, hasDoc: !!maxDoc[0] });
+  return nextId;
 }
 
 export async function closeMongo() {
