@@ -8,11 +8,8 @@ const router = Router();
 // POST /auth/login
 router.post('/login', async (req, res) => {
   try {
-    console.error('[LOGIN] Request body:', req.body);
     const { username, password } = req.body ?? {};
-    console.error('[LOGIN] Parsed credentials:', { username, hasPassword: !!password });
     if (!username || !password) {
-      console.error('[LOGIN] Missing credentials');
       return res.status(400).json({ message: 'username/NIP & password wajib diisi' });
     }
 
@@ -20,24 +17,19 @@ router.post('/login', async (req, res) => {
     
     // Cari user berdasarkan username ATAU NIP (case-insensitive untuk username)
     const identifier = String(username).trim();
-    console.error('[LOGIN] Searching user with identifier:', identifier);
     const u = await users.findOne({
       $or: [
-        { username: { $regex: new RegExp(`^${identifier}$`, 'i') } }, // Username (case-insensitive)
-        { nip: identifier }  // NIP (exact match)
+        { username: { $regex: new RegExp(`^${identifier}$`, 'i') } },
+        { nip: identifier }
       ]
     });
     
-    console.error('[LOGIN] User found:', { exists: !!u, isActive: u?.is_active, role: u?.role });
     if (!u || !u.is_active) {
-      console.error('[LOGIN] User not found or inactive');
       return res.status(401).json({ message: 'Username/NIP atau password salah' });
     }
 
     const ok = await bcrypt.compare(password, u.password);
-    console.error('[LOGIN] Password check:', { ok });
     if (!ok) {
-      console.error('[LOGIN] Password mismatch');
       return res.status(401).json({ message: 'Username/NIP atau password salah' });
     }
 

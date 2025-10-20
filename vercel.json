@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "echo 'Force rebuild - Oct 20 21:44'",
   "builds": [
     {
       "src": "harga-backend/src/server.js",

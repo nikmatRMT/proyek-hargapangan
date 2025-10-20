@@ -46,35 +46,20 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4000',
   'https://harpa-banua.vercel.app',
-  process.env.FRONTEND_ORIGIN, // Allow custom env var
+  process.env.FRONTEND_ORIGIN,
 ].filter(Boolean);
-
-console.log('[CORS] Allowed origins:', allowedOrigins);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (same-origin in Vercel, mobile apps, Postman)
-      if (!origin) {
-        console.error('[CORS] No origin - allowing (same-origin)');
+      // Allow requests with no origin (same-origin, mobile apps, Postman)
+      if (!origin) return callback(null, true);
+      
+      // Check exact match or allow all Vercel domains (*.vercel.app)
+      if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         return callback(null, true);
       }
       
-      console.error('[CORS] Checking origin:', origin);
-      
-      // Check exact match first
-      if (allowedOrigins.includes(origin)) {
-        console.error('[CORS] ✅ Allowed (exact match):', origin);
-        return callback(null, true);
-      }
-      
-      // Allow all Vercel preview/deployment URLs (*.vercel.app)
-      if (origin.endsWith('.vercel.app')) {
-        console.error('[CORS] ✅ Allowed (Vercel domain):', origin);
-        return callback(null, true);
-      }
-      
-      console.error('[CORS] ❌ Blocked:', origin);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
