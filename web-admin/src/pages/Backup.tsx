@@ -6,6 +6,145 @@ import BackupExportForm, { type ExportParams } from '@/components/BackupExportFo
 import { fetchReports } from '@/api';
 import { exportMarketExcel } from '@/utils/exportExcel';
 
+/* =========================
+   Helper lokal untuk EXPORT (sama dengan Dashboard)
+========================= */
+
+// Minggu Romawi per rentang 7 hari
+function weekRomanForDay(day: number) {
+  const idx = Math.floor((day - 1) / 7); // 0..4
+  return ["I", "II", "III", "IV", "V"][Math.min(Math.max(idx, 0), 4)];
+}
+
+// Label bulan "Juli 2024" (untuk judul export)
+function monthLabelFromISO(dateISO: string) {
+  const [y, m] = dateISO.split("-").map(Number);
+  const d = new Date(y, (m || 1) - 1, 1);
+  return d.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+}
+
+/** Pemetaan nama komoditas tampilan → key kolom Excel */
+const MAP: Record<string, string> = {
+  Beras: "beras",
+  "Minyak Goreng Kemasan": "minyakGorengKemasan",
+  "Minyak Goreng Curah": "minyakGorengCurah",
+  "Tepung Terigu Kemasan": "tepungTeriguKemasan",
+  "Tepung Terigu Curah": "tepungTeriguCurah",
+  "Gula Pasir": "gulaPasir",
+  "Telur Ayam": "telurAyam",
+  "Daging Sapi": "dagingSapi",
+  "Daging Ayam": "dagingAyam",
+  Kedelai: "kedelai",
+  "Bawang Merah": "bawangMerah",
+  "Bawang Putih": "bawangPutih",
+  "Cabe Merah Besar": "cabeMerahBesar",
+  "Cabe Rawit": "cabeRawit",
+  "Ikan Haruan/ Gabus": "ikanHaruan",
+  "Ikan Tongkol/Tuna": "ikanTongkol",
+  "Ikan Mas/Nila": "ikanMas",
+  "Ikan Patin": "ikanPatin",
+  "Ikan Papuyu/Betok": "ikanPapuyu",
+  "Ikan Bandeng": "ikanBandeng",
+  "Ikan Kembung/Pindang": "ikanKembung",
+};
+
+type MarketRow = {
+  week: string;
+  day: number;
+  beras: number;
+  minyakGorengKemasan: number;
+  minyakGorengCurah: number;
+  tepungTeriguKemasan: number;
+  tepungTeriguCurah: number;
+  gulaPasir: number;
+  telurAyam: number;
+  dagingSapi: number;
+  dagingAyam: number;
+  kedelai: number;
+  bawangMerah: number;
+  bawangPutih: number;
+  cabeMerahBesar: number;
+  cabeRawit: number;
+  ikanHaruan: number;
+  ikanTongkol: number;
+  ikanMas: number;
+  ikanPatin: number;
+  ikanPapuyu: number;
+  ikanBandeng: number;
+  ikanKembung: number;
+};
+
+function buildRowsForExport(
+  flat: any[],
+  marketName: string,
+  fromISO?: string,
+  toISO?: string
+) {
+  const filtered = flat.filter((r: any) => {
+    const tanggal = r.date || r.tanggal;
+    const pasar = r.market || r.pasar || r.marketName || r.market_name;
+    if (!tanggal) return false;
+    if (marketName !== "Semua Pasar" && pasar !== marketName) return false;
+    if (fromISO && tanggal < fromISO) return false;
+    if (toISO && tanggal > toISO) return false;
+    return true;
+  });
+
+  const byDate = new Map<string, MarketRow>();
+  for (const r of filtered) {
+    const tanggal: string = r.date || r.tanggal;
+    const day = new Date(tanggal).getDate();
+    if (!byDate.has(tanggal)) {
+      byDate.set(tanggal, {
+        week: weekRomanForDay(day),
+        day,
+        beras: 0,
+        minyakGorengKemasan: 0,
+        minyakGorengCurah: 0,
+        tepungTeriguKemasan: 0,
+        tepungTeriguCurah: 0,
+        gulaPasir: 0,
+        telurAyam: 0,
+        dagingSapi: 0,
+        dagingAyam: 0,
+        kedelai: 0,
+        bawangMerah: 0,
+        bawangPutih: 0,
+        cabeMerahBesar: 0,
+        cabeRawit: 0,
+        ikanHaruan: 0,
+        ikanTongkol: 0,
+        ikanMas: 0,
+        ikanPatin: 0,
+        ikanPapuyu: 0,
+        ikanBandeng: 0,
+        ikanKembung: 0,
+      });
+    }
+    const row = byDate.get(tanggal)!;
+    const namaKomoditas: string =
+      r.commodity || r.komoditas || r.commodityName || r.commodity_name || "";
+    const key = MAP[namaKomoditas] as keyof MarketRow | undefined;
+    const harga = Number(r.price ?? r.harga ?? 0);
+    if (key && typeof row[key] === "number") (row[key] as number) = harga;
+  }
+
+  const rows = Array.from(byDate.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([, v]) => {
+      const show = [1, 8, 15, 22, 29].includes(v.day);
+      return { ...v, week: show ? v.week : "" };
+    });
+
+  const firstISO: string | undefined =
+    filtered[0]?.date || filtered[0]?.tanggal || fromISO || toISO;
+  const monthLabel = firstISO
+    ? monthLabelFromISO(firstISO)
+    : monthLabelFromISO(new Date().toISOString().slice(0, 10));
+
+  return { rows, monthLabel };
+}
+
 interface StorageStats {
   dataSize: number;
   storageSize: number;
@@ -92,7 +231,7 @@ export default function Backup() {
         ? 'Semua Pasar' 
         : markets.find(m => String(m.id) === String(params.marketId))?.nama_pasar || 'Unknown';
 
-      // Fetch all data berdasarkan filter
+      // Fetch all data berdasarkan filter dengan pagination
       const PAGE = 500;
       let page = 1;
       let allData: any[] = [];
@@ -117,57 +256,36 @@ export default function Backup() {
         return;
       }
 
-      // Format data untuk export (gunakan fungsi yang sama dengan Dashboard)
+      // Format data untuk export (format yang SAMA dengan Dashboard)
       const flat = allData.map((r: any) => ({
+        date: r.date || r.tanggal,
         tanggal: r.date || r.tanggal,
+        market: r.market || r.pasar || r.marketName || r.market_name,
         pasar: r.market || r.pasar || r.marketName || r.market_name,
+        commodity: r.commodity || r.komoditas || r.commodityName || r.commodity_name,
         komoditas: r.commodity || r.komoditas || r.commodityName || r.commodity_name,
+        price: Number(r.price ?? r.harga ?? 0),
         harga: Number(r.price ?? r.harga ?? 0),
       }));
 
-      // Helper untuk build rows (simplified version dari Dashboard)
-      const byDate = new Map<string, any>();
-      for (const r of flat) {
-        const tanggal = r.tanggal;
-        if (!byDate.has(tanggal)) {
-          byDate.set(tanggal, {
-            week: '',
-            day: new Date(tanggal).getDate(),
-            beras: 0,
-            minyakGorengKemasan: 0,
-            minyakGorengCurah: 0,
-            tepungTeriguKemasan: 0,
-            tepungTeriguCurah: 0,
-            gulaPasir: 0,
-            telurAyam: 0,
-            dagingSapi: 0,
-            dagingAyam: 0,
-            kedelai: 0,
-            bawangMerah: 0,
-            bawangPutih: 0,
-            cabeMerahBesar: 0,
-            cabeRawit: 0,
-            ikanHaruan: 0,
-            ikanTongkol: 0,
-            ikanMas: 0,
-            ikanPatin: 0,
-            ikanPapuyu: 0,
-            ikanBandeng: 0,
-            ikanKembung: 0,
-          });
-        }
-      }
+      // Build rows dengan fungsi yang sama dengan Dashboard
+      const { rows, monthLabel } = buildRowsForExport(
+        flat,
+        marketName,
+        params.startDate || undefined,
+        params.endDate || undefined
+      );
 
-      const rows = Array.from(byDate.values());
-      const dateLabel = params.startDate 
-        ? new Date(params.startDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
-        : new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long' });
-
+      // Export dengan format yang sama
       await exportMarketExcel({
-        title: `Backup Data Harga Pangan - ${marketName}`,
-        monthLabel: dateLabel,
+        title: `Harga Pasar Bahan Pangan Tingkat Produsen di ${marketName} ${
+          monthLabel.split(" ")[1]
+        }`,
+        monthLabel,
         rows,
-        fileName: `backup-${marketName.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`,
+        fileName: `${marketName.toLowerCase().replace(/\s+/g, "-")}-${
+          params.startDate ? params.startDate.slice(0, 7) : new Date().toISOString().slice(0, 7)
+        }.xlsx`,
       });
     } catch (error: any) {
       console.error('[Backup] Export error:', error);
