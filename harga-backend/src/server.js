@@ -49,6 +49,8 @@ const allowedOrigins = [
   process.env.FRONTEND_ORIGIN, // Allow custom env var
 ].filter(Boolean);
 
+console.log('[CORS] Allowed origins:', allowedOrigins);
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -58,15 +60,18 @@ app.use(
         return callback(null, true);
       }
       
+      console.log('[CORS] Checking origin:', origin, '| Allowed:', allowedOrigins.includes(origin));
+      
       if (allowedOrigins.includes(origin)) {
-        console.log('[CORS] Allowed origin:', origin);
+        console.log('[CORS] ✅ Allowed origin:', origin);
         callback(null, true);
       } else {
-        console.warn('[CORS] Blocked origin:', origin);
+        console.warn('[CORS] ❌ Blocked origin:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
+    optionsSuccessStatus: 200, // For legacy browsers
   })
 );
 
