@@ -231,6 +231,9 @@ export default function Backup() {
         ? 'Semua Pasar' 
         : markets.find(m => String(m.id) === String(params.marketId))?.nama_pasar || 'Unknown';
 
+      console.log('[Backup Export] Starting export for:', marketName);
+      console.log('[Backup Export] Params:', params);
+
       // Fetch all data berdasarkan filter dengan pagination
       const PAGE = 500;
       let page = 1;
@@ -251,6 +254,8 @@ export default function Backup() {
         page += 1;
       }
 
+      console.log('[Backup Export] Fetched records:', allData.length);
+
       if (allData.length === 0) {
         alert('Tidak ada data untuk di-export dengan filter yang dipilih.');
         return;
@@ -268,6 +273,8 @@ export default function Backup() {
         harga: Number(r.price ?? r.harga ?? 0),
       }));
 
+      console.log('[Backup Export] Sample flat data:', flat.slice(0, 3));
+
       // Build rows dengan fungsi yang sama dengan Dashboard
       const { rows, monthLabel } = buildRowsForExport(
         flat,
@@ -275,6 +282,10 @@ export default function Backup() {
         params.startDate || undefined,
         params.endDate || undefined
       );
+
+      console.log('[Backup Export] Built rows:', rows.length);
+      console.log('[Backup Export] Sample row:', rows[0]);
+      console.log('[Backup Export] Month label:', monthLabel);
 
       // Export dengan format yang sama
       await exportMarketExcel({
@@ -287,6 +298,8 @@ export default function Backup() {
           params.startDate ? params.startDate.slice(0, 7) : new Date().toISOString().slice(0, 7)
         }.xlsx`,
       });
+
+      console.log('[Backup Export] Export completed successfully!');
     } catch (error: any) {
       console.error('[Backup] Export error:', error);
       alert('Gagal export: ' + error.message);
