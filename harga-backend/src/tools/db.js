@@ -69,12 +69,30 @@ export function collections() {
 
 export async function getNextSeq(name) {
   const { counters } = collections();
-  const res = await counters.findOneAndUpdate(
-    { _id: name },
-    { $inc: { seq: 1 } },
-    { upsert: true, returnDocument: 'after' }
-  );
-  return res.value?.seq || 1;
+  
+  try {
+    const res = await counters.findOneAndUpdate(
+      { _id: name },
+      { $inc: { seq: 1 } },
+      { upsert: true, returnDocument: 'after' }
+    );
+    
+    const nextId = res.value?.seq || 1;
+    console.log(`[getNextSeq] ${name}:`, { nextId, counterDoc: res.value });
+    return nextId;
+  } catch (error) {
+    console.error(`[getNextSeq] Error for ${name}:`, error);
+    
+    // Fallback: get max id from collection
+    const collectionName = name;
+    const collection = getDb().collection(collectionName);
+    const maxDoc = await collection.find({}).project({ id: 1 }).sort({ id: -1 }).limit(1).toArray();
+    const maxId = maxDoc[0]?.id || 0;
+    const nextId = maxId + 1;
+    
+    console.log(`[getNextSeq] Fallback for ${name}:`, { maxId, nextId });
+    return nextId;
+  }
 }
 
 export async function closeMongo() {
