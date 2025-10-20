@@ -49,6 +49,10 @@ async function getCommodityByName(namaKomoditas) {
  */
 router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => {
   try {
+    console.log('[Mobile Report] User:', req.mobileUser);
+    console.log('[Mobile Report] Body:', req.body);
+    console.log('[Mobile Report] File:', req.file ? 'Yes' : 'No');
+    
     const b = req.body || {};
     const tanggal = (b.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
     const marketName = (b.market_name || '').trim();
@@ -110,7 +114,7 @@ router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => 
       { market_id: marketId, komoditas_id: komoditas.id, tanggal_lapor: tanggal },
       {
         $set: {
-          user_id: req.user?.id ?? null,
+          user_id: req.mobileUser?.id ?? null,
           harga: price,
           keterangan: notes,
           foto_url: fotoUrl,
