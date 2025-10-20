@@ -1,44 +1,27 @@
 // src/routes/mobileReports.js
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import requireMobileAuth from '../middleware/requireMobileAuth.js';
 import { collections, getNextSeq } from '../tools/db.js';
 import { bus } from '../events/bus.js';
+import { uploadToBlob, deleteFromBlob } from '../lib/blob.js';
 
 const router = Router();
 
 // === File upload (optional foto bukti) ===
-const uploadDir = process.env.NODE_ENV === 'production'
-  ? path.resolve('/tmp/uploads')
-  : path.resolve('tmp/uploads');
+// Gunakan memoryStorage untuk Vercel Blob (tidak pakai disk)
+const storage = multer.memoryStorage();
 
-// Try to create directory, but don't fail if it doesn't work (serverless)
-try {
-  fs.mkdirSync(uploadDir, { recursive: true });
-} catch (err) {
-  console.warn('Warning: Could not create upload directory:', err.message);
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    // Attempt to create directory dynamically for each upload
-    try {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    } catch (err) {
-      console.warn('Warning: mkdir failed in multer destination:', err.message);
-    }
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || '').toLowerCase();
-    cb(null, `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`);
-  },
-});
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_req, file, cb) => {
+    // Accept common image formats
+    if (!/image\/(jpeg|jpg|png|webp|heic)/.test(file.mimetype)) {
+      return cb(new Error('File harus berupa gambar (JPG/PNG/WebP)'));
+    }
+    cb(null, true);
+  },
 });
 
 // Helpers lookup ke tabel sesuai skema
@@ -91,14 +74,37 @@ router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => 
       return res.status(404).json({ message: `Komoditas "${commodityName}" tidak ditemukan` });
     }
 
+    // Upload foto bukti ke Vercel Blob (jika ada)
     let fotoUrl = null;
     if (req.file) {
-      fotoUrl = `/uploads/${req.file.filename}`;
+      try {
+        const ext = req.file.mimetype === 'image/png' ? '.png' : 
+                    req.file.mimetype === 'image/webp' ? '.webp' : 
+                    req.file.mimetype === 'image/heic' ? '.heic' : '.jpg';
+        const filename = `bukti/${marketId}-${komoditas.id}-${tanggal}-${Date.now()}${ext}`;
+        
+        const blob = await uploadToBlob(req.file.buffer, filename, {
+          contentType: req.file.mimetype,
+        });
+        fotoUrl = blob.url;
+        console.log('[Mobile Report] Foto bukti uploaded to Blob:', fotoUrl);
+      } catch (err) {
+        console.error('[Mobile Report] Failed to upload foto to Blob:', err);
+        // Continue without photo if upload fails (non-blocking)
+      }
     }
 
     const gpsUrl = lat != null && lng != null ? `https://maps.google.com/?q=${lat},${lng}` : null;
 
     const { laporan_harga } = collections();
+    
+    // Cek apakah sudah ada data (untuk delete old photo)
+    const existing = await laporan_harga.findOne(
+      { market_id: marketId, komoditas_id: komoditas.id, tanggal_lapor: tanggal },
+      { projection: { foto_url: 1 } }
+    );
+    const oldFotoUrl = existing?.foto_url || null;
+
     const newId = await getNextSeq('laporan_harga');
     await laporan_harga.updateOne(
       { market_id: marketId, komoditas_id: komoditas.id, tanggal_lapor: tanggal },
@@ -118,6 +124,13 @@ router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => 
       },
       { upsert: true }
     );
+
+    // Hapus foto lama dari Vercel Blob (jika ada dan beda dengan foto baru)
+    if (oldFotoUrl && oldFotoUrl !== fotoUrl && fotoUrl) {
+      await deleteFromBlob(oldFotoUrl).catch(err => {
+        console.warn('[Mobile Report] Failed to delete old foto from Blob:', err.message);
+      });
+    }
 
     // 🔔 broadcast ke klien (dashboard)
     bus.emit('prices:changed', {
