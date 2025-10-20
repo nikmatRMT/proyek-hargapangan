@@ -121,14 +121,23 @@ function writeTableToWorksheet(
   });
 
   // ===== Data (mulai baris berikutnya)
+  // Helper: sanitize number values (0 if invalid)
+  const safeNum = (val: any): number => {
+    const n = Number(val);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+  
   const toRow = (r: MarketRow): (string | number)[] => [
     '',
-    r.week || '',
-    r.day,
-    r.beras, r.minyakGorengKemasan, r.minyakGorengCurah, r.tepungTeriguKemasan,
-    r.tepungTeriguCurah, r.gulaPasir, r.telurAyam, r.dagingSapi, r.dagingAyam,
-    r.kedelai, r.bawangMerah, r.bawangPutih, r.cabeMerahBesar, r.cabeRawit,
-    r.ikanHaruan, r.ikanTongkol, r.ikanMas, r.ikanPatin, r.ikanPapuyu, r.ikanBandeng, r.ikanKembung,
+    String(r.week || ''),
+    safeNum(r.day),
+    safeNum(r.beras), safeNum(r.minyakGorengKemasan), safeNum(r.minyakGorengCurah), 
+    safeNum(r.tepungTeriguKemasan), safeNum(r.tepungTeriguCurah), safeNum(r.gulaPasir), 
+    safeNum(r.telurAyam), safeNum(r.dagingSapi), safeNum(r.dagingAyam),
+    safeNum(r.kedelai), safeNum(r.bawangMerah), safeNum(r.bawangPutih), 
+    safeNum(r.cabeMerahBesar), safeNum(r.cabeRawit),
+    safeNum(r.ikanHaruan), safeNum(r.ikanTongkol), safeNum(r.ikanMas), 
+    safeNum(r.ikanPatin), safeNum(r.ikanPapuyu), safeNum(r.ikanBandeng), safeNum(r.ikanKembung),
   ];
 
   const firstDataRowIdx = ws.lastRow.number + 1;
@@ -140,7 +149,10 @@ function writeTableToWorksheet(
       cell.font = { name: isWeekCell ? 'Arial' : 'Roboto', bold: isWeekCell };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.border = borderThin;
-      if (typeof cell.value === 'number') cell.numFmt = '#,##0';
+      // Only apply number format if value is valid number
+      if (typeof cell.value === 'number' && Number.isFinite(cell.value)) {
+        cell.numFmt = '#,##0';
+      }
     });
   }
 
@@ -166,8 +178,9 @@ function writeTableToWorksheet(
   // ===== Rata-Rata (pakai baris yang punya label minggu)
   const weekRows = rows.filter((r) => r.week && r.week.trim() !== '');
   const avg = (k: keyof MarketRow) => {
-    const nums = weekRows.map((r) => Number(r[k] ?? 0));
-    return Math.round(nums.reduce((a, b) => a + b, 0) / (nums.length || 1));
+    const nums = weekRows.map((r) => Number(r[k] ?? 0)).filter(n => Number.isFinite(n) && n >= 0);
+    if (nums.length === 0) return 0;
+    return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
   };
 
   const avgRow: any = ws.addRow([
@@ -178,7 +191,7 @@ function writeTableToWorksheet(
     avg('ikanHaruan'), avg('ikanTongkol'), avg('ikanMas'), avg('ikanPatin'), avg('ikanPapuyu'), avg('ikanBandeng'), avg('ikanKembung'),
   ]);
 
-  const greyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D6DCE4' } };
+  const greyFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFD6DCE4' } };
   avgRow.eachCell((cell: any, col: number) => {
     if (col === 1) return;
     cell.font = { name: 'Roboto', bold: true };
@@ -189,7 +202,10 @@ function writeTableToWorksheet(
       bottom: { style: 'medium' as const },
       right: { style: 'thin' as const },
     };
-    if (typeof cell.value === 'number') cell.numFmt = '#,##0';
+    // Validate number before applying format
+    if (typeof cell.value === 'number' && Number.isFinite(cell.value)) {
+      cell.numFmt = '#,##0';
+    }
     cell.fill = greyFill;
   });
   ws.mergeCells(avgRow.number, 2, avgRow.number, 3);
