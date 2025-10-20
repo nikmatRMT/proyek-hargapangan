@@ -55,7 +55,12 @@ async function http(path, { method = 'GET', body, auth = false, headers = {} } =
   const hs = { Accept: 'application/json', 'Content-Type': 'application/json', ...headers };
   if (auth) {
     const token = await getToken();
-    if (token) hs.Authorization = `Bearer ${token}`;
+    if (token) {
+      hs.Authorization = `Bearer ${token}`;
+      console.log('[API] Sending request with token:', token.substring(0, 20) + '...');
+    } else {
+      console.warn('[API] No token found in storage!');
+    }
   }
 
   let res;
@@ -71,7 +76,12 @@ async function postForm(path, form, { auth = false, headers = {} } = {}) {
   const hs = { Accept: 'application/json', ...headers }; // JANGAN set Content-Type manual
   if (auth) {
     const token = await getToken();
-    if (token) hs.Authorization = `Bearer ${token}`;
+    if (token) {
+      hs.Authorization = `Bearer ${token}`;
+      console.log('[API] Sending request with token:', token.substring(0, 20) + '...');
+    } else {
+      console.warn('[API] No token found in storage!');
+    }
   }
 
   let res;
