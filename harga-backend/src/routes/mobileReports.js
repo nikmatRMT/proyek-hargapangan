@@ -10,11 +10,27 @@ import { bus } from '../events/bus.js';
 const router = Router();
 
 // === File upload (optional foto bukti) ===
-const uploadDir = path.resolve('tmp/uploads');
-fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = process.env.NODE_ENV === 'production'
+  ? path.resolve('/tmp/uploads')
+  : path.resolve('tmp/uploads');
+
+// Try to create directory, but don't fail if it doesn't work (serverless)
+try {
+  fs.mkdirSync(uploadDir, { recursive: true });
+} catch (err) {
+  console.warn('Warning: Could not create upload directory:', err.message);
+}
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
+  destination: (_req, _file, cb) => {
+    // Attempt to create directory dynamically for each upload
+    try {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    } catch (err) {
+      console.warn('Warning: mkdir failed in multer destination:', err.message);
+    }
+    cb(null, uploadDir);
+  },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname || '').toLowerCase();
     cb(null, `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`);
