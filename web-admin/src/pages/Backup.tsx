@@ -1,8 +1,10 @@
 // src/pages/Backup.tsx
 import { useEffect, useState } from 'react';
-import { Database, HardDrive, FileText, RefreshCw, Trash2 } from 'lucide-react';
+import { Database, HardDrive, FileText, RefreshCw } from 'lucide-react';
 import * as api from '@/api';
 import BackupExportForm, { type ExportParams } from '@/components/BackupExportForm';
+import { fetchReports } from '@/api';
+import { exportMarketExcel } from '@/utils/exportExcel';
 
 interface StorageStats {
   dataSize: number;
@@ -86,36 +88,97 @@ export default function Backup() {
 
   const handleExport = async (params: ExportParams) => {
     try {
-      // For Phase 2, we'll use backend endpoint for export
-      // This will be implemented in next step
-      alert(`📥 Export akan dimulai dengan parameter:\n\n` +
-        `Tanggal: ${params.startDate || 'Semua'} - ${params.endDate || 'Semua'}\n` +
-        `Pasar: ${params.marketId === 'all' ? 'Semua Pasar' : markets.find(m => m.id === params.marketId)?.nama_pasar}\n\n` +
-        `Backend endpoint /api/backup/export akan dibuat di commit berikutnya.`
-      );
+      const marketName = params.marketId === 'all' 
+        ? 'Semua Pasar' 
+        : markets.find(m => String(m.id) === String(params.marketId))?.nama_pasar || 'Unknown';
+
+      // Fetch all data berdasarkan filter
+      const PAGE = 500;
+      let page = 1;
+      let allData: any[] = [];
       
-      // TODO: Implement backend endpoint
-      // const query = new URLSearchParams();
-      // if (params.startDate) query.append('startDate', params.startDate);
-      // if (params.endDate) query.append('endDate', params.endDate);
-      // if (params.marketId !== 'all') query.append('market_id', params.marketId);
-      // 
-      // const blob = await api.post(`/api/backup/export?${query}`);
-      // saveBlob(blob, 'backup-harga.xlsx');
+      for (;;) {
+        const res = await fetchReports({
+          from: params.startDate || undefined,
+          to: params.endDate || undefined,
+          market: params.marketId === 'all' ? 'all' : Number(params.marketId),
+          sort: 'asc',
+          page,
+          pageSize: PAGE,
+        });
+        const rows = res.rows || [];
+        allData = allData.concat(rows);
+        if ((res.total && allData.length >= res.total) || rows.length < PAGE) break;
+        page += 1;
+      }
+
+      if (allData.length === 0) {
+        alert('Tidak ada data untuk di-export dengan filter yang dipilih.');
+        return;
+      }
+
+      // Format data untuk export (gunakan fungsi yang sama dengan Dashboard)
+      const flat = allData.map((r: any) => ({
+        tanggal: r.date || r.tanggal,
+        pasar: r.market || r.pasar || r.marketName || r.market_name,
+        komoditas: r.commodity || r.komoditas || r.commodityName || r.commodity_name,
+        harga: Number(r.price ?? r.harga ?? 0),
+      }));
+
+      // Helper untuk build rows (simplified version dari Dashboard)
+      const byDate = new Map<string, any>();
+      for (const r of flat) {
+        const tanggal = r.tanggal;
+        if (!byDate.has(tanggal)) {
+          byDate.set(tanggal, {
+            week: '',
+            day: new Date(tanggal).getDate(),
+            beras: 0,
+            minyakGorengKemasan: 0,
+            minyakGorengCurah: 0,
+            tepungTeriguKemasan: 0,
+            tepungTeriguCurah: 0,
+            gulaPasir: 0,
+            telurAyam: 0,
+            dagingSapi: 0,
+            dagingAyam: 0,
+            kedelai: 0,
+            bawangMerah: 0,
+            bawangPutih: 0,
+            cabeMerahBesar: 0,
+            cabeRawit: 0,
+            ikanHaruan: 0,
+            ikanTongkol: 0,
+            ikanMas: 0,
+            ikanPatin: 0,
+            ikanPapuyu: 0,
+            ikanBandeng: 0,
+            ikanKembung: 0,
+          });
+        }
+      }
+
+      const rows = Array.from(byDate.values());
+      const dateLabel = params.startDate 
+        ? new Date(params.startDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
+        : new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long' });
+
+      await exportMarketExcel({
+        title: `Backup Data Harga Pangan - ${marketName}`,
+        monthLabel: dateLabel,
+        rows,
+        fileName: `backup-${marketName.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`,
+      });
     } catch (error: any) {
       console.error('[Backup] Export error:', error);
+      alert('Gagal export: ' + error.message);
       throw error;
     }
   };
 
-  const handleDelete = async () => {
-    const confirm = window.confirm(
-      '⚠️ PERHATIAN!\n\nFitur Delete Data akan menghapus data permanen dari database.\n\nUntuk saat ini, gunakan MongoDB Atlas Dashboard untuk mengelola data.\n\nLanjutkan ke MongoDB Atlas?'
-    );
-    
-    if (confirm) {
-      window.open('https://cloud.mongodb.com', '_blank');
-    }
+  const handleGoToDashboard = () => {
+    // Redirect ke Dashboard dengan hash untuk auto-scroll ke delete section
+    window.location.href = '/#delete';
   };
 
   const getStatusColor = (percentage: number): string => {
@@ -133,7 +196,10 @@ export default function Backup() {
   if (loading) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">💾 Backup & Storage</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <Database className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl font-bold">Backup & Storage</h1>
+        </div>
         <div className="text-center py-12">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Memuat data storage...</p>
@@ -145,7 +211,10 @@ export default function Backup() {
   if (!storage) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">💾 Backup & Storage</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <Database className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl font-bold">Backup & Storage</h1>
+        </div>
         <div className="text-center py-12 text-red-600">
           <p>Gagal memuat data storage. Refresh halaman atau hubungi admin.</p>
         </div>
@@ -156,7 +225,10 @@ export default function Backup() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">💾 Backup & Storage Management</h1>
+        <div className="flex items-center gap-3">
+          <Database className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl font-bold">Backup & Storage Management</h1>
+        </div>
         <button
           onClick={fetchStats}
           className="inline-flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-accent"
@@ -204,8 +276,8 @@ export default function Backup() {
               </p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {storage.critical ? '🚨 Critical' : storage.warning ? '⚠️ Warning' : '✅ Healthy'}
+          <p className={`text-sm font-medium ${storage.critical ? 'text-red-600' : storage.warning ? 'text-yellow-600' : 'text-green-600'}`}>
+            {storage.critical ? 'Critical' : storage.warning ? 'Warning' : 'Healthy'}
           </p>
         </div>
       </div>
@@ -224,16 +296,23 @@ export default function Backup() {
             style={{ width: `${Math.min(storage.percentage, 100)}%` }}
           />
         </div>
-        <p className="text-sm text-muted-foreground mt-2">
-          {storage.percentage < 70 && '✅ Storage dalam kondisi baik'}
-          {storage.percentage >= 70 && storage.percentage < 85 && '⚠️ Pertimbangkan untuk backup data lama'}
-          {storage.percentage >= 85 && '🚨 Segera backup dan archive data!'}
+        <p className={`text-sm font-medium mt-2 ${
+          storage.percentage < 70 ? 'text-green-700' : 
+          storage.percentage < 85 ? 'text-yellow-700' : 
+          'text-red-700'
+        }`}>
+          {storage.percentage < 70 && 'Storage dalam kondisi baik'}
+          {storage.percentage >= 70 && storage.percentage < 85 && 'Pertimbangkan untuk backup data lama'}
+          {storage.percentage >= 85 && 'Segera backup dan archive data!'}
         </p>
       </div>
 
       {/* Backup Actions */}
       <div className="border rounded-lg p-6 bg-card">
-        <h2 className="text-lg font-semibold mb-4">🔄 Backup & Export</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <FileText className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-semibold">Backup & Export</h2>
+        </div>
         {markets.length === 0 ? (
           <p className="text-sm text-muted-foreground">Memuat daftar pasar...</p>
         ) : (
@@ -243,25 +322,32 @@ export default function Backup() {
 
       {/* Delete Data Section */}
       <div className="border rounded-lg p-6 bg-card border-red-200">
-        <h2 className="text-lg font-semibold mb-4 text-red-600">🗑️ Delete Data</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <Database className="w-5 h-5 text-red-600" />
+          <h2 className="text-lg font-semibold text-red-600">Delete Data</h2>
+        </div>
         <p className="text-sm text-muted-foreground mb-4">
           Hapus data lama untuk mengosongkan storage. Data yang dihapus tidak dapat dikembalikan.
         </p>
         <button
-          onClick={handleDelete}
-          className="flex items-center gap-3 px-4 py-3 border border-red-300 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+          onClick={handleGoToDashboard}
+          className="flex items-center gap-3 px-4 py-3 border border-red-300 rounded-lg hover:bg-red-50 transition-colors text-red-600 w-full"
         >
-          <Trash2 className="w-5 h-5" />
-          <div className="text-left">
+          <Database className="w-5 h-5" />
+          <div className="text-left flex-1">
             <p className="font-semibold">Delete Data Bulanan</p>
-            <p className="text-sm text-muted-foreground">Kelola dan hapus data dari MongoDB</p>
+            <p className="text-sm text-muted-foreground">Buka Dashboard untuk hapus data per bulan & pasar</p>
           </div>
+          <span className="text-sm">→</span>
         </button>
       </div>
 
       {/* Collections Breakdown */}
       <div className="border rounded-lg p-6 bg-card">
-        <h2 className="text-lg font-semibold mb-4">📊 Collections Breakdown</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <HardDrive className="w-5 h-5 text-purple-600" />
+          <h2 className="text-lg font-semibold">Collections Breakdown</h2>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted">
@@ -292,7 +378,9 @@ export default function Backup() {
 
       {/* Info Box */}
       <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
-        <p className="font-semibold text-blue-900 mb-2">💡 Tips:</p>
+        <p className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+          <FileText className="w-4 h-4" /> Tips:
+        </p>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
           <li>Backup data secara berkala untuk mencegah kehilangan data</li>
           <li>Archive data lebih dari 6-12 bulan untuk menghemat storage</li>

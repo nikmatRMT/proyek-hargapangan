@@ -105,12 +105,13 @@ export default function Login() {
         {/* Logo & Brand */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="bg-green-600 p-3 rounded-full">
-              <BarChart3 className="h-8 w-8 text-white" />
+            <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-2xl shadow-lg">
+              <BarChart3 className="h-10 w-10 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">HARPA BANUA</h1>
-          <p className="text-gray-600 mt-2">Harga Pangan Banjarbaru Aktual</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">HARPA BANUA</h1>
+          <p className="text-gray-600 text-lg">Harga Pangan Banjarbaru Aktual</p>
+          <p className="text-gray-500 text-sm mt-1">Sistem Monitoring Harga Pasar</p>
         </div>
 
         {/* Login Card */}
@@ -217,22 +218,22 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6">
+        <Card className="mt-6 border-blue-200 bg-blue-50/50">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Informasi
+              <Shield className="h-5 w-5 text-blue-600" />
+              Informasi Akun
             </CardTitle>
-            <CardDescription>
-              Akun Dibuatkan uleh Admin KP3.
+            <CardDescription className="text-blue-800">
+              Akun dibuat dan dikelola oleh Admin Dinas Ketahanan Pangan, Pertanian, dan Perikanan (DKP3) Kota Banjarbaru.
             </CardDescription>
           </CardHeader>
         </Card>
 
         <div className="text-center mt-6 text-sm text-gray-500">
-          <p>&copy; 2024 DKP3 Banjarbaru. All rights reserved.</p>
+          <p>&copy; 2025 DKP3 Banjarbaru. All rights reserved.</p>
           <p className="mt-1">
-            Dikembangkan oleh <span className="font-medium">code name 2210020047</span>
+            Dikembangkan oleh <span className="font-medium text-green-600">Tim IT DKP3</span>
           </p>
         </div>
       </div>
