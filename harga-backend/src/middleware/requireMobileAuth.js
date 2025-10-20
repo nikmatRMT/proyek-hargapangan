@@ -2,9 +2,8 @@
 import jwt from 'jsonwebtoken';
 import { collections } from '../tools/db.js';
 
-const {
-  MOBILE_JWT_SECRET = process.env.JWT_SECRET || 'change_this_mobile_secret',
-} = process.env;
+// Use same secret as mobileAuth.js
+const JWT_SECRET = process.env.MOBILE_JWT_SECRET || 'dev_mobile_secret';
 
 export default async function requireMobileAuth(req, res, next) {
   try {
@@ -15,7 +14,7 @@ export default async function requireMobileAuth(req, res, next) {
     }
 
     // Verifikasi JWT
-    const payload = jwt.verify(token, MOBILE_JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
 
     // Ambil id dari beberapa kemungkinan field
     const userId =
@@ -29,7 +28,8 @@ export default async function requireMobileAuth(req, res, next) {
 
     req.mobileUser = { id: u.id, role: u.role, username: u.username, name: u.nama_lengkap };
     next();
-  } catch (_e) {
+  } catch (e) {
+    console.error('[requireMobileAuth] Error:', e.message);
     return res.status(401).json({ message: 'Unauthorized' });
   }
 }
