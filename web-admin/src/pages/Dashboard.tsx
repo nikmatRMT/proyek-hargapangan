@@ -642,8 +642,8 @@ function DangerBulkDelete({
       <button
         onClick={handlePreview}
         disabled={loading || selectedMarketId === "all"}
-        className="px-3 py-2 border rounded-lg text-sm bg-white"
-        title="Hitung data yang akan dihapus"
+        className="px-3 py-2 border rounded-lg text-sm bg-white hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        title={selectedMarketId === "all" ? "Pilih 1 pasar tertentu dulu" : "Hitung data yang akan dihapus"}
       >
         Preview
       </button>
@@ -651,15 +651,25 @@ function DangerBulkDelete({
       <button
         onClick={handleDelete}
         disabled={loading || selectedMarketId === "all" || (preview !== null && preview === 0)}
-        className="px-3 py-2 rounded-lg text-sm bg-red-600 text-white disabled:opacity-60"
-        title="Hapus semua data untuk bulan & pasar terpilih"
+        className="px-3 py-2 rounded-lg text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+        title={
+          selectedMarketId === "all" 
+            ? "Pilih 1 pasar tertentu dulu" 
+            : preview === 0 
+            ? "Tidak ada data untuk dihapus pada bulan & pasar terpilih" 
+            : "Hapus semua data untuk bulan & pasar terpilih"
+        }
       >
         Hapus Bulan Ini
       </button>
 
       {preview !== null && (
-        <span className="text-sm text-red-700">
-          Akan dihapus: <b>{preview}</b> baris
+        <span className={`text-sm ${preview > 0 ? 'text-red-700 font-semibold' : 'text-gray-500'}`}>
+          {preview > 0 ? (
+            <>Akan dihapus: <b>{preview}</b> baris</>
+          ) : (
+            <>Tidak ada data untuk bulan & pasar ini</>
+          )}
         </span>
       )}
     </div>
