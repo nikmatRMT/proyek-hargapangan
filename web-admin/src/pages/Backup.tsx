@@ -1,9 +1,8 @@
 // src/pages/Backup.tsx
 import { useEffect, useState } from 'react';
-import { Download, Database, HardDrive, FileText, Cloud, RefreshCw, Trash2 } from 'lucide-react';
+import { Database, HardDrive, FileText, RefreshCw, Trash2 } from 'lucide-react';
 import * as api from '@/api';
 import BackupExportForm, { type ExportParams } from '@/components/BackupExportForm';
-import { exportMarketExcel } from '@/utils/exportExcel';
 
 interface StorageStats {
   dataSize: number;
