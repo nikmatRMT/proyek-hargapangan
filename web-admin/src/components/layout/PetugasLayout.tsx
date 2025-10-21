@@ -101,9 +101,9 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-      {/* Header - Simple & Clean */}
+      {/* Header - Mobile Optimized */}
       <header className="bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 text-white shadow-lg sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 max-w-6xl">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
             <button
@@ -111,59 +111,59 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
                 window.history.pushState({}, '', '/input-data');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
-              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 sm:gap-4 hover:opacity-80 transition-opacity min-w-0 flex-1 mr-4"
             >
-              <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm p-2 shadow-lg">
-                <img src="/logo.png" alt="Logo" className="h-full w-full rounded-lg object-contain" />
+              <div className="h-8 w-8 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm p-1 sm:p-2 shadow-lg flex-shrink-0">
+                <img src="/logo.png" alt="Logo" className="h-full w-full rounded object-contain" />
               </div>
-              <div className="text-left">
-                <h1 className="text-xl font-bold tracking-tight">HARPA BANUA</h1>
-                <p className="text-sm text-green-100 font-medium">Input Data Harga Pangan</p>
+              <div className="text-left min-w-0">
+                <h1 className="text-base sm:text-xl font-bold tracking-tight truncate">HARPA BANUA</h1>
+                <p className="text-xs sm:text-sm text-green-100 font-medium hidden sm:block">Input Data Harga Pangan</p>
               </div>
             </button>
 
             {/* User Info & Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               {/* User Avatar */}
               <button
                 onClick={navigateToProfile}
-                className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-green-500/30 transition-colors group"
+                className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 rounded-lg sm:rounded-xl hover:bg-green-500/30 transition-colors group"
                 title="Profil"
               >
                 {avatarUrl ? (
                   <img
                     key={tick}
                     src={avatarUrl}
-                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-105 transition-transform"
+                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-105 transition-transform"
                     alt={displayName}
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-white text-green-600 grid place-items-center font-bold text-base shadow-sm group-hover:scale-105 transition-transform">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white text-green-600 grid place-items-center font-bold text-sm sm:text-base shadow-sm group-hover:scale-105 transition-transform">
                     {initial}
                   </div>
                 )}
-                <div className="text-left hidden sm:block">
-                  <span className="text-sm font-medium block">{displayName}</span>
+                <div className="text-left hidden lg:block">
+                  <span className="text-sm font-medium block truncate max-w-24">{displayName}</span>
                   <span className="text-xs text-green-100 opacity-80">Petugas</span>
                 </div>
               </button>
 
-              {/* Dark Mode Toggle */}
+              {/* Dark Mode Toggle - Hidden on small screens */}
               <button
                 onClick={toggleDarkMode}
-                className="p-3 rounded-xl hover:bg-green-500/30 transition-colors"
+                className="p-2 sm:p-3 rounded-lg sm:rounded-xl hover:bg-green-500/30 transition-colors hidden sm:block"
                 title={isDarkMode ? 'Mode Cerah' : 'Mode Gelap'}
               >
-                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {isDarkMode ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
 
               {/* Logout */}
               <button
                 onClick={handleLogout}
-                className="p-3 rounded-xl hover:bg-red-500/30 transition-colors text-white"
+                className="p-2 sm:p-3 rounded-lg sm:rounded-xl hover:bg-red-500/30 transition-colors text-white"
                 title="Keluar"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
           </div>
@@ -171,18 +171,18 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-6xl min-h-[calc(100vh-200px)]">
+      <main className="container mx-auto px-0 sm:px-4 py-4 sm:py-8 max-w-6xl min-h-[calc(100vh-180px)]">
         {children}
       </main>
 
       {/* Footer */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="container mx-auto px-4 py-4 sm:py-6 max-w-6xl">
           <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
               © 2025 HARPA BANUA - Dinas Ketahanan Pangan Banjarbaru
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1 hidden sm:block">
               Sistem Monitoring Harga Pangan Strategis
             </p>
           </div>

@@ -45,14 +45,14 @@ const KOMODITAS_LIST = [
 function StepCard({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
   return (
     <Card className="shadow-sm">
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4 mb-6">
-          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 flex items-center justify-center font-bold text-lg border-2 border-green-200 dark:border-green-700">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 flex items-center justify-center font-bold text-lg border-2 border-green-200 dark:border-green-700">
             {number}
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 pt-2">{title}</h3>
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 pt-1 sm:pt-2">{title}</h3>
         </div>
-        <div className="space-y-6 pl-16">
+        <div className="space-y-4 sm:space-y-6 pl-0 sm:pl-16">
           {children}
         </div>
       </CardContent>
@@ -224,179 +224,186 @@ export default function InputDataPage() {
   const selectedCommodityData = KOMODITAS_LIST.find(k => k.value === selectedCommodity);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Success/Error Messages */}
       {error && (
-        <Alert variant="destructive" className="shadow-sm">
+        <Alert variant="destructive" className="shadow-sm mx-2 sm:mx-0">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="text-sm">{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert className="border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 shadow-sm">
+        <Alert className="border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 shadow-sm mx-2 sm:mx-0">
           <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
+          <AlertDescription className="text-sm">{success}</AlertDescription>
         </Alert>
       )}
 
       {/* Step 1: Lokasi Pantauan */}
-      <StepCard number="1" title="Lokasi Pantauan">
-        <div className="space-y-3">
-          <Label htmlFor="market" className="text-base font-medium">Pilih Lokasi Pasar</Label>
-          <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-            <SelectTrigger id="market" className="h-12 text-base">
-              <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
-            </SelectTrigger>
-            <SelectContent>
-              {PASAR_LIST.map(pasar => (
-                <SelectItem key={pasar.value} value={pasar.value} className="text-base py-3">
-                  {pasar.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </StepCard>
-
-      {/* Step 2: Detail Harga Komoditas */}
-      <StepCard number="2" title="Detail Harga Komoditas">
-        <div className="space-y-6">
+      <div className="mx-2 sm:mx-0">
+        <StepCard number="1" title="Lokasi Pantauan">
           <div className="space-y-3">
-            <Label htmlFor="commodity" className="text-base font-medium">Pilih Komoditas</Label>
-            <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
-              <SelectTrigger id="commodity" className="h-12 text-base">
-                <SelectValue placeholder="-- Pilih Komoditas --" />
+            <Label htmlFor="market" className="text-sm sm:text-base font-medium">Pilih Lokasi Pasar</Label>
+            <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+              <SelectTrigger id="market" className="h-12 text-sm sm:text-base">
+                <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
               </SelectTrigger>
               <SelectContent>
-                {KOMODITAS_LIST.map(komoditas => (
-                  <SelectItem key={komoditas.value} value={komoditas.value} className="text-base py-3">
-                    {komoditas.label}
+                {PASAR_LIST.map(pasar => (
+                  <SelectItem key={pasar.value} value={pasar.value} className="text-sm sm:text-base py-3">
+                    {pasar.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+        </StepCard>
+      </div>
 
-          <div className="space-y-3">
-            <Label htmlFor="price" className="text-base font-medium">
-              Masukkan Harga {selectedCommodityData ? `(Rp per ${selectedCommodityData.unit})` : '(Rp)'}
-            </Label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium text-base">
-                Rp
-              </span>
-              <Input
-                id="price"
-                type="text"
-                placeholder="0"
-                value={formatRupiah(price)}
-                onChange={handlePriceChange}
-                className="h-12 pl-12 pr-4 text-base font-medium"
-              />
+      {/* Step 2: Detail Harga Komoditas */}
+      <div className="mx-2 sm:mx-0">
+        <StepCard number="2" title="Detail Harga Komoditas">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="commodity" className="text-sm sm:text-base font-medium">Pilih Komoditas</Label>
+              <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
+                <SelectTrigger id="commodity" className="h-12 text-sm sm:text-base">
+                  <SelectValue placeholder="-- Pilih Komoditas --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {KOMODITAS_LIST.map(komoditas => (
+                    <SelectItem key={komoditas.value} value={komoditas.value} className="text-sm sm:text-base py-3">
+                      {komoditas.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            {price && Number(price) > 0 && (
-              <p className="text-sm text-muted-foreground bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                💰 <strong>Rp {formatRupiah(price)}</strong>
-              </p>
+
+            <div className="space-y-3">
+              <Label htmlFor="price" className="text-sm sm:text-base font-medium">
+                Masukkan Harga {selectedCommodityData ? `(Rp per ${selectedCommodityData.unit})` : '(Rp)'}
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium text-sm sm:text-base">
+                  Rp
+                </span>
+                <Input
+                  id="price"
+                  type="text"
+                  placeholder="0"
+                  value={formatRupiah(price)}
+                  onChange={handlePriceChange}
+                  className="h-12 pl-10 sm:pl-12 pr-3 sm:pr-4 text-sm sm:text-base font-medium"
+                />
+              </div>
+              {price && Number(price) > 0 && (
+                <p className="text-xs sm:text-sm text-muted-foreground bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 rounded-lg">
+                  💰 <strong>Rp {formatRupiah(price)}</strong>
+                </p>
+              )}
+            </div>
+
+            {gps.lat && gps.lng && (
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 p-3 sm:p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium">Lokasi GPS Terdeteksi</p>
+                  <p className="text-xs opacity-80 break-all">{gps.lat}, {gps.lng}</p>
+                </div>
+              </div>
             )}
           </div>
-
-          {gps.lat && gps.lng && (
-            <div className="flex items-center gap-3 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
-              <MapPin className="h-5 w-5" />
-              <div>
-                <p className="font-medium">Lokasi GPS Terdeteksi</p>
-                <p className="text-xs opacity-80">{gps.lat}, {gps.lng}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </StepCard>
+        </StepCard>
+      </div>
 
       {/* Step 3: Informasi Tambahan (Opsional) */}
-      <StepCard number="3" title="Informasi Tambahan (Opsional)">
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="notes" className="text-base font-medium">Keterangan / Catatan</Label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Contoh: Harga cabai naik karena cuaca..."
-              className="w-full min-h-[120px] p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              maxLength={200}
-            />
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">{notes.length}/200 karakter</p>
-              <div className="text-xs text-gray-400">💡 Opsional</div>
+      <div className="mx-2 sm:mx-0">
+        <StepCard number="3" title="Informasi Tambahan (Opsional)">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="notes" className="text-sm sm:text-base font-medium">Keterangan / Catatan</Label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Contoh: Harga cabai naik karena cuaca..."
+                className="w-full min-h-[100px] sm:min-h-[120px] p-3 sm:p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-sm sm:text-base resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                maxLength={200}
+              />
+              <div className="flex justify-between items-center text-xs sm:text-sm">
+                <p className="text-muted-foreground">{notes.length}/200 karakter</p>
+                <div className="text-gray-400">💡 Opsional</div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="photo" className="text-sm sm:text-base font-medium">Foto Bukti</Label>
+              {!photoPreview ? (
+                <label 
+                  htmlFor="photo" 
+                  className="flex flex-col items-center justify-center gap-2 sm:gap-3 w-full h-24 sm:h-32 px-3 sm:px-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors group"
+                >
+                  <Camera className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 group-hover:text-green-500 transition-colors" />
+                  <div className="text-center">
+                    <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-medium">Upload Foto Bukti</span>
+                    <p className="text-xs sm:text-sm text-gray-400 mt-1">JPG, PNG, WebP (maks 5MB)</p>
+                  </div>
+                  <input
+                    id="photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
+                </label>
+              ) : (
+                <div className="relative bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg">
+                  <img 
+                    src={photoPreview} 
+                    alt="Preview" 
+                    className="w-full h-48 sm:h-64 object-cover rounded-lg shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="absolute top-5 sm:top-6 right-5 sm:right-6 p-1.5 sm:p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg transition-colors"
+                  >
+                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </button>
+                  <div className="mt-2 sm:mt-3 flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{photo?.name}</p>
+                      <p className="text-xs text-gray-500">Ukuran: {photo && (photo.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <div className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900 px-2 py-1 rounded flex-shrink-0">
+                      ✓ Siap
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="photo" className="text-base font-medium">Foto Bukti</Label>
-            {!photoPreview ? (
-              <label 
-                htmlFor="photo" 
-                className="flex flex-col items-center justify-center gap-3 w-full h-32 px-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors group"
-              >
-                <Camera className="h-8 w-8 text-gray-400 group-hover:text-green-500 transition-colors" />
-                <div className="text-center">
-                  <span className="text-base text-gray-600 dark:text-gray-400 font-medium">Upload Foto Bukti</span>
-                  <p className="text-sm text-gray-400 mt-1">JPG, PNG, WebP (maks 5MB)</p>
-                </div>
-                <input
-                  id="photo"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
-              </label>
-            ) : (
-              <div className="relative bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <img 
-                  src={photoPreview} 
-                  alt="Preview" 
-                  className="w-full h-64 object-cover rounded-lg shadow-sm"
-                />
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  className="absolute top-6 right-6 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{photo?.name}</p>
-                    <p className="text-xs text-gray-500">Ukuran: {photo && (photo.size / 1024 / 1024).toFixed(2)} MB</p>
-                  </div>
-                  <div className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900 px-2 py-1 rounded">
-                    ✓ Siap
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </StepCard>
+        </StepCard>
+      </div>
 
       {/* Submit Button */}
-      <div className="pt-4">
+      <div className="pt-4 mx-2 sm:mx-0">
         <Button
           onClick={handleSubmit}
           disabled={loading || !selectedMarket || !selectedCommodity || !price}
-          className="w-full h-14 bg-green-600 hover:bg-green-700 text-lg font-semibold disabled:opacity-50 shadow-lg transition-all duration-200"
+          className="w-full h-12 sm:h-14 bg-green-600 hover:bg-green-700 text-base sm:text-lg font-semibold disabled:opacity-50 shadow-lg transition-all duration-200"
         >
           {loading ? (
             <>
-              <Loader2 className="h-6 w-6 mr-3 animate-spin" />
-              Mengirim Laporan...
+              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 animate-spin" />
+              <span className="hidden sm:inline">Mengirim Laporan...</span>
+              <span className="sm:hidden">Mengirim...</span>
             </>
           ) : (
             <>
-              <CheckCircle2 className="h-6 w-6 mr-3" />
+              <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
               Kirim Laporan
             </>
           )}

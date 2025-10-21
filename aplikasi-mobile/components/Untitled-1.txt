@@ -1,0 +1,5 @@
+MONGO_URI=mongodb+srv://Vercel-Admin-proyek-hargapangan:M6xSwPrwTctMFtLi@proyek-hargapangan.jcfbfhs.mongodb.net/?retryWrites=true&w=majority
+MONGO_DB_NAME=harga_pasar
+SESSION_SECRET=78707a8eba20c0d6e70a79dcee54d24b8a27dd9cfb6c0170ecf006b410ba77a3
+FRONTEND_ORIGIN=https://proyek-hargapangan.vercel.app
+NODE_ENV=production

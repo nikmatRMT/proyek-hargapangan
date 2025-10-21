@@ -165,11 +165,11 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F8FC' },
+  container: { flex: 1, backgroundColor: '#F0FDF4' },
 
   header: {
     width: '100%',
-    backgroundColor: '#1E40AF',
+    backgroundColor: '#059669', // Green-600
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
@@ -179,6 +179,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
   backButton: {
@@ -190,33 +194,85 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, alignItems: 'center' },
 
   profileCard: {
-    width: '100%', backgroundColor: 'white', borderRadius: 16,
-    padding: 24, alignItems: 'center', marginBottom: 20, elevation: 5,
+    width: '100%', 
+    backgroundColor: 'white', 
+    borderRadius: 16,
+    padding: 24, 
+    alignItems: 'center', 
+    marginBottom: 20, 
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
   },
   avatarWrap: { alignItems: 'center', marginTop: -56 },
   avatar: {
     width: 120, height: 120, borderRadius: 60,
-    borderWidth: 4, borderColor: '#E5EDFF', backgroundColor: '#eee',
+    borderWidth: 5, borderColor: 'white', backgroundColor: '#E5E7EB',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
-  avatarFallback: { backgroundColor: '#E5ECF9', alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { fontSize: 42, fontWeight: '700', color: '#2563EB' },
+  avatarFallback: { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }, // Green-100
+  avatarInitial: { fontSize: 42, fontWeight: '700', color: '#047857' }, // Green-700
 
-  profileName: { fontSize: 22, fontWeight: 'bold', color: '#1A202C', marginTop: 12 },
-  profileRole: { fontSize: 16, color: '#4A5568', marginTop: 4 },
-  profileOrg: { fontSize: 14, color: '#6B7280', marginTop: 2 },
+  profileName: { fontSize: 22, fontWeight: 'bold', color: '#1F2937', marginTop: 12 },
+  profileRole: { fontSize: 15, color: '#6B7280', marginTop: 4, fontWeight: '500' },
+  profileOrg: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
 
   btn: {
-    marginTop: 14, alignSelf: 'center',
-    backgroundColor: '#2F6BFF', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 10,
+    marginTop: 16, 
+    alignSelf: 'center',
+    backgroundColor: '#059669', // Green-600
+    paddingVertical: 11, 
+    paddingHorizontal: 24, 
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#059669',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
-  btnText: { color: 'white', fontWeight: '700' },
+  btnText: { color: 'white', fontWeight: '700', fontSize: 14 },
 
-  infoCard: { width: '100%', backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 20, elevation: 5 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  infoIcon: { fontSize: 20, marginRight: 16 },
-  infoLabel: { fontSize: 14, color: '#6B7280' },
-  infoValue: { fontSize: 16, fontWeight: '600', color: '#1A202C' },
+  infoCard: { 
+    width: '100%', 
+    backgroundColor: 'white', 
+    borderRadius: 16, 
+    padding: 16, 
+    marginBottom: 20, 
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  infoRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 14, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#F3F4F6' 
+  },
+  infoIcon: { fontSize: 22, marginRight: 16, width: 28 },
+  infoLabel: { fontSize: 13, color: '#6B7280', marginBottom: 2 },
+  infoValue: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
 
-  logoutButton: { width: '100%', height: 50, backgroundColor: '#EF4444', borderRadius: 12, alignItems: 'center', justifyContent: 'center', elevation: 5 },
+  logoutButton: { 
+    width: '100%', 
+    height: 52, 
+    backgroundColor: '#EF4444', 
+    borderRadius: 10, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    elevation: 4,
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
   logoutButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });

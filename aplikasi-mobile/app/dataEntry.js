@@ -281,65 +281,148 @@ const InfoCard = ({ number, title, children }) => (
 
 // --- StyleSheet ---
 const styles = StyleSheet.create({
-  keyboardAvoidingContainer: { flex: 1, backgroundColor: '#F7F8FC' },
+  keyboardAvoidingContainer: { flex: 1, backgroundColor: '#F0FDF4' },
   header: {
-    width: '100%', backgroundColor: '#1E40AF', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20,
-    alignItems: 'center', borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
-    flexDirection: 'row', justifyContent: 'space-between', elevation: 8,
+    width: '100%', 
+    backgroundColor: '#059669', // Green-600
+    paddingHorizontal: 20, 
+    paddingTop: 60, 
+    paddingBottom: 20,
+    alignItems: 'center', 
+    borderBottomLeftRadius: 24, 
+    borderBottomRightRadius: 24,
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   headerContent: { flexDirection: 'row', alignItems: 'center' },
   headerTextContainer: { marginLeft: 12 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-  headerSubtitle: { fontSize: 12, color: 'rgba(255, 255, 255, 0.8)' },
+  headerSubtitle: { fontSize: 12, color: 'rgba(255, 255, 255, 0.9)', marginTop: 2 },
 
   profileButton: {},
   // avatar foto
   profileAvatar: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)',
+    width: 40, height: 40, borderRadius: 20,
+    borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.95)',
     backgroundColor: '#fff',
   },
   // avatar inisial (fallback)
   initialCircle: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#10B981',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#10B981', // Green-500
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.8)',
   },
-  initialText: { color: '#fff', fontWeight: '700' },
+  initialText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
   mainContent: { padding: 16, paddingBottom: 20 },
-  card: { backgroundColor: 'white', borderRadius: 16, padding: 20, marginBottom: 16, elevation: 5 },
+  card: { 
+    backgroundColor: 'white', 
+    borderRadius: 16, 
+    padding: 20, 
+    marginBottom: 16, 
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+  },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  cardNumberContainer: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#E0E7FF', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  cardNumber: { color: '#3730A3', fontWeight: 'bold' },
-  cardTitle: { fontSize: 18, fontWeight: '600', color: '#1A202C' },
+  cardNumberContainer: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: '#D1FAE5', // Green-100
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginRight: 12 
+  },
+  cardNumber: { color: '#047857', fontWeight: 'bold', fontSize: 16 }, // Green-700
+  cardTitle: { fontSize: 17, fontWeight: '600', color: '#1F2937' },
 
-  label: { fontSize: 14, fontWeight: '500', color: '#4A5568', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
   priceInputContainer: { position: 'relative', justifyContent: 'center' },
-  rpSymbol: { position: 'absolute', left: 16, fontSize: 16, color: '#6B7280', zIndex: 1 },
+  rpSymbol: { position: 'absolute', left: 16, fontSize: 16, color: '#6B7280', zIndex: 1, fontWeight: '600' },
   input: {
-    width: '100%', height: 50, borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12,
-    fontSize: 16, backgroundColor: '#F8FAFC', paddingLeft: 50, paddingRight: 16,
+    width: '100%', 
+    height: 52, 
+    borderWidth: 1, 
+    borderColor: '#D1D5DB', 
+    borderRadius: 10,
+    fontSize: 16, 
+    backgroundColor: '#F9FAFB', 
+    paddingLeft: 50, 
+    paddingRight: 16,
+    color: '#1F2937'
   },
   uploadButton: {
-    width: '100%', marginTop: 12, paddingVertical: 12, borderWidth: 2, borderColor: '#0D9488',
-    borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+    width: '100%', 
+    marginTop: 12, 
+    paddingVertical: 14, 
+    borderWidth: 2, 
+    borderColor: '#10B981', // Green-500
+    borderRadius: 10, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5', // Green-50
   },
-  uploadButtonText: { color: '#0F766E', fontWeight: '600', fontSize: 16 },
+  uploadButtonText: { color: '#047857', fontWeight: '600', fontSize: 15 }, // Green-700
 
-  bottomButtonContainer: { padding: 16, backgroundColor: 'white', borderTopWidth: 1, borderColor: '#E2E8F0' },
-  button: { width: '100%', height: 50, backgroundColor: '#1E40AF', borderRadius: 12, alignItems: 'center', justifyContent: 'center', elevation: 5 },
+  bottomButtonContainer: { 
+    padding: 16, 
+    backgroundColor: 'white', 
+    borderTopWidth: 1, 
+    borderColor: '#E5E7EB',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -2 },
+  },
+  button: { 
+    width: '100%', 
+    height: 52, 
+    backgroundColor: '#059669', // Green-600
+    borderRadius: 10, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    elevation: 4,
+    shadowColor: '#059669',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
   buttonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });
 
 const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
-    fontSize: 16, paddingVertical: 12, paddingHorizontal: 10, borderWidth: 1, borderColor: '#CBD5E1',
-    borderRadius: 12, color: 'black', paddingRight: 30, backgroundColor: '#F8FAFC', marginBottom: 16,
+    fontSize: 16, 
+    paddingVertical: 14, 
+    paddingHorizontal: 14, 
+    borderWidth: 1, 
+    borderColor: '#D1D5DB',
+    borderRadius: 10, 
+    color: '#1F2937', 
+    paddingRight: 30, 
+    backgroundColor: '#F9FAFB', 
+    marginBottom: 16,
   },
   inputAndroid: {
-    fontSize: 16, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: '#CBD5E1',
-    borderRadius: 12, color: 'black', paddingRight: 30, backgroundColor: '#F8FAFC', marginBottom: 16,
+    fontSize: 16, 
+    paddingHorizontal: 14, 
+    paddingVertical: 10, 
+    borderWidth: 1, 
+    borderColor: '#D1D5DB',
+    borderRadius: 10, 
+    color: '#1F2937', 
+    paddingRight: 30, 
+    backgroundColor: '#F9FAFB', 
+    marginBottom: 16,
   },
 });
