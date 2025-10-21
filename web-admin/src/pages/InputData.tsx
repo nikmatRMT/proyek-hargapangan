@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,18 +6,33 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle, Loader2, MapPin } from 'lucide-react';
-import { getMarkets, getCommodities, submitPriceReport } from '../api';
+import { submitPriceReport } from '../api';
 
-interface Market {
-  id: number;
-  nama_pasar: string;
-}
+// Data static seperti di mobile app
+const PASAR_LIST = [
+  { label: 'Pasar Bauntung', value: 'Pasar Bauntung' },
+  { label: 'Pasar Jati', value: 'Pasar Jati' },
+  { label: 'Pasar Ulin Raya', value: 'Pasar Ulin Raya' },
+  { label: 'Pasar Pagi Loktabat Utara', value: 'Pasar Pagi Loktabat Utara' },
+];
 
-interface Commodity {
-  id: number;
-  name: string;
-  unit: string;
-}
+const KOMODITAS_LIST = [
+  { label: 'Beras', value: 'Beras', unit: 'kg' },
+  { label: 'Minyak Goreng Kemasan', value: 'Minyak Goreng Kemasan', unit: 'liter' },
+  { label: 'Minyak Goreng Curah', value: 'Minyak Goreng Curah', unit: 'liter' },
+  { label: 'Tepung Terigu Kemasan', value: 'Tepung Terigu Kemasan', unit: 'kg' },
+  { label: 'Tepung Terigu Curah', value: 'Tepung Terigu Curah', unit: 'kg' },
+  { label: 'Gula Pasir', value: 'Gula Pasir', unit: 'kg' },
+  { label: 'Telur Ayam', value: 'Telur Ayam', unit: 'kg' },
+  { label: 'Daging Ayam', value: 'Daging Ayam', unit: 'kg' },
+  { label: 'Daging Sapi', value: 'Daging Sapi', unit: 'kg' },
+  { label: 'Bawang Merah', value: 'Bawang Merah', unit: 'kg' },
+  { label: 'Bawang Putih', value: 'Bawang Putih', unit: 'kg' },
+  { label: 'Cabai Merah Besar', value: 'Cabai Merah Besar', unit: 'kg' },
+  { label: 'Cabai Merah Keriting', value: 'Cabai Merah Keriting', unit: 'kg' },
+  { label: 'Cabai Rawit Hijau', value: 'Cabai Rawit Hijau', unit: 'kg' },
+  { label: 'Cabai Rawit Merah', value: 'Cabai Rawit Merah', unit: 'kg' },
+];
 
 // Step Card Component
 function StepCard({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
@@ -39,48 +54,19 @@ function StepCard({ number, title, children }: { number: string; title: string; 
 }
 
 export default function InputDataPage() {
-  const [markets, setMarkets] = useState<Market[]>([]);
-  const [commodities, setCommodities] = useState<Commodity[]>([]);
-  
-  const [selectedMarketId, setSelectedMarketId] = useState<string>('');
-  const [selectedCommodityId, setSelectedCommodityId] = useState<string>('');
+  const [selectedMarket, setSelectedMarket] = useState<string>('');
+  const [selectedCommodity, setSelectedCommodity] = useState<string>('');
   const [price, setPrice] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [gps, setGps] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
 
   useEffect(() => {
-    loadData();
     getLocation();
   }, []);
-
-  async function loadData() {
-    try {
-      const [marketsRes, commoditiesRes] = await Promise.all([
-        getMarkets(),
-        getCommodities()
-      ]);
-      
-      // Backend returns { rows: [...] } for markets and { data: [...] } for commodities
-      const marketData = marketsRes.rows || marketsRes.data || marketsRes || [];
-      const commodityData = commoditiesRes.data || commoditiesRes || [];
-      
-      console.log('Markets loaded:', marketData);
-      console.log('Commodities loaded:', commodityData);
-      
-      setMarkets(Array.isArray(marketData) ? marketData : []);
-      setCommodities(Array.isArray(commodityData) ? commodityData : []);
-    } catch (err) {
-      console.error('Error loading data:', err);
-      setError('Gagal memuat data. Silakan refresh halaman.');
-    } finally {
-      setLoadingData(false);
-    }
-  }
 
   async function getLocation() {
     if ('geolocation' in navigator) {
@@ -115,12 +101,12 @@ export default function InputDataPage() {
     setSuccess('');
 
     // Validation
-    if (!selectedMarketId) {
+    if (!selectedMarket) {
       setError('Pilih pasar terlebih dahulu');
       return;
     }
 
-    if (!selectedCommodityId) {
+    if (!selectedCommodity) {
       setError('Pilih komoditas terlebih dahulu');
       return;
     }
@@ -139,12 +125,19 @@ export default function InputDataPage() {
     try {
       setLoading(true);
 
+      // Format payload seperti mobile app
+      const today = new Date().toISOString().split('T')[0];
+      const commodityData = KOMODITAS_LIST.find(k => k.value === selectedCommodity);
+      
       const payload = {
-        marketId: Number(selectedMarketId),
-        prices: [{
-          commodityId: Number(selectedCommodityId),
-          price: priceNumber
-        }]
+        date: today,
+        market_name: selectedMarket,
+        commodity_name: selectedCommodity,
+        unit: commodityData?.unit || 'kg',
+        price: priceNumber,
+        notes: notes || '',
+        gps_lat: gps.lat ? String(gps.lat) : '',
+        gps_lng: gps.lng ? String(gps.lng) : '',
       };
 
       await submitPriceReport(payload);
@@ -152,7 +145,7 @@ export default function InputDataPage() {
       setSuccess('Laporan harga berhasil dikirim!');
       
       // Reset form
-      setSelectedCommodityId('');
+      setSelectedCommodity('');
       setPrice('');
       setNotes('');
 
@@ -166,20 +159,7 @@ export default function InputDataPage() {
     }
   }
 
-  const selectedCommodity = commodities.find(c => c.id === Number(selectedCommodityId));
-
-  if (loadingData) {
-    return (
-      <div className="space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-            <p className="text-muted-foreground">Memuat data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const selectedCommodityData = KOMODITAS_LIST.find(k => k.value === selectedCommodity);
 
   return (
     <div className="space-y-4">
@@ -202,119 +182,107 @@ export default function InputDataPage() {
       <StepCard number="1" title="Lokasi Pantauan">
         <div className="space-y-2">
           <Label htmlFor="market">Pilih Lokasi Pasar</Label>
-          {markets.length === 0 ? (
-            <div className="p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
-              ⚠️ Tidak ada data pasar. Hubungi admin untuk menambahkan data pasar.
-            </div>
-          ) : (
-            <Select value={selectedMarketId} onValueChange={setSelectedMarketId}>
-              <SelectTrigger id="market" className="h-11">
-                <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
-              </SelectTrigger>
-              <SelectContent>
-                {markets.map(market => (
-                  <SelectItem key={market.id} value={String(market.id)}>
-                    {market.nama_pasar}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+            <SelectTrigger id="market" className="h-11">
+              <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
+            </SelectTrigger>
+            <SelectContent>
+              {PASAR_LIST.map(pasar => (
+                <SelectItem key={pasar.value} value={pasar.value}>
+                  {pasar.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </StepCard>
 
       {/* Step 2: Detail Harga Komoditas */}
-      {selectedMarketId && (
-        <StepCard number="2" title="Detail Harga Komoditas">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="commodity">Pilih Komoditas</Label>
-              <Select value={selectedCommodityId} onValueChange={setSelectedCommodityId}>
-                <SelectTrigger id="commodity" className="h-11">
-                  <SelectValue placeholder="-- Pilih Komoditas --" />
-                </SelectTrigger>
-                <SelectContent>
-                  {commodities.map(commodity => (
-                    <SelectItem key={commodity.id} value={String(commodity.id)}>
-                      {commodity.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <StepCard number="2" title="Detail Harga Komoditas">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="commodity">Pilih Komoditas</Label>
+            <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
+              <SelectTrigger id="commodity" className="h-11">
+                <SelectValue placeholder="-- Pilih Komoditas --" />
+              </SelectTrigger>
+              <SelectContent>
+                {KOMODITAS_LIST.map(komoditas => (
+                  <SelectItem key={komoditas.value} value={komoditas.value}>
+                    {komoditas.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">
-                Masukkan Harga {selectedCommodity ? `(Rp per ${selectedCommodity.unit})` : '(Rp)'}
-              </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium">
-                  Rp
-                </span>
-                <Input
-                  id="price"
-                  type="text"
-                  placeholder="0"
-                  value={formatRupiah(price)}
-                  onChange={handlePriceChange}
-                  className="h-11 pl-10 text-base"
-                />
-              </div>
-              {price && Number(price) > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Rp {formatRupiah(price)}
-                </p>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="price">
+              Masukkan Harga {selectedCommodityData ? `(Rp per ${selectedCommodityData.unit})` : '(Rp)'}
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium">
+                Rp
+              </span>
+              <Input
+                id="price"
+                type="text"
+                placeholder="0"
+                value={formatRupiah(price)}
+                onChange={handlePriceChange}
+                className="h-11 pl-10 text-base"
+              />
             </div>
-
-            {gps.lat && gps.lng && (
-              <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 p-3 rounded-lg">
-                <MapPin className="h-4 w-4" />
-                <span>GPS Otomatis: {gps.lat}, {gps.lng}</span>
-              </div>
+            {price && Number(price) > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Rp {formatRupiah(price)}
+              </p>
             )}
           </div>
-        </StepCard>
-      )}
+
+          {gps.lat && gps.lng && (
+            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 p-3 rounded-lg">
+              <MapPin className="h-4 w-4" />
+              <span>GPS Otomatis: {gps.lat}, {gps.lng}</span>
+            </div>
+          )}
+        </div>
+      </StepCard>
 
       {/* Step 3: Informasi Tambahan (Opsional) */}
-      {selectedMarketId && selectedCommodityId && (
-        <StepCard number="3" title="Informasi Tambahan (Opsional)">
-          <div className="space-y-2">
-            <Label htmlFor="notes">Keterangan / Catatan</Label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Contoh: Harga cabai naik..."
-              className="w-full min-h-[100px] p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-              maxLength={200}
-            />
-            <p className="text-xs text-muted-foreground">{notes.length}/200 karakter</p>
-          </div>
-        </StepCard>
-      )}
+      <StepCard number="3" title="Informasi Tambahan (Opsional)">
+        <div className="space-y-2">
+          <Label htmlFor="notes">Keterangan / Catatan</Label>
+          <textarea
+            id="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Contoh: Harga cabai naik..."
+            className="w-full min-h-[100px] p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+            maxLength={200}
+          />
+          <p className="text-xs text-muted-foreground">{notes.length}/200 karakter</p>
+        </div>
+      </StepCard>
 
       {/* Submit Button */}
-      {selectedMarketId && selectedCommodityId && price && (
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full h-12 bg-green-600 hover:bg-green-700 text-base font-semibold"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              Mengirim Laporan...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="h-5 w-5 mr-2" />
-              Kirim Laporan
-            </>
-          )}
-        </Button>
-      )}
+      <Button
+        onClick={handleSubmit}
+        disabled={loading || !selectedMarket || !selectedCommodity || !price}
+        className="w-full h-12 bg-green-600 hover:bg-green-700 text-base font-semibold disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Mengirim Laporan...
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="h-5 w-5 mr-2" />
+            Kirim Laporan
+          </>
+        )}
+      </Button>
     </div>
   );
 }
