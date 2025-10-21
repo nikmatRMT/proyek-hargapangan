@@ -105,8 +105,8 @@ export default function Login() {
         {/* Logo & Brand */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-2xl shadow-lg">
-              <img src="/logo.png" alt="HARPA Logo" className="h-16 w-16" />
+            <div className="bg-gradient-to-br from-green-500 to-green-700 p-6 rounded-2xl shadow-lg">
+              <img src="/logo.png" alt="HARPA Logo" className="h-20 w-20" />
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">HARPA BANUA</h1>
