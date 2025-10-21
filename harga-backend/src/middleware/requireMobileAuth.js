@@ -7,7 +7,22 @@ const JWT_SECRET = process.env.MOBILE_JWT_SECRET || 'dev_mobile_secret';
 
 export default async function requireMobileAuth(req, res, next) {
   try {
-    // Ambil token dari Authorization
+    // PRIORITAS 1: Coba web session dulu (untuk petugas login via web)
+    if (req.session?.user) {
+      const u = req.session.user;
+      // Hanya izinkan role petugas (atau admin untuk testing)
+      if (['petugas', 'admin', 'super_admin'].includes(u.role)) {
+        req.mobileUser = { 
+          id: u.id, 
+          role: u.role, 
+          username: u.username, 
+          name: u.nama_lengkap || u.username 
+        };
+        return next();
+      }
+    }
+
+    // PRIORITAS 2: Coba Bearer Token (untuk mobile app)
     const [scheme, token] = String(req.headers.authorization || '').split(' ');
     if (scheme !== 'Bearer' || !token) {
       return res.status(401).json({ message: 'Unauthorized' });
