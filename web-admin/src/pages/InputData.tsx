@@ -16,6 +16,7 @@ const PASAR_LIST = [
   { label: 'Pasar Pagi Loktabat Utara', value: 'Pasar Pagi Loktabat Utara' },
 ];
 
+// Data komoditas sesuai dengan backend (seed-commodities.mjs)
 const KOMODITAS_LIST = [
   { label: 'Beras', value: 'Beras', unit: 'kg' },
   { label: 'Minyak Goreng Kemasan', value: 'Minyak Goreng Kemasan', unit: 'liter' },
@@ -24,14 +25,20 @@ const KOMODITAS_LIST = [
   { label: 'Tepung Terigu Curah', value: 'Tepung Terigu Curah', unit: 'kg' },
   { label: 'Gula Pasir', value: 'Gula Pasir', unit: 'kg' },
   { label: 'Telur Ayam', value: 'Telur Ayam', unit: 'kg' },
-  { label: 'Daging Ayam', value: 'Daging Ayam', unit: 'kg' },
   { label: 'Daging Sapi', value: 'Daging Sapi', unit: 'kg' },
+  { label: 'Daging Ayam', value: 'Daging Ayam', unit: 'kg' },
+  { label: 'Kedelai', value: 'Kedelai', unit: 'kg' },
   { label: 'Bawang Merah', value: 'Bawang Merah', unit: 'kg' },
   { label: 'Bawang Putih', value: 'Bawang Putih', unit: 'kg' },
-  { label: 'Cabai Merah Besar', value: 'Cabai Merah Besar', unit: 'kg' },
-  { label: 'Cabai Merah Keriting', value: 'Cabai Merah Keriting', unit: 'kg' },
-  { label: 'Cabai Rawit Hijau', value: 'Cabai Rawit Hijau', unit: 'kg' },
-  { label: 'Cabai Rawit Merah', value: 'Cabai Rawit Merah', unit: 'kg' },
+  { label: 'Cabe Merah Besar', value: 'Cabe Merah Besar', unit: 'kg' },
+  { label: 'Cabe Rawit', value: 'Cabe Rawit', unit: 'kg' },
+  { label: 'Ikan Haruan/ Gabus', value: 'Ikan Haruan/ Gabus', unit: 'kg' },
+  { label: 'Ikan Tongkol/Tuna', value: 'Ikan Tongkol/Tuna', unit: 'kg' },
+  { label: 'Ikan Mas/Nila', value: 'Ikan Mas/Nila', unit: 'kg' },
+  { label: 'Ikan Patin', value: 'Ikan Patin', unit: 'kg' },
+  { label: 'Ikan Papuyu/Betok', value: 'Ikan Papuyu/Betok', unit: 'kg' },
+  { label: 'Ikan Bandeng', value: 'Ikan Bandeng', unit: 'kg' },
+  { label: 'Ikan Kembung/Pindang', value: 'Ikan Kembung/Pindang', unit: 'kg' },
 ];
 
 // Step Card Component
@@ -140,6 +147,7 @@ export default function InputDataPage() {
         gps_lng: gps.lng ? String(gps.lng) : '',
       };
 
+      console.log('Sending payload:', payload);
       await submitMobileReport(payload);
 
       setSuccess('Laporan harga berhasil dikirim!');
