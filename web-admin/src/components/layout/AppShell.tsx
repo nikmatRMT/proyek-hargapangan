@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <div className="bg-white p-2 rounded-lg shadow-sm">
-                    <BarChart3 className="h-7 w-7 text-green-600" />
+                    <img src="/logo.png" alt="HARPA Logo" className="h-7 w-7" />
                   </div>
                   <div>
                     <div className="text-sm font-bold text-gray-900 leading-none">HARPA</div>
