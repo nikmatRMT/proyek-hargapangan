@@ -133,7 +133,7 @@ export function submitMobileReport(payload: {
   gps_lat?: string;
   gps_lng?: string;
 }) {
-  return http('/api/mobile/reports', {
+  return http('/m/reports', {
     method: 'POST',
     credentials: 'include',
     body: payload  // Tidak perlu JSON.stringify, http() akan handle itu
