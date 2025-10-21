@@ -317,6 +317,45 @@ const getUploadedFile = (req, res, next) => {
   });
 };
 
+/* ========== UPDATE PROFIL SENDIRI (PUT /me) ========== */
+router.put('/me', async (req, res) => {
+  try {
+    const actor = req.session?.user;
+    if (!actor) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { nama_lengkap, phone, alamat, nip } = req.body || {};
+    const update = {};
+    
+    if (nama_lengkap !== undefined) update.nama_lengkap = String(nama_lengkap).trim();
+    if (phone !== undefined) update.phone = String(phone).trim() || null;
+    if (alamat !== undefined) update.alamat = String(alamat).trim() || null;
+    if (nip !== undefined) {
+      const nipStr = String(nip).trim();
+      if (nipStr && !/^\d{18}$/.test(nipStr)) {
+        return res.status(400).json({ message: 'NIP harus 18 digit angka' });
+      }
+      update.nip = nipStr || null;
+    }
+
+    if (Object.keys(update).length === 0) {
+      const { users } = collections();
+      const user = await users.findOne({ id: actor.id }, { projection: { _id: 0 } });
+      return res.json({ ok: true, user });
+    }
+
+    update.updated_at = new Date();
+
+    const { users } = collections();
+    await users.updateOne({ id: actor.id }, { $set: update });
+    const user = await users.findOne({ id: actor.id }, { projection: { _id: 0 } });
+
+    return res.json({ ok: true, user });
+  } catch (e) {
+    console.error('PUT /api/users/me', e);
+    return res.status(500).json({ message: 'Gagal update profil' });
+  }
+});
+
 router.post(
   '/me/avatar',
   (req, res, next) => {

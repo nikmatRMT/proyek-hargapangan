@@ -243,14 +243,14 @@ export default function InputDataPage() {
       {/* Step 1: Lokasi Pantauan */}
       <StepCard number="1" title="Lokasi Pantauan">
         <div className="space-y-2">
-          <Label htmlFor="market">Pilih Lokasi Pasar</Label>
+          <Label htmlFor="market" className="text-base">Pilih Lokasi Pasar</Label>
           <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-            <SelectTrigger id="market" className="w-full h-12 text-base">
+            <SelectTrigger id="market" className="h-12 text-base">
               <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-60">
               {PASAR_LIST.map(pasar => (
-                <SelectItem key={pasar.value} value={pasar.value}>
+                <SelectItem key={pasar.value} value={pasar.value} className="text-base">
                   {pasar.label}
                 </SelectItem>
               ))}
@@ -263,14 +263,14 @@ export default function InputDataPage() {
       <StepCard number="2" title="Detail Harga Komoditas">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="commodity">Pilih Komoditas</Label>
+            <Label htmlFor="commodity" className="text-base">Pilih Komoditas</Label>
             <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
-              <SelectTrigger id="commodity" className="w-full h-12 text-base">
+              <SelectTrigger id="commodity" className="h-12 text-base">
                 <SelectValue placeholder="-- Pilih Komoditas --" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-60">
                 {KOMODITAS_LIST.map(komoditas => (
-                  <SelectItem key={komoditas.value} value={komoditas.value}>
+                  <SelectItem key={komoditas.value} value={komoditas.value} className="text-base">
                     {komoditas.label}
                   </SelectItem>
                 ))}
@@ -279,11 +279,11 @@ export default function InputDataPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="price">
+            <Label htmlFor="price" className="text-base">
               Masukkan Harga {selectedCommodityData ? `(Rp per ${selectedCommodityData.unit})` : '(Rp)'}
             </Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 font-medium text-base">
                 Rp
               </span>
               <Input
