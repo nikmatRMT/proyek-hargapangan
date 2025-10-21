@@ -46,10 +46,12 @@ export default function InputDataPage() {
   async function loadMarkets() {
     try {
       const res = await getMarkets();
-      setMarkets(res.data || []);
+      console.log('Markets response:', res);
+      const marketData = res.data || res || [];
+      setMarkets(Array.isArray(marketData) ? marketData : []);
     } catch (err) {
       console.error('Error loading markets:', err);
-      setError('Gagal memuat data pasar');
+      setError('Gagal memuat data pasar. Silakan refresh halaman.');
     } finally {
       setLoadingData(false);
     }
@@ -58,10 +60,12 @@ export default function InputDataPage() {
   async function loadCommodities() {
     try {
       const res = await getCommodities();
-      setCommodities(res.data || []);
+      console.log('Commodities response:', res);
+      const commodityData = res.data || res || [];
+      setCommodities(Array.isArray(commodityData) ? commodityData : []);
     } catch (err) {
       console.error('Error loading commodities:', err);
-      setError('Gagal memuat data komoditas');
+      setError('Gagal memuat data komoditas. Silakan refresh halaman.');
     }
   }
 
@@ -178,18 +182,24 @@ export default function InputDataPage() {
             <CardContent className="pt-6">
               <div className="space-y-2">
                 <Label htmlFor="market" className="text-base font-semibold">Pilih Pasar *</Label>
-                <Select value={selectedMarketId} onValueChange={setSelectedMarketId}>
-                  <SelectTrigger id="market" className="h-12">
-                    <SelectValue placeholder="-- Pilih Pasar --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {markets.map(market => (
-                      <SelectItem key={market.id} value={String(market.id)}>
-                        {market.nama_pasar}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {markets.length === 0 ? (
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
+                    ⚠️ Tidak ada data pasar. Hubungi admin untuk menambahkan data pasar.
+                  </div>
+                ) : (
+                  <Select value={selectedMarketId} onValueChange={setSelectedMarketId}>
+                    <SelectTrigger id="market" className="h-12">
+                      <SelectValue placeholder="-- Pilih Pasar --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {markets.map(market => (
+                        <SelectItem key={market.id} value={String(market.id)}>
+                          {market.nama_pasar}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </CardContent>
           </Card>
