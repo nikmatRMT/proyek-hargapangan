@@ -129,20 +129,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
         {/* Sidebar */}
         {sidebarOpen && (
-          <Sidebar className="border-r border-gray-200 bg-gray-100 text-gray-800 shadow-sm">
-            <SidebarHeader className="border-b border-gray-200 bg-gray-200/80">
+          <Sidebar className="border-r border-green-200 bg-gradient-to-b from-green-600 to-green-700 text-white shadow-lg">
+            <SidebarHeader className="border-b border-green-500/30 bg-green-600/50">
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <img src="/logo.png" alt="HARPA Logo" className="h-10 w-10 rounded-lg shadow-sm" />
+                  <img src="/logo.png" alt="HARPA Logo" className="h-10 w-10 rounded-lg shadow-md bg-white/10 p-1" />
                   <div>
-                    <div className="text-sm font-bold text-gray-900 leading-none">HARPA</div>
-                    <div className="text-xs text-gray-600">Harga Pangan Banjarbaru Aktual</div>
+                    <div className="text-sm font-bold text-white leading-none">HARPA</div>
+                    <div className="text-xs text-green-50">Harga Pangan Banjarbaru Aktual</div>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="rounded-md px-2 py-1 text-sm hover:bg-gray-200"
+                  className="rounded-md px-2 py-1 text-sm text-white hover:bg-green-500/30"
                   title="Tutup Sidebar"
                 >
                   Tutup
@@ -150,9 +150,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </SidebarHeader>
 
-            <SidebarContent className="bg-gray-100">
+            <SidebarContent className="bg-gradient-to-b from-green-600 to-green-700">
               <SidebarGroup>
-                <SidebarGroupLabel className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <SidebarGroupLabel className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-green-100">
                   Menu Utama
                 </SidebarGroupLabel>
 
@@ -162,7 +162,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           asChild
-                          className={cn('hover:bg-gray-200', isActive(item.url) && 'bg-gray-200 font-medium')}
+                          className={cn(
+                            'text-white hover:bg-green-500/30',
+                            isActive(item.url) && 'bg-green-500/50 font-medium'
+                          )}
                         >
                           <a href={item.url}>
                             <div className="flex items-center gap-3">
