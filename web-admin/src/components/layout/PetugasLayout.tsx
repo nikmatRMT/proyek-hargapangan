@@ -52,8 +52,13 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
   // Avatar with cache busting
   useEffect(() => {
     if (user?.id) {
-      const url = withMeAvatar(user);
-      setAvatarUrl(url);
+      try {
+        const url = withMeAvatar(user);
+        setAvatarUrl(url || null);
+      } catch (err) {
+        console.error('Avatar error:', err);
+        setAvatarUrl(null);
+      }
     }
   }, [user, tick]);
 
@@ -74,8 +79,18 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
     setIsDarkMode(!isDarkMode);
   }
 
+  function navigateToProfile() {
+    try {
+      window.history.pushState({}, '', '/profile');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch (err) {
+      console.error('Navigation error:', err);
+      window.location.href = '/profile';
+    }
+  }
+
   const displayName = user?.nama_lengkap || user?.username || 'Petugas';
-  const initial = displayName.charAt(0).toUpperCase();
+  const initial = (displayName || 'P').charAt(0).toUpperCase();
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
@@ -96,7 +111,7 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
               {/* User Avatar */}
               <button
-                onClick={() => window.location.href = '/profile'}
+                onClick={navigateToProfile}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-500/30 transition-colors"
                 title="Profil"
               >

@@ -90,10 +90,8 @@ const App = () => {
   if (isPetugas) {
     return (
       <PetugasLayout>
-        {path === "/input-data" && <InputData />}
+        {(path === "/input-data" || path === "/") && <InputData />}
         {path === "/profile" && <Profile />}
-        {/* Default redirect ke input-data */}
-        {path === "/" && <InputData />}
       </PetugasLayout>
     );
   }
