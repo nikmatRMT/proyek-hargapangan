@@ -55,20 +55,13 @@
   --input: 217.2 32.6% 17.5%;
   --ring: 142 76% 36%;
 }
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
 
 .bg-sidebar{ background-color: hsl(var(--sidebar)); }
 .text-sidebar-foreground{ color: hsl(var(--sidebar-foreground)); }
 .bg-sidebar-accent{ background-color: hsl(var(--sidebar-accent)); }
 .text-sidebar-accent-foreground{ color: hsl(var(--sidebar-accent-foreground)); }
 .ring-sidebar-ring{ --tw-ring-color: hsl(var(--sidebar-ring)); }
+.border-sidebar-border{ border-color: hsl(var(--sidebar-border)); }
 .border-sidebar-border{ border-color: hsl(var(--sidebar-border)); }
 
 /* Dark Mode Styles */
