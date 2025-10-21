@@ -1,0 +1,304 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle2, AlertCircle, Loader2, Plus, Trash2 } from 'lucide-react';
+import { getMarkets, getCommodities, submitPriceReport } from '../api';
+
+interface Market {
+  id: number;
+  nama_pasar: string;
+}
+
+interface Commodity {
+  id: number;
+  name: string;
+  unit: string;
+}
+
+interface PriceEntry {
+  commodityId: number;
+  commodityName: string;
+  unit: string;
+  price: string;
+}
+
+export default function InputDataPage() {
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [commodities, setCommodities] = useState<Commodity[]>([]);
+  const [selectedMarketId, setSelectedMarketId] = useState<string>('');
+  const [entries, setEntries] = useState<PriceEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    loadMarkets();
+    loadCommodities();
+  }, []);
+
+  async function loadMarkets() {
+    try {
+      const res = await getMarkets();
+      setMarkets(res.data || []);
+    } catch (err) {
+      console.error('Error loading markets:', err);
+      setError('Gagal memuat data pasar');
+    }
+  }
+
+  async function loadCommodities() {
+    try {
+      const res = await getCommodities();
+      setCommodities(res.data || []);
+    } catch (err) {
+      console.error('Error loading commodities:', err);
+      setError('Gagal memuat data komoditas');
+    }
+  }
+
+  function addEntry() {
+    setEntries([...entries, { commodityId: 0, commodityName: '', unit: '', price: '' }]);
+  }
+
+  function removeEntry(index: number) {
+    setEntries(entries.filter((_, i) => i !== index));
+  }
+
+  function updateEntry(index: number, field: keyof PriceEntry, value: any) {
+    const updated = [...entries];
+    updated[index] = { ...updated[index], [field]: value };
+    
+    // Auto-fill commodity name and unit when commodity is selected
+    if (field === 'commodityId') {
+      const commodity = commodities.find(c => c.id === Number(value));
+      if (commodity) {
+        updated[index].commodityName = commodity.name;
+        updated[index].unit = commodity.unit;
+      }
+    }
+    
+    setEntries(updated);
+  }
+
+  async function handleSubmit() {
+    setError('');
+    setSuccess('');
+
+    // Validation
+    if (!selectedMarketId) {
+      setError('Pilih pasar terlebih dahulu');
+      return;
+    }
+
+    if (entries.length === 0) {
+      setError('Tambahkan minimal 1 komoditas');
+      return;
+    }
+
+    // Validate all entries
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      if (!entry.commodityId || entry.commodityId === 0) {
+        setError(`Pilih komoditas untuk baris ${i + 1}`);
+        return;
+      }
+      if (!entry.price || isNaN(Number(entry.price)) || Number(entry.price) <= 0) {
+        setError(`Masukkan harga valid untuk ${entry.commodityName}`);
+        return;
+      }
+    }
+
+    try {
+      setLoading(true);
+
+      // Send to backend API
+      const payload = {
+        marketId: Number(selectedMarketId),
+        prices: entries.map(e => ({
+          commodityId: e.commodityId,
+          price: Number(e.price)
+        }))
+      };
+
+      await submitPriceReport(payload);
+
+      setSuccess(`Berhasil menyimpan ${entries.length} data harga`);
+      
+      // Reset form
+      setEntries([]);
+      setSelectedMarketId('');
+
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      console.error('Error submitting:', err);
+      setError(err.response?.data?.error || 'Gagal menyimpan data');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="container mx-auto py-6 max-w-4xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Input Data Harga Pangan</CardTitle>
+          <CardDescription>
+            Masukkan data harga komoditas untuk pasar yang Anda kelola
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Success Alert */}
+          {success && (
+            <Alert className="border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Market Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="market">Pilih Pasar *</Label>
+            <Select value={selectedMarketId} onValueChange={setSelectedMarketId}>
+              <SelectTrigger id="market">
+                <SelectValue placeholder="-- Pilih Pasar --" />
+              </SelectTrigger>
+              <SelectContent>
+                {markets.map(market => (
+                  <SelectItem key={market.id} value={String(market.id)}>
+                    {market.nama_pasar}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Price Entries */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base">Daftar Komoditas</Label>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={addEntry}
+                disabled={!selectedMarketId}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Tambah Komoditas
+              </Button>
+            </div>
+
+            {entries.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Klik "Tambah Komoditas" untuk mulai input data
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {entries.map((entry, index) => (
+                  <div 
+                    key={index} 
+                    className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 p-4 border rounded-lg dark:border-gray-700"
+                  >
+                    {/* Commodity Select */}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Komoditas</Label>
+                      <Select 
+                        value={String(entry.commodityId || '')} 
+                        onValueChange={(val) => updateEntry(index, 'commodityId', Number(val))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih komoditas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {commodities.map(commodity => (
+                            <SelectItem key={commodity.id} value={String(commodity.id)}>
+                              {commodity.name} ({commodity.unit})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Price Input */}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Harga {entry.unit && `(Rp/${entry.unit})`}
+                      </Label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={entry.price}
+                        onChange={(e) => updateEntry(index, 'price', e.target.value)}
+                        min="0"
+                      />
+                    </div>
+
+                    {/* Delete Button */}
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeEntry(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setEntries([]);
+                setSelectedMarketId('');
+                setError('');
+                setSuccess('');
+              }}
+              disabled={loading}
+            >
+              Reset
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || entries.length === 0}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Simpan Data
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -112,6 +112,16 @@ export function getCommodities() {
   });
 }
 
+/** Submit data harga dari petugas (via web atau mobile) */
+export function submitPriceReport(payload: { marketId: number; prices: Array<{ commodityId: number; price: number }> }) {
+  return http('/api/mobile/reports', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 /** Ambil harga (opsional filter) — contoh: getPrices({ date:'2025-10-12', market_id:3 }) */
 export function getPrices(params?: Record<string, string | number | boolean | undefined>) {
   const q = new URLSearchParams();

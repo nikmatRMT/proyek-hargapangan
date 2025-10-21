@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Backup from "./pages/Backup";
+import InputData from "./pages/InputData";
 import Login from "./pages/Login";
 import { AppShell } from "./components/layout/AppShell";
 import { bumpMe } from "./lib/avatar"; // ⬅️ tambah
@@ -59,7 +60,18 @@ const App = () => {
   // Kalau di /login dan sudah login → arahkan ke tujuan awal (atau '/')
   useEffect(() => {
     if (authUser && path === "/login") {
-      const dest = sessionStorage.getItem('post_login_redirect') || "/";
+      // Redirect berdasarkan role
+      let dest = sessionStorage.getItem('post_login_redirect') || "/";
+      
+      // Jika tidak ada redirect tujuan, redirect ke halaman default sesuai role
+      if (dest === "/" || dest === "/login") {
+        if (authUser.role === 'petugas') {
+          dest = "/input-data";
+        } else {
+          dest = "/"; // admin & super_admin ke dashboard
+        }
+      }
+      
       sessionStorage.removeItem('post_login_redirect');
       window.history.replaceState({}, "", dest);
       setPath(dest);
@@ -75,6 +87,7 @@ const App = () => {
   return (
     <AppShell>
       {path === "/" && <Dashboard />}
+      {path === "/input-data" && <InputData />}
       {path === "/users" && <Users />}
       {path === "/profile" && <Profile />}
       {path === "/backup" && <Backup />}
