@@ -36,7 +36,7 @@ export function Select({
 
   return (
     <Ctx.Provider value={{ value: internal, setValue, open, setOpen }}>
-      <div className="relative inline-block">{children}</div>
+      <div className="relative w-full">{children}</div>
     </Ctx.Provider>
   )
 }
@@ -52,7 +52,7 @@ export function SelectTrigger({
     <button
       type="button"
       className={cn(
-        "inline-flex h-9 items-center justify-between gap-2 rounded-md border bg-white px-3 text-sm shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600",
+        "flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-white px-3 text-sm shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600",
         className
       )}
       onClick={(e) => {
@@ -88,7 +88,7 @@ export function SelectContent({
   return (
     <div
       className={cn(
-        "absolute z-50 mt-2 w-[var(--select-width,12rem)] rounded-md border bg-white p-1 shadow-lg",
+        "absolute z-50 mt-2 w-full rounded-md border bg-white p-1 shadow-lg",
         className
       )}
     >
