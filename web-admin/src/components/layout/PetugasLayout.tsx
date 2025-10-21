@@ -53,7 +53,7 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (user?.id) {
       try {
-        const url = withMeAvatar(user);
+        const url = withMeAvatar(user?.foto || null); // ⬅️ Pass foto field, not user object
         setAvatarUrl(url || null);
       } catch (err) {
         console.error('Avatar error:', err);
@@ -61,6 +61,13 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
       }
     }
   }, [user, tick]);
+
+  // Listen for avatar update events
+  useEffect(() => {
+    const onBump = () => setTick((t) => t + 1);
+    window.addEventListener('avatar:bumped', onBump);
+    return () => window.removeEventListener('avatar:bumped', onBump);
+  }, []);
 
   async function handleLogout() {
     if (!confirm('Yakin ingin keluar?')) return;
