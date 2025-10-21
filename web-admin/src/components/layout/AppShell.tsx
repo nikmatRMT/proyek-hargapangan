@@ -16,7 +16,7 @@ import {
   SidebarFooter,
   SidebarInset,
 } from './sidebar';
-import { BarChart3, Users, Settings, Home, User as UserIcon, LogOut, Database } from 'lucide-react';
+import { BarChart3, Users, Settings, Home, User as UserIcon, LogOut, Database, Sun, Moon } from 'lucide-react';
 import { API_BASE, logoutWeb } from '@/api';
 import { withMeAvatar } from '@/lib/avatar';
 
@@ -59,7 +59,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [me, setMe] = useState<any>(() => readAuthUser());
   const [tick, setTick] = useState(0); // force re-render untuk avatar cache-busting
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      return newMode;
+    });
+  };
+
+  // Apply theme to document
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [isDarkMode]);
 
   // Hydrate user dari /api/me setelah mount bila data localStorage belum lengkap (terutama foto)
   useEffect(() => {
@@ -129,20 +155,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
         {/* Sidebar */}
         {sidebarOpen && (
-          <Sidebar className="border-r border-green-200 bg-gradient-to-b from-green-600 to-green-700 text-white shadow-lg">
-            <SidebarHeader className="border-b border-green-500/30 bg-green-600/50">
+          <Sidebar className={cn(
+            "border-r shadow-lg transition-colors duration-300",
+            isDarkMode 
+              ? "border-gray-700 bg-gradient-to-b from-gray-800 to-gray-900 text-gray-100"
+              : "border-green-200 bg-gradient-to-b from-green-600 to-green-700 text-white"
+          )}>
+            <SidebarHeader className={cn(
+              "border-b transition-colors duration-300",
+              isDarkMode
+                ? "border-gray-700 bg-gray-800/50"
+                : "border-green-500/30 bg-green-600/50"
+            )}>
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <img src="/logo.png" alt="HARPA Logo" className="h-10 w-10 rounded-lg shadow-md" />
                   <div>
-                    <div className="text-sm font-bold text-white leading-none">HARPA</div>
-                    <div className="text-xs text-green-50">Harga Pangan Banjarbaru Aktual</div>
+                    <div className={cn(
+                      "text-sm font-bold leading-none",
+                      isDarkMode ? "text-gray-100" : "text-white"
+                    )}>HARPA</div>
+                    <div className={cn(
+                      "text-xs",
+                      isDarkMode ? "text-gray-300" : "text-green-50"
+                    )}>Harga Pangan Banjarbaru Aktual</div>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="rounded-md px-2 py-1 text-sm text-white hover:bg-green-500/30"
+                  className={cn(
+                    "rounded-md px-2 py-1 text-sm transition-colors",
+                    isDarkMode 
+                      ? "text-gray-100 hover:bg-gray-700/50"
+                      : "text-white hover:bg-green-500/30"
+                  )}
                   title="Tutup Sidebar"
                 >
                   Tutup
@@ -150,9 +197,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </SidebarHeader>
 
-            <SidebarContent className="bg-gradient-to-b from-green-600 to-green-700">
+            <SidebarContent className={cn(
+              "transition-colors duration-300",
+              isDarkMode
+                ? "bg-gradient-to-b from-gray-800 to-gray-900"
+                : "bg-gradient-to-b from-green-600 to-green-700"
+            )}>
               <SidebarGroup>
-                <SidebarGroupLabel className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-green-100">
+                <SidebarGroupLabel className={cn(
+                  "px-4 py-2 text-xs font-semibold uppercase tracking-wide",
+                  isDarkMode ? "text-gray-400" : "text-green-100"
+                )}>
                   Menu Utama
                 </SidebarGroupLabel>
 
@@ -163,8 +218,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <SidebarMenuButton
                           asChild
                           className={cn(
-                            'text-white hover:bg-green-500/30',
-                            isActive(item.url) && 'bg-green-500/50 font-medium'
+                            'transition-colors',
+                            isDarkMode
+                              ? 'text-gray-100 hover:bg-gray-700/50'
+                              : 'text-white hover:bg-green-500/30',
+                            isActive(item.url) && (isDarkMode 
+                              ? 'bg-gray-700 font-medium' 
+                              : 'bg-green-500/50 font-medium')
                           )}
                         >
                           <a href={item.url}>
@@ -231,9 +291,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Header */}
-          <header className="bg-white border-b border-gray-200">
+          <header className={cn(
+            "border-b transition-colors duration-300",
+            isDarkMode 
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+          )}>
             <div className="flex items-center justify-between px-6 py-3">
-              <nav className="text-sm text-gray-600">
+              <nav className={cn(
+                "text-sm",
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              )}>
                 <a href="/" className="hover:text-gray-900">Dashboard</a>
                 <span className="mx-2 text-gray-400">/</span>
                 <span className="font-medium text-gray-900">
@@ -261,9 +329,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <div className="app-shell-full w-full h-full overflow-y-auto bg-gray-50 p-6">
+          <div className={cn(
+            "app-shell-full w-full h-full overflow-y-auto p-6 transition-colors duration-300",
+            isDarkMode ? "bg-gray-900" : "bg-gray-50"
+          )}>
             {children}
           </div>
+
+          {/* Floating Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-green-500 to-green-700 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group"
+            title={isDarkMode ? 'Mode Cerah' : 'Mode Gelap'}
+          >
+            {isDarkMode ? (
+              <Sun className="h-6 w-6 transition-transform group-hover:rotate-180 duration-500" />
+            ) : (
+              <Moon className="h-6 w-6 transition-transform group-hover:-rotate-12 duration-300" />
+            )}
+          </button>
         </SidebarInset>
       </div>
     </SidebarProvider>
