@@ -300,7 +300,7 @@ export default function InputDataPage() {
               </div>
               {price && Number(price) > 0 && (
                 <p className="text-xs sm:text-sm text-muted-foreground bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 rounded-lg">
-                  💰 <strong>Rp {formatRupiah(price)}</strong>
+                  <strong>Rp {formatRupiah(price)}</strong>
                 </p>
               )}
             </div>
@@ -334,7 +334,7 @@ export default function InputDataPage() {
               />
               <div className="flex justify-between items-center text-xs sm:text-sm">
                 <p className="text-muted-foreground">{notes.length}/200 karakter</p>
-                <div className="text-gray-400">💡 Opsional</div>
+                <div className="text-gray-400">Opsional</div>
               </div>
             </div>
 
@@ -378,7 +378,7 @@ export default function InputDataPage() {
                       <p className="text-xs text-gray-500">Ukuran: {photo && (photo.size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                     <div className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900 px-2 py-1 rounded flex-shrink-0">
-                      ✓ Siap
+                      Siap
                     </div>
                   </div>
                 </div>

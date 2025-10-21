@@ -238,13 +238,13 @@ export default function ProfilePage() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-3">
                 <p className="text-lg text-gray-600">@{user.username}</p>
                 {user.is_active ? (
-                  <Badge className="bg-green-100 text-green-800 border-green-200">✓ Aktif</Badge>
+                  <Badge className="bg-green-100 text-green-800 border-green-200">Aktif</Badge>
                 ) : (
-                  <Badge className="bg-red-100 text-red-800 border-red-200">✗ Non-aktif</Badge>
+                  <Badge className="bg-red-100 text-red-800 border-red-200">Non-aktif</Badge>
                 )}
               </div>
               <p className="text-base text-gray-500">
-                📅 Bergabung sejak {fmtDate(user.created_at)}
+                Bergabung sejak {fmtDate(user.created_at)}
               </p>
             </div>
           </div>
@@ -345,9 +345,9 @@ export default function ProfilePage() {
                 </div>
               </div>
               {user.is_active ? (
-                <Badge className="bg-green-100 text-green-800 border-green-200 text-sm">✓ Aktif</Badge>
+                <Badge className="bg-green-100 text-green-800 border-green-200 text-sm">Aktif</Badge>
               ) : (
-                <Badge className="bg-red-100 text-red-800 border-red-200 text-sm">✗ Non-aktif</Badge>
+                <Badge className="bg-red-100 text-red-800 border-red-200 text-sm">Non-aktif</Badge>
               )}
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -434,8 +434,8 @@ export default function ProfilePage() {
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t">
               <div className="text-sm text-gray-500">
-                📸 Format foto: PNG/JPG/WebP, maksimal 3MB<br/>
-                📱 NIP harus 18 digit angka
+                Format foto: PNG/JPG/WebP, maksimal 3MB<br/>
+                NIP harus 18 digit angka
               </div>
               <div className="flex items-center gap-3">
                 <Button 
