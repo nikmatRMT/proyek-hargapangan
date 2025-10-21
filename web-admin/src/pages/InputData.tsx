@@ -148,26 +148,17 @@ export default function InputDataPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl">
+    <div className="space-y-4">
       {loadingData ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-              <p className="text-muted-foreground">Memuat data...</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+            <p className="text-muted-foreground">Memuat data...</p>
+          </div>
+        </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Input Data Harga Pangan</CardTitle>
-            <CardDescription>
-              Masukkan data harga komoditas untuk pasar yang Anda kelola
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-          {/* Error Alert */}
+        <>
+          {/* Success/Error Messages */}
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -175,7 +166,6 @@ export default function InputDataPage() {
             </Alert>
           )}
 
-          {/* Success Alert */}
           {success && (
             <Alert className="border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300">
               <CheckCircle2 className="h-4 w-4" />
@@ -183,155 +173,150 @@ export default function InputDataPage() {
             </Alert>
           )}
 
-          {/* Market Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="market">Pilih Pasar *</Label>
-            <Select value={selectedMarketId} onValueChange={setSelectedMarketId}>
-              <SelectTrigger id="market">
-                <SelectValue placeholder="-- Pilih Pasar --" />
-              </SelectTrigger>
-              <SelectContent>
-                {markets.map(market => (
-                  <SelectItem key={market.id} value={String(market.id)}>
-                    {market.nama_pasar}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Price Entries */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Daftar Komoditas & Harga</Label>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={addEntry}
-                disabled={!selectedMarketId}
-                className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Tambah Komoditas
-              </Button>
-            </div>
-
-            {!selectedMarketId ? (
-              <div className="text-center py-8 text-muted-foreground bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed">
-                <p className="text-sm">Pilih pasar terlebih dahulu untuk mulai input data</p>
+          {/* Market Selection Card */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <Label htmlFor="market" className="text-base font-semibold">Pilih Pasar *</Label>
+                <Select value={selectedMarketId} onValueChange={setSelectedMarketId}>
+                  <SelectTrigger id="market" className="h-12">
+                    <SelectValue placeholder="-- Pilih Pasar --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {markets.map(market => (
+                      <SelectItem key={market.id} value={String(market.id)}>
+                        {market.nama_pasar}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
+            </CardContent>
+          </Card>
+
+          {/* Input Form */}
+          {!selectedMarketId ? (
+            <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed">
+              <p className="text-muted-foreground">Pilih pasar terlebih dahulu untuk mulai input data</p>
+            </div>
+          ) : (
+            <>
+              {/* Entries List */}
               <div className="space-y-3">
                 {entries.map((entry, index) => (
-                  <div 
-                    key={index} 
-                    className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_auto] gap-3 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    {/* Commodity Select */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Komoditas *
-                      </Label>
-                      <Select 
-                        value={String(entry.commodityId || '')} 
-                        onValueChange={(val) => updateEntry(index, 'commodityId', Number(val))}
-                      >
-                        <SelectTrigger className="h-10">
-                          <SelectValue placeholder="-- Pilih Komoditas --" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {commodities.map(commodity => (
-                            <SelectItem key={commodity.id} value={String(commodity.id)}>
-                              {commodity.name} ({commodity.unit})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <Card key={index}>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        {/* Commodity Select */}
+                        <div className="space-y-1.5">
+                          <Label className="text-sm font-medium">
+                            Komoditas *
+                          </Label>
+                          <Select 
+                            value={String(entry.commodityId || '')} 
+                            onValueChange={(val) => updateEntry(index, 'commodityId', Number(val))}
+                          >
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="-- Pilih Komoditas --" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {commodities.map(commodity => (
+                                <SelectItem key={commodity.id} value={String(commodity.id)}>
+                                  {commodity.name} ({commodity.unit})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                    {/* Price Input */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Harga {entry.unit ? `(Rp/${entry.unit})` : '*'}
-                      </Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">
-                          Rp
-                        </span>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={entry.price}
-                          onChange={(e) => updateEntry(index, 'price', e.target.value)}
-                          min="0"
-                          className="h-10 pl-9"
-                        />
+                        {/* Price Input */}
+                        <div className="space-y-1.5">
+                          <Label className="text-sm font-medium">
+                            Harga {entry.unit ? `(Rp/${entry.unit})` : '*'}
+                          </Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                              Rp
+                            </span>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              value={entry.price}
+                              onChange={(e) => updateEntry(index, 'price', e.target.value)}
+                              min="0"
+                              className="h-11 pl-10 text-base"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Delete Button */}
+                        {entries.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeEntry(index)}
+                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 border-red-300 dark:border-red-800"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Hapus Komoditas
+                          </Button>
+                        )}
                       </div>
-                    </div>
-
-                    {/* Delete Button */}
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => removeEntry(index)}
-                        className="h-10 w-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 border-red-300 dark:border-red-800"
-                        title="Hapus komoditas ini"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-            )}
-          </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-between gap-3 pt-4 border-t">
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              {entries.length > 0 && (
-                <span>
-                  Total: <strong className="text-green-600 dark:text-green-400">{entries.length}</strong> komoditas
-                </span>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setEntries([{ commodityId: 0, commodityName: '', unit: '', price: '' }]);
-                  setError('');
-                  setSuccess('');
-                }}
-                disabled={loading}
-              >
-                Reset Form
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={loading || entries.length === 0 || !selectedMarketId}
-                className="bg-green-600 hover:bg-green-700 min-w-[140px]"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Simpan Data
-                  </>
+              {/* Add & Submit Buttons */}
+              <div className="space-y-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addEntry}
+                  className="w-full h-11 text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Tambah Komoditas Lain
+                </Button>
+
+                <Button
+                  onClick={handleSubmit}
+                  disabled={loading || entries.length === 0 || !selectedMarketId}
+                  className="w-full h-12 bg-green-600 hover:bg-green-700 text-base font-semibold"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Menyimpan Data...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 mr-2" />
+                      Simpan {entries.length} Komoditas
+                    </>
+                  )}
+                </Button>
+
+                {entries.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setEntries([{ commodityId: 0, commodityName: '', unit: '', price: '' }]);
+                      setError('');
+                      setSuccess('');
+                    }}
+                    disabled={loading}
+                    className="w-full text-sm"
+                  >
+                    Reset Form
+                  </Button>
                 )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );

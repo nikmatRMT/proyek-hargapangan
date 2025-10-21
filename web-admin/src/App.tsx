@@ -7,6 +7,7 @@ import Backup from "./pages/Backup";
 import InputData from "./pages/InputData";
 import Login from "./pages/Login";
 import { AppShell } from "./components/layout/AppShell";
+import { PetugasLayout } from "./components/layout/PetugasLayout";
 import { bumpMe } from "./lib/avatar"; // ⬅️ tambah
 
 const App = () => {
@@ -83,7 +84,21 @@ const App = () => {
     return <Login />;
   }
 
-  // Halaman lain dibungkus AppShell
+  // Petugas menggunakan layout khusus (tanpa sidebar)
+  const isPetugas = authUser?.role === 'petugas';
+
+  if (isPetugas) {
+    return (
+      <PetugasLayout>
+        {path === "/input-data" && <InputData />}
+        {path === "/profile" && <Profile />}
+        {/* Default redirect ke input-data */}
+        {path === "/" && <InputData />}
+      </PetugasLayout>
+    );
+  }
+
+  // Admin & Super Admin menggunakan AppShell dengan sidebar
   return (
     <AppShell>
       {path === "/" && <Dashboard />}
