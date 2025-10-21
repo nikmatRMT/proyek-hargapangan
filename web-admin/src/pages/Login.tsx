@@ -106,7 +106,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-2xl shadow-lg">
-              <BarChart3 className="h-10 w-10 text-white" />
+              <img src="/logo.png" alt="HARPA Logo" className="h-12 w-12" />
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">HARPA BANUA</h1>
