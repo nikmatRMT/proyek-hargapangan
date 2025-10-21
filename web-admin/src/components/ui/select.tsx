@@ -88,7 +88,7 @@ export function SelectContent({
   return (
     <div
       className={cn(
-        "absolute z-50 mt-2 w-full rounded-md border bg-white p-1 shadow-lg",
+        "absolute z-50 mt-2 w-full rounded-md border bg-white p-1 shadow-lg max-h-60 overflow-y-auto",
         className
       )}
     >
@@ -110,13 +110,13 @@ export function SelectItem({
       role="option"
       aria-selected={active}
       className={cn(
-        "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-green-50 hover:text-green-700",
+        "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-green-50 hover:text-green-700 whitespace-normal break-words max-w-full",
         active && "bg-green-50 text-green-700 font-medium",
         className
       )}
       onClick={() => ctx.setValue(value)}
     >
-      {children}
+      <span className="break-words flex-1">{children}</span>
     </div>
   )
 }
