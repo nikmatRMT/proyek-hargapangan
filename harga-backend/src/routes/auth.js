@@ -33,8 +33,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Username/NIP atau password salah' });
     }
 
-    if (!['admin', 'super_admin'].includes(u.role)) {
-      return res.status(403).json({ message: 'Hanya admin yang boleh masuk web-admin' });
+    // Allow admin, super_admin, and petugas to login
+    if (!['admin', 'super_admin', 'petugas'].includes(u.role)) {
+      return res.status(403).json({ message: 'Role Anda tidak memiliki akses ke sistem web' });
     }
 
     req.session.user = { id: u.id, username: u.username, role: u.role };
@@ -61,5 +62,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /auth/logout
+router.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('[LOGOUT] Session destroy error:', err);
+      return res.status(500).json({ message: 'Logout gagal' });
+    }
+    res.clearCookie('sid');
+    res.json({ message: 'Logout berhasil' });
+  });
+});
 
 export default router;
