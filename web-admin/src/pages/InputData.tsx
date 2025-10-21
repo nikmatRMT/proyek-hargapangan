@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, AlertCircle, Loader2, MapPin } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, MapPin, Camera, X } from 'lucide-react';
 import { submitMobileReport } from '../api';
 
 // Data static seperti di mobile app
@@ -65,6 +65,8 @@ export default function InputDataPage() {
   const [selectedCommodity, setSelectedCommodity] = useState<string>('');
   const [price, setPrice] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +105,30 @@ export default function InputDataPage() {
     }
   }
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validasi tipe file
+      if (!file.type.match(/^image\/(jpeg|jpg|png|webp)/)) {
+        setError('File harus berupa gambar (JPG/PNG/WebP)');
+        return;
+      }
+      // Validasi ukuran max 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Ukuran foto maksimal 5MB');
+        return;
+      }
+      setPhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+      setError('');
+    }
+  }
+
+  function removePhoto() {
+    setPhoto(null);
+    setPhotoPreview('');
+  }
+
   async function handleSubmit() {
     setError('');
     setSuccess('');
@@ -136,19 +162,46 @@ export default function InputDataPage() {
       const today = new Date().toISOString().split('T')[0];
       const commodityData = KOMODITAS_LIST.find(k => k.value === selectedCommodity);
       
-      const payload = {
-        date: today,
-        market_name: selectedMarket,
-        commodity_name: selectedCommodity,
-        unit: commodityData?.unit || 'kg',
-        price: priceNumber,
-        notes: notes || '',
-        gps_lat: gps.lat ? String(gps.lat) : '',
-        gps_lng: gps.lng ? String(gps.lng) : '',
-      };
+      // Gunakan FormData kalau ada foto
+      if (photo) {
+        const formData = new FormData();
+        formData.append('date', today);
+        formData.append('market_name', selectedMarket);
+        formData.append('commodity_name', selectedCommodity);
+        formData.append('unit', commodityData?.unit || 'kg');
+        formData.append('price', String(priceNumber));
+        formData.append('notes', notes || '');
+        formData.append('gps_lat', gps.lat ? String(gps.lat) : '');
+        formData.append('gps_lng', gps.lng ? String(gps.lng) : '');
+        formData.append('photo', photo);
 
-      console.log('Sending payload:', payload);
-      await submitMobileReport(payload);
+        // Kirim dengan FormData
+        const response = await fetch('/m/reports', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `HTTP ${response.status}`);
+        }
+      } else {
+        // Tanpa foto, kirim JSON biasa
+        const payload = {
+          date: today,
+          market_name: selectedMarket,
+          commodity_name: selectedCommodity,
+          unit: commodityData?.unit || 'kg',
+          price: priceNumber,
+          notes: notes || '',
+          gps_lat: gps.lat ? String(gps.lat) : '',
+          gps_lng: gps.lng ? String(gps.lng) : '',
+        };
+
+        console.log('Sending payload:', payload);
+        await submitMobileReport(payload);
+      }
 
       setSuccess('Laporan harga berhasil dikirim!');
       
@@ -156,6 +209,7 @@ export default function InputDataPage() {
       setSelectedCommodity('');
       setPrice('');
       setNotes('');
+      removePhoto();
 
       // Auto-hide success message
       setTimeout(() => setSuccess(''), 3000);
@@ -191,7 +245,7 @@ export default function InputDataPage() {
         <div className="space-y-2">
           <Label htmlFor="market">Pilih Lokasi Pasar</Label>
           <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-            <SelectTrigger id="market" className="h-11">
+            <SelectTrigger id="market" className="w-full h-12 text-base">
               <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
             </SelectTrigger>
             <SelectContent>
@@ -211,7 +265,7 @@ export default function InputDataPage() {
           <div className="space-y-2">
             <Label htmlFor="commodity">Pilih Komoditas</Label>
             <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
-              <SelectTrigger id="commodity" className="h-11">
+              <SelectTrigger id="commodity" className="w-full h-12 text-base">
                 <SelectValue placeholder="-- Pilih Komoditas --" />
               </SelectTrigger>
               <SelectContent>
@@ -238,7 +292,7 @@ export default function InputDataPage() {
                 placeholder="0"
                 value={formatRupiah(price)}
                 onChange={handlePriceChange}
-                className="h-11 pl-10 text-base"
+                className="h-12 pl-10 text-base"
               />
             </div>
             {price && Number(price) > 0 && (
@@ -259,17 +313,55 @@ export default function InputDataPage() {
 
       {/* Step 3: Informasi Tambahan (Opsional) */}
       <StepCard number="3" title="Informasi Tambahan (Opsional)">
-        <div className="space-y-2">
-          <Label htmlFor="notes">Keterangan / Catatan</Label>
-          <textarea
-            id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Contoh: Harga cabai naik..."
-            className="w-full min-h-[100px] p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-            maxLength={200}
-          />
-          <p className="text-xs text-muted-foreground">{notes.length}/200 karakter</p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="notes">Keterangan / Catatan</Label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Contoh: Harga cabai naik..."
+              className="w-full min-h-[100px] p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 text-base"
+              maxLength={200}
+            />
+            <p className="text-xs text-muted-foreground">{notes.length}/200 karakter</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="photo">Foto Bukti (opsional)</Label>
+            {!photoPreview ? (
+              <label 
+                htmlFor="photo" 
+                className="flex items-center justify-center gap-2 w-full h-12 px-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors"
+              >
+                <Camera className="h-5 w-5 text-gray-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Upload Foto Bukti</span>
+                <input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+              </label>
+            ) : (
+              <div className="relative">
+                <img 
+                  src={photoPreview} 
+                  alt="Preview" 
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{photo?.name}</p>
+              </div>
+            )}
+          </div>
         </div>
       </StepCard>
 
