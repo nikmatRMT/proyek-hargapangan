@@ -316,6 +316,7 @@ export default function InputDataPage() {
                 )}
               </Button>
             </div>
+          </div>
         </CardContent>
       </Card>
     </div>
