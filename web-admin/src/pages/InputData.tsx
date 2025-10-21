@@ -34,6 +34,7 @@ export default function InputDataPage() {
     { commodityId: 0, commodityName: '', unit: '', price: '' }
   ]);
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -49,6 +50,8 @@ export default function InputDataPage() {
     } catch (err) {
       console.error('Error loading markets:', err);
       setError('Gagal memuat data pasar');
+    } finally {
+      setLoadingData(false);
     }
   }
 
@@ -146,14 +149,24 @@ export default function InputDataPage() {
 
   return (
     <div className="container mx-auto py-6 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Input Data Harga Pangan</CardTitle>
-          <CardDescription>
-            Masukkan data harga komoditas untuk pasar yang Anda kelola
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      {loadingData ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+              <p className="text-muted-foreground">Memuat data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Input Data Harga Pangan</CardTitle>
+            <CardDescription>
+              Masukkan data harga komoditas untuk pasar yang Anda kelola
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
           {/* Error Alert */}
           {error && (
             <Alert variant="destructive">
@@ -319,6 +332,7 @@ export default function InputDataPage() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
