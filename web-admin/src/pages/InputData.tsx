@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle, Loader2, MapPin } from 'lucide-react';
-import { submitPriceReport } from '../api';
+import { submitMobileReport } from '../api';
 
 // Data static seperti di mobile app
 const PASAR_LIST = [
@@ -140,7 +140,7 @@ export default function InputDataPage() {
         gps_lng: gps.lng ? String(gps.lng) : '',
       };
 
-      await submitPriceReport(payload);
+      await submitMobileReport(payload);
 
       setSuccess('Laporan harga berhasil dikirim!');
       

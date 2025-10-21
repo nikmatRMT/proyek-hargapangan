@@ -122,6 +122,25 @@ export function submitPriceReport(payload: { marketId: number; prices: Array<{ c
   });
 }
 
+/** Submit laporan harga mobile format (untuk petugas web) */
+export function submitMobileReport(payload: {
+  date: string;
+  market_name: string;
+  commodity_name: string;
+  unit: string;
+  price: number;
+  notes?: string;
+  gps_lat?: string;
+  gps_lng?: string;
+}) {
+  return http('/api/mobile/reports', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 /** Ambil harga (opsional filter) — contoh: getPrices({ date:'2025-10-12', market_id:3 }) */
 export function getPrices(params?: Record<string, string | number | boolean | undefined>) {
   const q = new URLSearchParams();
