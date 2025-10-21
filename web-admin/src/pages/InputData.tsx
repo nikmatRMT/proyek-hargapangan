@@ -65,8 +65,12 @@ export default function InputDataPage() {
         getCommodities()
       ]);
       
-      const marketData = marketsRes.data || marketsRes || [];
+      // Backend returns { rows: [...] } for markets and { data: [...] } for commodities
+      const marketData = marketsRes.rows || marketsRes.data || marketsRes || [];
       const commodityData = commoditiesRes.data || commoditiesRes || [];
+      
+      console.log('Markets loaded:', marketData);
+      console.log('Commodities loaded:', commodityData);
       
       setMarkets(Array.isArray(marketData) ? marketData : []);
       setCommodities(Array.isArray(commodityData) ? commodityData : []);
