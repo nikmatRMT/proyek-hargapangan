@@ -133,9 +133,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <SidebarHeader className="border-b border-gray-200 bg-gray-200/80">
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
-                    <img src="/logo.png" alt="HARPA Logo" className="h-7 w-7" />
-                  </div>
+                  <img src="/logo.png" alt="HARPA Logo" className="h-10 w-10 rounded-lg shadow-sm" />
                   <div>
                     <div className="text-sm font-bold text-gray-900 leading-none">HARPA</div>
                     <div className="text-xs text-gray-600">Harga Pangan Banjarbaru Aktual</div>
