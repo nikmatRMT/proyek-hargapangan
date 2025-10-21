@@ -99,13 +99,19 @@ export function PetugasLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 py-4 max-w-4xl">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                window.history.pushState({}, '', '/input-data');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-lg shadow-md" />
-              <div>
+              <div className="text-left">
                 <h1 className="text-lg font-bold">HARPA BANUA</h1>
                 <p className="text-xs text-green-100">Input Data Harga Pangan</p>
               </div>
-            </div>
+            </button>
 
             {/* User Info & Actions */}
             <div className="flex items-center gap-2">
