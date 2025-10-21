@@ -30,7 +30,9 @@ export default function InputDataPage() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [selectedMarketId, setSelectedMarketId] = useState<string>('');
-  const [entries, setEntries] = useState<PriceEntry[]>([]);
+  const [entries, setEntries] = useState<PriceEntry[]>([
+    { commodityId: 0, commodityName: '', unit: '', price: '' }
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -128,9 +130,9 @@ export default function InputDataPage() {
 
       setSuccess(`Berhasil menyimpan ${entries.length} data harga`);
       
-      // Reset form
-      setEntries([]);
-      setSelectedMarketId('');
+      // Reset form - tambah 1 entry baru
+      setEntries([{ commodityId: 0, commodityName: '', unit: '', price: '' }]);
+      // Tidak reset market agar bisa langsung input lagi untuk pasar yang sama
 
       // Auto-hide success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
@@ -188,39 +190,42 @@ export default function InputDataPage() {
           {/* Price Entries */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-base">Daftar Komoditas</Label>
+              <Label className="text-base font-semibold">Daftar Komoditas & Harga</Label>
               <Button 
                 type="button" 
                 variant="outline" 
                 size="sm"
                 onClick={addEntry}
                 disabled={!selectedMarketId}
+                className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Tambah Komoditas
               </Button>
             </div>
 
-            {entries.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Klik "Tambah Komoditas" untuk mulai input data
+            {!selectedMarketId ? (
+              <div className="text-center py-8 text-muted-foreground bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed">
+                <p className="text-sm">Pilih pasar terlebih dahulu untuk mulai input data</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {entries.map((entry, index) => (
                   <div 
                     key={index} 
-                    className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 p-4 border rounded-lg dark:border-gray-700"
+                    className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_auto] gap-3 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
                   >
                     {/* Commodity Select */}
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Komoditas</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Komoditas *
+                      </Label>
                       <Select 
                         value={String(entry.commodityId || '')} 
                         onValueChange={(val) => updateEntry(index, 'commodityId', Number(val))}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih komoditas" />
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="-- Pilih Komoditas --" />
                         </SelectTrigger>
                         <SelectContent>
                           {commodities.map(commodity => (
@@ -233,17 +238,23 @@ export default function InputDataPage() {
                     </div>
 
                     {/* Price Input */}
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">
-                        Harga {entry.unit && `(Rp/${entry.unit})`}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Harga {entry.unit ? `(Rp/${entry.unit})` : '*'}
                       </Label>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={entry.price}
-                        onChange={(e) => updateEntry(index, 'price', e.target.value)}
-                        min="0"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">
+                          Rp
+                        </span>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={entry.price}
+                          onChange={(e) => updateEntry(index, 'price', e.target.value)}
+                          min="0"
+                          className="h-10 pl-9"
+                        />
+                      </div>
                     </div>
 
                     {/* Delete Button */}
@@ -253,7 +264,8 @@ export default function InputDataPage() {
                         variant="outline"
                         size="icon"
                         onClick={() => removeEntry(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                        className="h-10 w-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 border-red-300 dark:border-red-800"
+                        title="Hapus komoditas ini"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -265,38 +277,45 @@ export default function InputDataPage() {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setEntries([]);
-                setSelectedMarketId('');
-                setError('');
-                setSuccess('');
-              }}
-              disabled={loading}
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading || entries.length === 0}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Simpan Data
-                </>
+          <div className="flex justify-between gap-3 pt-4 border-t">
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              {entries.length > 0 && (
+                <span>
+                  Total: <strong className="text-green-600 dark:text-green-400">{entries.length}</strong> komoditas
+                </span>
               )}
-            </Button>
-          </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEntries([{ commodityId: 0, commodityName: '', unit: '', price: '' }]);
+                  setError('');
+                  setSuccess('');
+                }}
+                disabled={loading}
+              >
+                Reset Form
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading || entries.length === 0 || !selectedMarketId}
+                className="bg-green-600 hover:bg-green-700 min-w-[140px]"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Simpan Data
+                  </>
+                )}
+              </Button>
+            </div>
         </CardContent>
       </Card>
     </div>
