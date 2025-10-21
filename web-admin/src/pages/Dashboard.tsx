@@ -355,18 +355,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-8 py-6">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Harga Pangan Banjarbaru Aktual</h1>
-            <p className="text-sm text-gray-600 mt-1">Data laporan harga komoditas pasar</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Harga Pangan Banjarbaru Aktual</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Data laporan harga komoditas pasar</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               className={`px-4 py-2 text-sm rounded-lg border ${
-                tab === "summary" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700"
+                tab === "summary" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 dark:border-gray-600"
               }`}
               onClick={() => setTab("summary")}
             >
@@ -374,7 +374,7 @@ export default function Dashboard() {
             </button>
             <button
               className={`px-4 py-2 text-sm rounded-lg border ${
-                tab === "table" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700"
+                tab === "table" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 dark:border-gray-600"
               }`}
               onClick={() => setTab("table")}
             >
@@ -390,14 +390,14 @@ export default function Dashboard() {
       </div>
 
       {/* Filter + Aksi */}
-      <section className="bg-white border-b border-gray-200 px-8 py-4">
+      <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-4">
         {/* 3 kolom: [Urut] [Filter] [Aksi] */}
         <div className="grid items-center gap-4 grid-cols-1 md:grid-cols-[auto_1fr_auto]">
           {/* Kolom 1: Urut */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Urut:</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Urut:</span>
             <select
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
               aria-label="Urutkan tanggal"
@@ -418,7 +418,7 @@ export default function Dashboard() {
                 checked={allDates}
                 onChange={(e) => setAllDates(e.target.checked)}
               />
-              <span className="text-sm text-gray-700">Semua tanggal</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Semua tanggal</span>
             </label>
 
             <div className="flex items-center gap-2">
@@ -427,7 +427,7 @@ export default function Dashboard() {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 disabled={allDates}
-                className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50"
+                className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
                 aria-label="Tanggal mulai"
               />
               <span className="text-gray-400">–</span>
@@ -436,7 +436,7 @@ export default function Dashboard() {
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 disabled={allDates}
-                className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50"
+                className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
                 aria-label="Tanggal akhir"
               />
             </div>
@@ -447,7 +447,7 @@ export default function Dashboard() {
                 const v = e.target.value;
                 setSelectedMarketId(v === "all" ? "all" : Number(v));
               }}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
               aria-label="Pilih pasar"
             >
               <option value="all">Semua Pasar</option>
@@ -635,11 +635,11 @@ function DangerBulkDelete({
   return (
     <div className="flex items-end gap-3 flex-wrap">
       <div className="flex flex-col">
-        <label className="text-xs text-gray-600 mb-1">Bulan</label>
+        <label className="text-xs text-gray-600 dark:text-gray-400 mb-1">Bulan</label>
         <select
           value={month}
           onChange={(e) => setMonth(Number(e.target.value))}
-          className="px-3 py-2 border rounded-lg text-sm bg-white"
+          className="px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
         >
           {[...Array(12)].map((_, i) => (
             <option key={i + 1} value={i + 1}>
@@ -650,19 +650,19 @@ function DangerBulkDelete({
       </div>
 
       <div className="flex flex-col">
-        <label className="text-xs text-gray-600 mb-1">Tahun</label>
+        <label className="text-xs text-gray-600 dark:text-gray-400 mb-1">Tahun</label>
         <input
           type="number"
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
-          className="px-3 py-2 border rounded-lg text-sm w-28"
+          className="px-3 py-2 border rounded-lg text-sm w-28 bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
         />
       </div>
 
       <button
         onClick={handlePreview}
         disabled={loading || selectedMarketId === "all"}
-        className="px-3 py-2 border rounded-lg text-sm bg-white hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-60 disabled:cursor-not-allowed dark:text-gray-200 dark:border-gray-600"
         title={selectedMarketId === "all" ? "Pilih 1 pasar tertentu dulu" : "Hitung data yang akan dihapus"}
       >
         Preview
@@ -698,12 +698,12 @@ function DangerBulkDelete({
 
 function Card({ title, value }: { title: string; value: string }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-600">{title}</span>
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</span>
       </div>
-      <div className="text-2xl font-bold text-gray-900">{value}</div>
-      <p className="text-xs text-gray-500 mt-1">Semua komoditas</p>
+      <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Semua komoditas</p>
     </div>
   );
 }

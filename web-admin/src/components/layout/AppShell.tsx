@@ -241,10 +241,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-gray-200 bg-gray-100 p-3">
+            <SidebarFooter className={cn(
+              "border-t p-3 transition-colors duration-300",
+              isDarkMode
+                ? "border-gray-700 bg-gray-800"
+                : "border-gray-200 bg-gray-100"
+            )}>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <div className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-200">
+                  <div className={cn(
+                    "flex items-center gap-3 px-2 py-2 rounded-md transition-colors",
+                    isDarkMode
+                      ? "hover:bg-gray-700"
+                      : "hover:bg-gray-200"
+                  )}>
                     {avatarUrl ? (
                       <img
                         key={tick}
@@ -258,14 +268,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{displayName}</div>
+                      <div className={cn(
+                        "text-sm font-medium truncate",
+                        isDarkMode ? "text-gray-100" : "text-gray-900"
+                      )}>{displayName}</div>
                       <span className={cn('mt-0.5 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium', roleColor)}>
                         {roleLabel}
                       </span>
                     </div>
                     <button
                       onClick={doLogout}
-                      className="ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                      className={cn(
+                        "ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors",
+                        isDarkMode
+                          ? "text-red-400 hover:bg-red-900/20"
+                          : "text-red-600 hover:bg-red-50"
+                      )}
                       title="Logout"
                     >
                       <LogOut className="h-4 w-4" />
@@ -299,19 +317,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}>
             <div className="flex items-center justify-between px-6 py-3">
               <nav className={cn(
-                "text-sm",
+                "text-sm transition-colors",
                 isDarkMode ? "text-gray-400" : "text-gray-600"
               )}>
-                <a href="/" className="hover:text-gray-900">Dashboard</a>
-                <span className="mx-2 text-gray-400">/</span>
-                <span className="font-medium text-gray-900">
+                <a 
+                  href="/" 
+                  className={cn(
+                    "hover:text-green-600 transition-colors",
+                    isDarkMode ? "text-gray-400 hover:text-green-400" : ""
+                  )}
+                >Dashboard</a>
+                <span className={cn(
+                  "mx-2",
+                  isDarkMode ? "text-gray-600" : "text-gray-400"
+                )}>  /</span>
+                <span className={cn(
+                  "font-medium",
+                  isDarkMode ? "text-gray-100" : "text-gray-900"
+                )}>
                   {pathname === '/' ? 'Dashboard' : pathname.replace('/', '')}
                 </span>
               </nav>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
-                  <p className="text-xs text-gray-500 capitalize">{(role || '').replace('_', ' ')}</p>
+                  <p className={cn(
+                    "text-sm font-medium",
+                    isDarkMode ? "text-gray-100" : "text-gray-900"
+                  )}>{displayName}</p>
+                  <p className={cn(
+                    "text-xs capitalize",
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  )}>{(role || '').replace('_', ' ')}</p>
                 </div>
                 {avatarUrl ? (
                   <img
@@ -331,7 +367,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className={cn(
             "app-shell-full w-full h-full overflow-y-auto p-6 transition-colors duration-300",
-            isDarkMode ? "bg-gray-900" : "bg-gray-50"
+            isDarkMode ? "bg-gray-900 dark-mode" : "bg-gray-50"
           )}>
             {children}
           </div>
