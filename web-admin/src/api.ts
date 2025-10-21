@@ -136,8 +136,7 @@ export function submitMobileReport(payload: {
   return http('/api/mobile/reports', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: payload  // Tidak perlu JSON.stringify, http() akan handle itu
   });
 }
 
