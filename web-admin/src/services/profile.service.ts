@@ -1,8 +1,14 @@
-// web-admin/src/services/profile.service.ts
-const API = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:4000';
+import { API_BASE } from '@/api';
+
+const API = API_BASE;
+
+function abs(path: string) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${API}${p}`;
+}
 
 async function http<T = any>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
+  const res = await fetch(abs(path), {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     ...init,
