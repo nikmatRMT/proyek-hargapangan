@@ -9,9 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BarChart3, Eye, EyeOff, Shield, Mail, Lock, AlertCircle } from 'lucide-react';
 
-type Role = 'admin' | 'petugas';
+import { API_BASE } from '@/api';
 
-const API_BASE = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:4000';
+type Role = 'admin' | 'petugas';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);

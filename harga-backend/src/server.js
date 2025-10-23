@@ -102,7 +102,9 @@ app.use(
     store: sessionStore,
     cookie: {
       httpOnly: true,
-      sameSite: 'lax', // 'lax' allows cookies on same-site navigation
+      // Use 'none' in production so Set-Cookie is accepted when frontend and API
+      // are served from different preview domains on Vercel. Keep 'lax' in dev.
+      sameSite: isProduction ? 'none' : 'lax',
       secure: isProduction, // true on HTTPS (Vercel)
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',

@@ -1,0 +1,30 @@
+[
+  {
+    "_id": "68f49a06630c8cd44b990163",
+    "id": 1,
+    "nama_pasar": "Pasar Bauntung",
+    "created_at": "2025-10-19T07:57:58.603Z",
+    "updated_at": "2025-10-19T07:57:58.603Z"
+  },
+  {
+    "_id": "68f49b75f854f06d58dc4302",
+    "id": 2,
+    "nama_pasar": "Pasar Jati",
+    "created_at": "2025-10-19T08:04:05.422Z",
+    "updated_at": "2025-10-19T08:04:05.422Z"
+  },
+  {
+    "_id": "68f49b75f854f06d58dc4303",
+    "id": 3,
+    "nama_pasar": "Pasar Pagi Loktabat Utara",
+    "created_at": "2025-10-19T08:04:05.941Z",
+    "updated_at": "2025-10-19T08:04:05.941Z"
+  },
+  {
+    "_id": "68f49b76f854f06d58dc4304",
+    "id": 4,
+    "nama_pasar": "Pasar Ulin Raya",
+    "created_at": "2025-10-19T08:04:06.459Z",
+    "updated_at": "2025-10-19T08:04:06.459Z"
+  }
+]

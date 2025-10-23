@@ -1,0 +1,136 @@
+[
+  {
+    "_id": "J0ocrgQGQtoKd810kas8usxwo3lemJhE",
+    "expires": "2025-10-27T03:37:04.490Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T03:37:04.490Z\",\"secure\":true,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "tGSXCsCQazI28EqYaHkbgF58PIisWNKG",
+    "expires": "2025-10-27T03:45:18.964Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T03:45:18.964Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "3UXB-lH7Y3Q2pUuuHXpkYwv-RxZtJKHA",
+    "expires": "2025-10-27T03:54:55.377Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T03:54:55.377Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "gUe5uKKpYZKz12o7jFbbheDnx7PwUlje",
+    "expires": "2025-10-27T03:57:26.517Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T03:57:26.517Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "IsQoDau5tkwM8yomQAfIq5HUKARtGSZx",
+    "expires": "2025-10-27T04:03:06.871Z",
+    "lastModified": "2025-10-20T04:03:06.976Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T04:03:06.871Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "YzdG-sZG2mvvJcgXXLlvaQktPjl4hH6u",
+    "expires": "2025-10-27T04:06:03.072Z",
+    "lastModified": "2025-10-20T04:06:03.152Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T04:06:03.072Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "rK1u9ATCeMK6W3o6FvK7GoPWBCgg_fPT",
+    "expires": "2025-10-27T12:35:27.858Z",
+    "lastModified": "2025-10-20T12:35:27.858Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T12:35:27.858Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "XBeJ6Q9214evbQAdkRMCSa2Fjb6e0XTB",
+    "expires": "2025-10-27T06:11:59.315Z",
+    "lastModified": "2025-10-20T06:11:59.430Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T06:11:59.315Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "yiXv91PHuniitOdmoO_jORTJE_IsSkis",
+    "expires": "2025-10-27T14:48:51.946Z",
+    "lastModified": "2025-10-20T14:48:51.946Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T14:48:51.946Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "_Qm8cA_VjaO5VycqJ3FRoHHepXhC7yw8",
+    "expires": "2025-10-27T14:54:51.946Z",
+    "lastModified": "2025-10-20T14:54:52.084Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T14:54:51.946Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "Gc4Wknt49363I5ufsp408p16I-I4zTXG",
+    "expires": "2025-10-27T15:25:13.527Z",
+    "lastModified": "2025-10-20T15:25:13.671Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T15:25:13.527Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "nJursZG8sawQQ1hz0j7frV05SOtWzfdI",
+    "expires": "2025-10-27T16:32:13.098Z",
+    "lastModified": "2025-10-20T16:32:13.435Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T16:32:13.098Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "whKLDg1sEKpf3ZkcK_NKAUNHs2HYe2Fo",
+    "expires": "2025-10-27T16:44:10.511Z",
+    "lastModified": "2025-10-20T16:44:10.991Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T16:44:10.511Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "jfoKkOC4_jy4_pS6eKTMFV3pvv0XQ3jN",
+    "expires": "2025-10-27T17:09:46.644Z",
+    "lastModified": "2025-10-20T17:09:46.779Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-27T17:09:46.644Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "-Ns3ZEF6rTB2F7cVq1dlDSzeAql9872F",
+    "expires": "2025-10-28T02:45:40.125Z",
+    "lastModified": "2025-10-21T02:45:40.267Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-28T02:45:40.125Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "eFAYaJTnccebwcQ6PqtqmUQUt79hsGAw",
+    "expires": "2025-10-28T04:42:56.743Z",
+    "lastModified": "2025-10-21T04:42:56.878Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-28T04:42:56.743Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "5FSYqle7YsRtBLfYc3_zjc-QV4QfrfSa",
+    "expires": "2025-10-28T04:43:09.826Z",
+    "lastModified": "2025-10-21T04:43:09.949Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-28T04:43:09.826Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"petugas\"}}"
+  },
+  {
+    "_id": "QwDuNJ2pVsi9prslBdUSC5RyeSje6LXl",
+    "expires": "2025-10-28T05:12:19.809Z",
+    "lastModified": "2025-10-21T05:12:19.954Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-28T05:12:19.809Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "wwt0iI_FG-iT5GXMq4zDeqlHsrS6AwYL",
+    "expires": "2025-10-28T05:36:11.461Z",
+    "lastModified": "2025-10-21T05:36:11.596Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-28T05:36:11.461Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":6,\"username\":\"super admin\",\"role\":\"petugas\"}}"
+  },
+  {
+    "_id": "eo3-GaQnbDLsL8HLMCrVnHapYBrg-gRb",
+    "expires": "2025-10-28T07:26:25.008Z",
+    "lastModified": "2025-10-21T07:26:25.121Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-28T07:26:25.008Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "kS9ShMx0uMcpO3AZ1YCuvUZ9_KN6DEQA",
+    "expires": "2025-10-29T00:30:45.885Z",
+    "lastModified": "2025-10-22T00:30:46.029Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-29T00:30:45.885Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "8h6v9crR4K08zLshAsWEyMygkekvLVMZ",
+    "expires": "2025-10-29T05:43:42.354Z",
+    "lastModified": "2025-10-22T05:43:42.467Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-29T05:43:42.354Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  },
+  {
+    "_id": "LpsmWrefnv4dbV0AL1RCRk0g94UMSwTV",
+    "expires": "2025-10-29T06:41:54.238Z",
+    "lastModified": "2025-10-22T06:41:54.335Z",
+    "session": "{\"cookie\":{\"originalMaxAge\":604800000,\"expires\":\"2025-10-29T06:41:54.238Z\",\"secure\":\"1\",\"httpOnly\":true,\"path\":\"/\",\"sameSite\":\"lax\"},\"user\":{\"id\":1,\"username\":\"admin\",\"role\":\"admin\"}}"
+  }
+]

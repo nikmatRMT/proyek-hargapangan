@@ -46,6 +46,9 @@ export async function initMongo() {
     laporan_harga.createIndex({ market_id: 1, tanggal_lapor: 1 }).catch(() => {}),
 
     counters.createIndex({ _id: 1 }, { unique: true }).catch(() => {}),
+    // audit logs collection
+    db.collection('audit_logs').createIndex({ id: 1 }, { unique: true }).catch(() => {}),
+    db.collection('audit_logs').createIndex({ collection: 1 }).catch(() => {}),
   ]);
 
   return db;
@@ -80,6 +83,33 @@ export async function getNextSeq(name) {
   
   console.log(`[getNextSeq] ${name}:`, { maxId, nextId, hasDoc: !!maxDoc[0] });
   return nextId;
+}
+
+/**
+ * Log an audit entry to `audit_logs` collection.
+ * Expects user to be a small object (id, username, role) if available.
+ */
+export async function logAudit({ collectionName, documentId = null, action, user = null, before = null, after = null, note = null }) {
+  const id = await getNextSeq('audit_logs');
+  const audit = {
+    id,
+    collection: collectionName,
+    documentId,
+    action,
+    user: user ? { id: user.id ?? user._id ?? null, username: user.username ?? user.name ?? null, role: user.role ?? null } : null,
+    before: before || null,
+    after: after || null,
+    note: note || null,
+    created_at: new Date(),
+  };
+  try {
+    const { audit_logs } = collections();
+    await audit_logs.insertOne(audit);
+  } catch (err) {
+    // Don't fail main operation if audit logging fails; just emit a console warning.
+    console.warn('[logAudit] failed to write audit entry:', err?.message || err);
+  }
+  return audit;
 }
 
 export async function closeMongo() {

@@ -22,4 +22,8 @@ export interface ReportRow {
   // kolom baru (opsional) — salah satu bisa dipakai
   notes?: string | null;        // preferensi utama (lebih netral)
   keterangan?: string | null;   // alias; dipakai jika app kirim 'keterangan'
+  // optional id references (kadang backend return id fields)
+  market_id?: number;
+  commodity_id?: number;
+  komoditas_id?: number;
 }

@@ -21,15 +21,13 @@ async function loadWorkbookCtor(): Promise<new () => any> {
 
 /** Tipe baris yang dipakai writer */
 export type MarketRow = {
-  week: string; day: number;
-  beras: number; minyakGorengKemasan: number; minyakGorengCurah: number;
-  tepungTeriguKemasan: number; tepungTeriguCurah: number; gulaPasir: number; telurAyam: number;
-  dagingSapi: number; dagingAyam: number; kedelai: number; bawangMerah: number; bawangPutih: number;
-  cabeMerahBesar: number; cabeRawit: number; ikanHaruan: number; ikanTongkol: number;
-  ikanMas: number; ikanPatin: number; ikanPapuyu: number; ikanBandeng: number; ikanKembung: number;
+  week?: string;
+  day?: number;
+  // dynamic commodity columns: key=commodity name, value=number
+  [commodity: string]: any;
 };
 
-const HEADER_COMMODITIES = [
+const DEFAULT_HEADER_COMMODITIES = [
   'Beras',
   'Minyak Goreng Kemasan',
   'Minyak Goreng Curah',
@@ -51,14 +49,9 @@ const HEADER_COMMODITIES = [
   'Ikan Papuyu/Betok',
   'Ikan Bandeng',
   'Ikan Kembung/Pindang',
-] as const;
-
-const UNIT_ROW: string[] = [
-  '(Rp/Kg)', '(Rp/Liter)', '(Rp/Liter)', '(Rp/Kg)', '(Rp/Kg)',
-  '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)',
-  '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)',
-  '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)', '(Rp/Kg)',
 ];
+
+const DEFAULT_UNIT = '(Rp/Kg)';
 
 /** ubah px → lebar karakter (ExcelJS) */
 function setColumnWidthPx(ws: any, col: number, px: number) {
@@ -69,15 +62,16 @@ function setColumnWidthPx(ws: any, col: number, px: number) {
 /** Core: tulis 1 tabel ke worksheet, ditempel di bawah baris terakhir yang ada */
 function writeTableToWorksheet(
   ws: any,
-  opts: { title: string; monthLabel: string; rows: MarketRow[] }
+  opts: { title: string; monthLabel: string; rows: MarketRow[]; headers?: string[]; units?: string[] }
 ) {
-  const { title, monthLabel, rows = [] } = opts;
+  const { title, monthLabel, rows = [], headers = DEFAULT_HEADER_COMMODITIES, units = [] } = opts;
 
   // layout kolom
   setColumnWidthPx(ws, 1, 5);    // A (kosong)
   setColumnWidthPx(ws, 2, 70);   // B Minggu
   setColumnWidthPx(ws, 3, 90);   // C Tanggal
-  for (let c = 4; c <= 24; c++) setColumnWidthPx(ws, c, 94); // D..X komoditas
+  const startCol = 4;
+  for (let i = 0; i < headers.length; i++) setColumnWidthPx(ws, startCol + i, 94);
 
   // ===== Judul (merge A..X)
   ws.addRow([]);
@@ -90,10 +84,10 @@ function writeTableToWorksheet(
   ws.mergeCells(titleRow.number, 1, titleRow.number, 24);
 
   // ===== Header & Unit
-  const headerRow: any = ws.addRow(['', 'Minggu', 'Tanggal', ...HEADER_COMMODITIES]);
-  const unitVals: any[] = Array(24).fill('');
+  const headerRow: any = ws.addRow(['', 'Minggu', 'Tanggal', ...headers]);
+  const unitVals: any[] = Array(3 + headers.length).fill('');
   unitVals[2] = monthLabel; // kolom C
-  for (let i = 0; i < UNIT_ROW.length; i++) unitVals[3 + i] = UNIT_ROW[i];
+  for (let i = 0; i < headers.length; i++) unitVals[3 + i] = units[i] || DEFAULT_UNIT;
   const unitsRow: any = ws.addRow(unitVals);
 
   // Merge B(header) 2 baris (Minggu)
@@ -142,7 +136,14 @@ function writeTableToWorksheet(
 
   const firstDataRowIdx = ws.lastRow.number + 1;
   for (const r of rows) {
-    const row: any = ws.addRow(toRow(r));
+    // build row according to headers
+    const dynamicVals: (string | number)[] = headers.map((h) => {
+      const v = r[h];
+      const n = Number(v);
+      return Number.isFinite(n) ? n : '';
+    });
+    const rowVals = ['', String(r.week || ''), safeNum(r.day), ...dynamicVals];
+    const row: any = ws.addRow(rowVals);
     row.eachCell((cell: any, col: number) => {
       if (col === 1) return;
       const isWeekCell = col === 2 && !!r.week;
@@ -231,7 +232,7 @@ function saveBlob(blob: Blob, fileName: string) {
 
 /** Export SINGLE sheet (1 tabel) */
 export async function exportMarketExcel(opts: {
-  title: string; monthLabel: string; rows: MarketRow[]; fileName?: string;
+  title: string; monthLabel: string; rows: MarketRow[]; fileName?: string; headers?: string[]; units?: string[];
 }) {
   const Workbook = await loadWorkbookCtor();
   const wb: any = new Workbook();
@@ -293,6 +294,44 @@ export async function exportMonthsStackedSingleSheet(params: {
   const buf = await wb.xlsx.writeBuffer();
   const arrayBuffer: ArrayBuffer =
     buf instanceof ArrayBuffer ? buf : (buf as any).buffer;
+  const blob = new Blob([arrayBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  saveBlob(blob, fileName);
+}
+
+/** Export: one worksheet per market. Each worksheet contains stacked monthly tables for that market. */
+export async function exportMarketsMultiSheet(params: {
+  markets: Array<{ name: string; tables: Array<{ title: string; monthLabel: string; rows: MarketRow[]; headers?: string[]; units?: string[] }> }>;
+  fileName?: string;
+}) {
+  const { markets, fileName = 'semua-pasar-multi-sheet.xlsx' } = params;
+  const Workbook = await loadWorkbookCtor();
+  const wb: any = new Workbook();
+
+  wb.creator = 'HARPA BANUA';
+  wb.lastModifiedBy = 'HARPA BANUA';
+  wb.created = new Date();
+  wb.modified = new Date();
+
+  // Helper to sanitize sheet name (Excel limit 31 chars, remove invalid chars)
+  function safeSheetName(n: string) {
+    const s = String(n || '').replace(/[:\\\\\/\?\*\[\]]/g, '').slice(0, 31);
+    return s || 'Sheet';
+  }
+
+  for (const m of markets) {
+    const ws = wb.addWorksheet(safeSheetName(m.name), { views: [{ state: 'normal' }] });
+    // write each table into this worksheet stacked
+    for (const t of m.tables) {
+      // t may include headers/units; pass through
+      writeTableToWorksheet(ws, { title: t.title, monthLabel: t.monthLabel, rows: t.rows, headers: t.headers, units: t.units });
+    }
+  }
+
+  // finalize
+  const buf = await wb.xlsx.writeBuffer();
+  const arrayBuffer: ArrayBuffer = buf instanceof ArrayBuffer ? buf : (buf as any).buffer;
   const blob = new Blob([arrayBuffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });

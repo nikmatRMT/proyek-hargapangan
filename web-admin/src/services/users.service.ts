@@ -1,5 +1,7 @@
 'use client';
 
+import { API_BASE } from '@/api';
+
 export type Role = 'admin' | 'petugas';
 export type UserRow = {
   id: number;
@@ -15,10 +17,15 @@ export type UserRow = {
   updated_at: string;
 };
 
-const API = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:4000';
+const API = API_BASE;
+
+function abs(path: string) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${API}${p}`;
+}
 
 async function http(path: string, init?: RequestInit): Promise<any> {
-  const res = await fetch(`${API}${path}`, {
+  const res = await fetch(abs(path), {
     credentials: 'include',
     cache: 'no-store',                               // ⬅️ cegah 304
     headers: {
