@@ -11,6 +11,9 @@
     "start": "node src/server.js",
     "import:excel": "node src/tools/import-excel.mjs",
     "db:init-counters": "node scripts/init-counters.mjs",
+    "db:view": "node scripts/view-db.mjs",
+    "db:export-prod": "node scripts/export-from-production.mjs",
+    "db:import-local": "node scripts/import-to-local.mjs",
     "seed:users": "node scripts/seed-users.mjs",
     "seed:prices": "node scripts/seed-prices.mjs"
   },

@@ -1,3 +1,15 @@
+// Update hanya tanggal laporan
+export async function updateReportDate(id: number, tanggal: string, notes?: string) {
+  const res = await fetch(joinUrl(`/api/prices/${id}`), {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tanggal, notes }),
+  });
+  const data = await readJsonResponse(res);
+  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
+  return data;
+}
 // src/api.ts
 
 // =====================
@@ -48,7 +60,10 @@ async function http(path: string, opts: FetchOpts = {}) {
 
   const data = await readJsonResponse(res);
   if (!res.ok) {
-    throw new Error(data?.message || `HTTP ${res.status}`);
+    const err: any = new Error(data?.message || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
   }
   return data;
 }
@@ -62,6 +77,11 @@ export function get(path: string) {
 
 export function post(path: string, body?: any) {
   return http(path, { method: 'POST', body, credentials: 'include' });
+}
+
+/** Patch arbitrary fields for a price row by id */
+export async function patchPriceById(id: number, body: Record<string, any>) {
+  return http(`/api/prices/${id}`, { method: 'PATCH', body, credentials: 'include' });
 }
 
 export function put(path: string, body?: any) {
@@ -110,6 +130,76 @@ export function getCommodities() {
     if (String(e.message).includes('404')) return http('/api/komoditas', { credentials: 'include' });
     throw e;
   });
+}
+
+// === CRUD helper untuk Markets ===
+export async function createMarket(nama_pasar: string) {
+  // Try multiple endpoint names used across different backends
+  const candidates = ['/api/markets', '/api/pasar'];
+  let lastErr: any = null;
+  for (const p of candidates) {
+    try { return await post(p, { nama_pasar }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+  }
+  throw lastErr || new Error('createMarket: endpoint tidak ditemukan');
+}
+
+export async function updateMarket(id: number, nama_pasar: string) {
+  const candidates = [`/api/markets/${id}`, `/api/pasar/${id}`];
+  let lastErr: any = null;
+  for (const p of candidates) {
+    try { return await put(p, { nama_pasar }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+  }
+  throw lastErr || new Error('updateMarket: endpoint tidak ditemukan');
+}
+
+export async function deleteMarket(id: number) {
+  const candidates = [`/api/markets/${id}`, `/api/pasar/${id}`];
+  let lastErr: any = null;
+  for (const p of candidates) {
+    try { return await del(p); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+  }
+  throw lastErr || new Error('deleteMarket: endpoint tidak ditemukan');
+}
+
+// === CRUD helper untuk Commodities ===
+export async function createCommodity(nama_komoditas: string) {
+  const candidates = ['/api/commodities', '/api/komoditas'];
+  let lastErr: any = null;
+  for (const p of candidates) {
+    try { return await post(p, { nama_komoditas }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+  }
+  throw lastErr || new Error('createCommodity: endpoint tidak ditemukan');
+}
+
+export async function updateCommodity(id: number, nama_komoditas: string) {
+  const candidates = [`/api/commodities/${id}`, `/api/komoditas/${id}`];
+  let lastErr: any = null;
+  for (const p of candidates) {
+    try { return await put(p, { nama_komoditas }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+  }
+  throw lastErr || new Error('updateCommodity: endpoint tidak ditemukan');
+}
+
+export async function deleteCommodity(id: number) {
+  const candidates = [`/api/commodities/${id}`, `/api/komoditas/${id}`];
+  let lastErr: any = null;
+  for (const p of candidates) {
+    try { return await del(p); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+  }
+  throw lastErr || new Error('deleteCommodity: endpoint tidak ditemukan');
+}
+
+// Lightweight helpers to fetch normalized options for dropdowns (used by ReportsTable)
+export async function fetchMarketsOptions() {
+  const res = await getMarkets();
+  const list = Array.isArray((res as any).rows) ? (res as any).rows : Array.isArray(res) ? (res as any) : [];
+  return list.map((m: any) => ({ value: m.id, label: m.nama_pasar || m.name || m.nama || String(m.id) }));
+}
+
+export async function fetchCommoditiesOptions() {
+  const res = await getCommodities();
+  const list = Array.isArray((res as any).rows) ? (res as any).rows : Array.isArray(res) ? (res as any) : [];
+  return list.map((k: any) => ({ value: k.id, label: k.nama_komoditas || k.name || k.nama || String(k.id) }));
 }
 
 /** Submit data harga dari petugas (via web atau mobile) */
@@ -170,12 +260,13 @@ export function fetchReports(
 // =====================
 type UploadExcelArgs = {
   file: File;
-  marketName: string;   // wajib: nama pasar yang dipilih (untuk validasi server)
-  marketId: number;     // wajib: id pasar yang dipilih
+  marketName?: string;   // nama pasar yang dipilih (opsional kalau rekap=true)
+  marketId?: number;     // id pasar yang dipilih (opsional kalau rekap=true)
   bulk: boolean;        // true: impor multi-bulan dari satu file; false: satu bulan (butuh month & year)
   month?: string;       // '01'..'12' (wajib bila bulk=false)
   year?: string;        // '2025' (wajib bila bulk=false)
   truncate?: boolean;   // default false
+  rekap?: boolean;
 };
 
 /**
@@ -185,19 +276,13 @@ type UploadExcelArgs = {
  *  2) /api/import-excel
  *  3) /api/import-excel/bulk
  */
-export async function uploadExcel(args: {
-  file: File;
-  marketName: string;
-  marketId: number;
-  bulk: boolean;
-  month?: string;
-  year?: string;
-  truncate?: boolean;
-}) {
-  const { file, marketName, marketId, bulk, month, year, truncate } = args;
+export async function uploadExcel(args: UploadExcelArgs) {
+  const { file, marketName, marketId, bulk, month, year, truncate, rekap } = args;
 
   if (!file) throw new Error('File Excel belum dipilih.');
-  if (!marketName || typeof marketId !== 'number') {
+  // Kalau rekap mode, backend akan mencoba mendeteksi pasar per-sheet.
+  // Jadi pasar tidak wajib bila rekap === true. Default: require market.
+  if (!rekap && (!marketName || typeof marketId !== 'number')) {
     throw new Error('Wajib pilih pasar tertentu sebelum impor.');
   }
   if (!bulk && (!month || !year)) {
@@ -206,8 +291,10 @@ export async function uploadExcel(args: {
 
   const form = new FormData();
   form.append('file', file);
-  form.append('marketName', marketName);
-  form.append('marketId', String(marketId));
+  // Hanya kirim market jika ada (rekap mode boleh tanpa market)
+  if (marketName) form.append('marketName', marketName);
+  if (typeof marketId === 'number') form.append('marketId', String(marketId));
+  form.append('rekap', rekap ? '1' : '0');
   form.append('bulk', bulk ? '1' : '0');
   if (!bulk) {
     form.append('month', String(month));

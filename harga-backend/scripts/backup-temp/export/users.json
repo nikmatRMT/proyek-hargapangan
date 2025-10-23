@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "68f4a4f7a76ad80ee05fdf4c",
+    "id": 1,
+    "username": "admin",
+    "password": "$2b$10$D6TVegA2zRj9Xbg9DXiYr.tQ4xETJJSsEcUuPh13KD0Rw7mbyScIC",
+    "role": "admin",
+    "is_active": true,
+    "nama_lengkap": "Administrator",
+    "created_at": "2025-10-19T00:00:00.000Z",
+    "updated_at": "2025-10-21T06:39:13.748Z",
+    "foto": "https://8afvx7agxw21nzha.public.blob.vercel-storage.com/avatars/user-1-1760970016981.png",
+    "alamat": "east street 10th",
+    "phone": "012104392382"
+  },
+  {
+    "_id": "68f5c1e7ae2cf2276db51c02",
+    "id": 6,
+    "nip": "199001012025011089",
+    "nama_lengkap": "admin",
+    "username": "super admin",
+    "password": "$2b$10$rbRVOkZWABvcmTAjvkH4cea.4iXhWKpUDxu30Oqj0aEsR/d5sboZm",
+    "role": "petugas",
+    "is_active": 1,
+    "phone": null,
+    "alamat": "east street 10th",
+    "foto": "https://8afvx7agxw21nzha.public.blob.vercel-storage.com/avatars/user-6-1761003538999.jpg",
+    "created_at": "2025-10-20T05:00:23.449Z",
+    "updated_at": "2025-10-21T06:58:59.363Z"
+  },
+  {
+    "_id": "68f66058de39a669be0f30eb",
+    "id": 7,
+    "nip": "199001012025011080",
+    "nama_lengkap": "nikmat rahmat",
+    "username": "art",
+    "password": "$2b$10$gDYd095vUch10/58aixsaeetiDSkVns13lNPVvEG.rBm2I5FX3Lr.",
+    "role": "admin",
+    "is_active": 1,
+    "phone": "012104392382",
+    "alamat": "east street 10th",
+    "foto": "https://8afvx7agxw21nzha.public.blob.vercel-storage.com/avatars/user-7-1760977091480.png",
+    "created_at": "2025-10-20T16:16:24.697Z",
+    "updated_at": "2025-10-20T16:18:12.862Z"
+  }
+]

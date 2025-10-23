@@ -154,6 +154,26 @@ function toISODateFlex(val, ctx) {
   return null;
 }
 
+/* =========================
+   Detect market name from sheet (rekap style)
+   Scan top rows for patterns like 'Pasar <name>' or 'di Pasar <name>'
+========================= */
+function guessMarketFromSheet(ws) {
+  try {
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, blankrows: false });
+    const head = rows.slice(0, 12).flat().filter(Boolean).map(String).join(' | ');
+    // common patterns: 'Pasar Bauntung', 'di Pasar Bauntung', 'Pasar Bauntung Kota Banjarbaru'
+    const m = head.match(/pasar\s+([A-Za-z0-9\-\/\s]+?)(?:[,\-|\n]| kota| kota\b| tahun|\b)/i);
+    if (m && m[1]) return m[1].trim();
+    const m2 = head.match(/di\s+pasar\s+([A-Za-z0-9\-\/\s]+?)(?:[,\-|\n]| kota| tahun|\b)/i);
+    if (m2 && m2[1]) return m2[1].trim();
+    // fallback: look for the word 'Pasar' followed by a capitalized token
+    const m3 = head.match(/Pasar\s+([A-Z][A-Za-z0-9\s]+)/);
+    if (m3 && m3[1]) return m3[1].trim();
+    return null;
+  } catch (e) { return null; }
+}
+
 const ID_MONTH = {
   januari: 1, februari: 2, febuari: 2, maret: 3, april: 4, mei: 5, juni: 6,
   juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12,
@@ -338,46 +358,71 @@ async function handleBulk(req, res) {
         s[k]++; stats.set(n, s);
       };
 
+      const rekapMode = String(req.body.rekap || '0') === '1' || String(req.body.rekap || '').toLowerCase() === 'true';
       for (const sheetName of wb.SheetNames) {
-        const ws = wb.Sheets[sheetName];
+          const ws = wb.Sheets[sheetName];
 
-        let parsed = parseMonthlySheet(ws, { year });
-        if (!parsed?.items?.length) {
-          parsed = parseWideSheet(ws, { year, month: guessMonthFromSheetName(sheetName) });
-        }
+          let parsed = parseMonthlySheet(ws, { year });
+          if (!parsed?.items?.length) {
+            parsed = parseWideSheet(ws, { year, month: guessMonthFromSheetName(sheetName) });
+          }
 
-        const { items, month, headerNorm = [], headerRaw = [] } = parsed;
-        if (!month || !items.length) continue;
+          const { items, month, headerNorm = [], headerRaw = [] } = parsed;
+          if (!month || !items.length) continue;
 
-        sheetCount++;
+          // determine market for this sheet: if rekap mode or market not provided, try guess from sheet
+          let thisMarketId = market_id;
+          if (!thisMarketId || rekapMode) {
+            const guessed = guessMarketFromSheet(ws) || sheetName;
+            try {
+              const { pasar } = collections();
+              const found = await pasar.findOne({ nama_pasar: guessed });
+              if (found) thisMarketId = found.id;
+              else {
+                // attempt fuzzy match: ignore case and diacritics
+                const rows = await pasar.find({}).toArray();
+                const match = rows.find(r => mkKey(r.nama_pasar) === mkKey(guessed));
+                if (match) thisMarketId = match.id;
+              }
+            } catch (e) {
+              console.warn('[ImportBulk] market guess failed for sheet', sheetName, guessed, e);
+            }
+          }
+          if (!thisMarketId) {
+            console.warn('[ImportBulk] skipping sheet, market not resolved:', sheetName);
+            continue;
+          }
 
-        if (truncate) {
-          const { laporan_harga } = collections();
-          const start = `${year}-${String(month).padStart(2,'0')}-01`;
-          const endMonth = month === 12 ? 1 : month + 1;
-          const endYear = month === 12 ? year + 1 : year;
-          const end = `${endYear}-${String(endMonth).padStart(2,'0')}-01`;
-          await laporan_harga.deleteMany({ market_id, tanggal_lapor: { $gte: start, $lt: end } });
-        }
+          sheetCount++;
 
-        for (const it of items) {
-          const key = mkKey(it.komoditas_nama);
-          const komoditas_id = komoditasMap.get(key);
-          if (!komoditas_id) { skipped++; unknown.add(it.komoditas_nama); bump(key, "skipped"); continue; }
+          if (truncate) {
+            const { laporan_harga } = collections();
+            const start = `${year}-${String(month).padStart(2,'0')}-01`;
+            const endMonth = month === 12 ? 1 : month + 1;
+            const endYear = month === 12 ? year + 1 : year;
+            const end = `${endYear}-${String(endMonth).padStart(2,'0')}-01`;
+            await laporan_harga.deleteMany({ market_id: thisMarketId, tanggal_lapor: { $gte: start, $lt: end } });
+          }
 
-          try {
-            await upsertPriceRow(null, {
-              market_id,
-              komoditas_id,
-              tanggal_lapor: it.tanggal_lapor,
-              harga: it.harga,
-            });
-            imported++; bump(key, "imported");
-          } catch {
-            skipped++; bump(key, "skipped");
+          for (const it of items) {
+            const key = mkKey(it.komoditas_nama);
+            const komoditas_id = komoditasMap.get(key);
+            if (!komoditas_id) { skipped++; unknown.add(it.komoditas_nama); bump(key, "skipped"); continue; }
+
+            try {
+              await upsertPriceRow(null, {
+                market_id: thisMarketId,
+                komoditas_id,
+                tanggal_lapor: it.tanggal_lapor,
+                harga: it.harga,
+              });
+              imported++; bump(key, "imported");
+            } catch (err) {
+              skipped++; bump(key, "skipped");
+              console.warn('[ImportBulk] upsert failed for', thisMarketId, it, err);
+            }
           }
         }
-      }
 
       if (sheetCount === 0)
         return res.status(400).json({ message: "Tidak ada sheet bulanan valid." });

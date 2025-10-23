@@ -17,20 +17,21 @@ router.get('/storage', async (req, res) => {
     }
 
     const db = getDb();
-    const stats = await db.stats();
-    
+    // Get database stats (dbStats command)
+    const stats = await db.command({ dbStats: 1 });
     const maxSize = 512 * 1024 * 1024; // 512MB free tier
     const dataSize = stats.dataSize || 0;
     const storageSize = stats.storageSize || 0;
     const percentage = ((dataSize / maxSize) * 100).toFixed(2);
-    
-    // Calculate collections breakdown
+
+    // Calculate collections breakdown using collStats command
     const collections = await db.listCollections().toArray();
     const collectionStats = [];
-    
+
     for (const col of collections) {
       try {
-        const colStats = await db.collection(col.name).stats();
+        // Use collStats command instead of .stats()
+        const colStats = await db.command({ collStats: col.name });
         collectionStats.push({
           name: col.name,
           count: colStats.count || 0,
@@ -42,7 +43,7 @@ router.get('/storage', async (req, res) => {
         console.warn(`Failed to get stats for ${col.name}:`, e.message);
       }
     }
-    
+
     // Sort by size desc
     collectionStats.sort((a, b) => b.size - a.size);
 

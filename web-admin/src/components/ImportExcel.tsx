@@ -1,6 +1,6 @@
 // src/components/ImportExcel.tsx
 import React, { useMemo, useRef, useState } from 'react';
-import { uploadExcel } from '../api';
+import { uploadExcel, createCommodity } from '../api';
 
 type Market = { id: number; nama?: string; name?: string; nama_pasar?: string };
 
@@ -23,10 +23,13 @@ export default function ImportExcel({
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [unknownNames, setUnknownNames] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
 
   // Default: bulk = true (impor multi-bulan dari satu file)
   const [bulk, setBulk] = useState(true);
   const [truncate, setTruncate] = useState(false);
+  const [rekap, setRekap] = useState(false);
 
   // Jika bulk = false, wajib isi bulan & tahun
   const now = new Date();
@@ -43,8 +46,9 @@ export default function ImportExcel({
   async function handleImport() {
     if (!file) return alert('Pilih file Excel terlebih dahulu (.xlsx/.xls).');
 
-    // Sesuai aturan: wajib pilih satu pasar (bukan "Semua Pasar")
-    if (selectedMarketId === 'all' || !market) {
+    // Kalau rekap = true, biarkan server coba deteksi pasar per-sheet.
+    // Hanya paksa pilih pasar kalau rekap === false.
+    if (!rekap && (selectedMarketId === 'all' || !market)) {
       return alert('Wajib pilih PASAR tertentu sebelum melakukan impor.');
     }
 
@@ -64,17 +68,22 @@ export default function ImportExcel({
     try {
       const res = await uploadExcel({
         file,
-        marketName: getMarketLabel(market),
-        marketId: market.id,
+        marketName: market ? getMarketLabel(market) : undefined,
+        marketId: market ? market.id : undefined,
         bulk,
+        rekap,
         month: bulk ? undefined : month,
         year: bulk ? undefined : year,
         truncate,
       });
 
-      alert(
-        `Import berhasil.\nimported=${res?.imported ?? 0}, skipped=${res?.skipped ?? 0}`
-      );
+      alert(`Import berhasil.\nimported=${res?.imported ?? 0}, skipped=${res?.skipped ?? 0}`);
+      // show unknown names if any
+      if (Array.isArray(res?.unknown_names) && res.unknown_names.length > 0) {
+        setUnknownNames(res.unknown_names);
+      } else {
+        setUnknownNames([]);
+      }
 
       // reset form
       setFile(null);
@@ -84,6 +93,20 @@ export default function ImportExcel({
       alert(e?.message || 'Import gagal.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function addCommodity(name: string) {
+    setCreating(true);
+    try {
+      await createCommodity(name);
+      // remove from unknownNames
+      setUnknownNames((prev) => prev.filter((n) => n !== name));
+      alert(`Komoditas '${name}' berhasil ditambahkan.`);
+    } catch (e: any) {
+      alert((e as any)?.data?.message || (e as any)?.message || 'Gagal tambah komoditas');
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -149,6 +172,17 @@ export default function ImportExcel({
         <span className="text-sm">Bersihkan data target sebelum impor</span>
       </label>
 
+      {/* Rekap mode: biarkan upload workbook berisi beberapa sheet */}
+      <label className="inline-flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={rekap}
+          onChange={(e) => setRekap(e.target.checked)}
+          disabled={busy}
+        />
+        <span className="text-sm">Mode Rekap (deteksi pasar per-sheet)</span>
+      </label>
+
       {/* Info pasar terpilih */}
       <div className="text-sm text-gray-700">
         Pasar terpilih:{' '}
@@ -170,6 +204,30 @@ export default function ImportExcel({
       >
         {busy ? 'Mengunggah…' : 'Import Data'}
       </button>
+
+      {/* Unknown names modal (simple) */}
+      {unknownNames.length > 0 && (
+        <div className="fixed inset-0 bg-black/30 grid place-items-center z-50">
+          <div className="bg-white p-6 rounded shadow w-96">
+            <h3 className="font-medium mb-2">Nama Komoditas Tidak Dikenal</h3>
+            <p className="text-sm text-gray-600 mb-3">Beberapa nama pada file tidak cocok dengan daftar komoditas. Tambahkan agar import berikutnya tidak di-skip.</p>
+            <div className="max-h-48 overflow-auto mb-3">
+              {unknownNames.map((n) => (
+                <div key={n} className="flex items-center justify-between gap-2 mb-2">
+                  <div className="text-sm truncate">{n}</div>
+                  <div>
+                    <button onClick={() => addCommodity(n)} disabled={creating} className="px-2 py-1 bg-green-600 text-white rounded-md mr-2">Tambah</button>
+                    <button onClick={() => setUnknownNames((prev) => prev.filter(x => x !== n))} className="px-2 py-1 border rounded-md">Abaikan</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setUnknownNames([]); }} className="px-3 py-2 border rounded">Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

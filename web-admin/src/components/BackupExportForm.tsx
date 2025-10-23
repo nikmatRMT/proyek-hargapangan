@@ -11,6 +11,7 @@ interface Market {
 interface BackupExportFormProps {
   markets: Market[];
   onExport: (params: ExportParams) => Promise<void>;
+  onPreview?: (params: ExportParams) => Promise<void>;
 }
 
 export interface ExportParams {
@@ -19,7 +20,7 @@ export interface ExportParams {
   marketId: string; // 'all' or specific market id
 }
 
-export default function BackupExportForm({ markets, onExport }: BackupExportFormProps) {
+export default function BackupExportForm({ markets, onExport, onPreview }: BackupExportFormProps) {
   const [allDates, setAllDates] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -170,16 +171,36 @@ export default function BackupExportForm({ markets, onExport }: BackupExportForm
         </select>
       </div>
 
-      {/* Export Button */}
-      <Button
-        onClick={handleExport}
-        disabled={exporting}
-        className="w-full"
-        size="lg"
-      >
-        <FileSpreadsheet className="w-4 h-4 mr-2" />
-        {exporting ? 'Mengekspor...' : 'Export ke Excel'}
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          onClick={async () => {
+            if (!onPreview) return handleExport();
+            setExporting(true);
+            try {
+              await onPreview({ startDate: allDates ? '' : startDate, endDate: allDates ? '' : endDate, marketId });
+            } catch (e: any) {
+              console.error('[Preview] Error:', e);
+              alert('Gagal membuat preview: ' + (e?.message || e));
+            } finally { setExporting(false); }
+          }}
+          disabled={exporting}
+          className="flex-1"
+          size="lg"
+          variant="outline"
+        >
+          <FileSpreadsheet className="w-4 h-4 mr-2" /> Preview
+        </Button>
+
+        <Button
+          onClick={handleExport}
+          disabled={exporting}
+          className="flex-1"
+          size="lg"
+        >
+          <FileSpreadsheet className="w-4 h-4 mr-2" />
+          {exporting ? 'Mengekspor...' : 'Export ke Excel'}
+        </Button>
+      </div>
     </div>
   );
 }

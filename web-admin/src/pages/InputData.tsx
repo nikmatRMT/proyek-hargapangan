@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle, Loader2, MapPin, Camera, X } from 'lucide-react';
-import { submitMobileReport } from '../api';
+import { submitMobileReport, API_BASE } from '../api';
 
 // Data static seperti di mobile app
 const PASAR_LIST = [
@@ -62,7 +62,10 @@ function StepCard({ number, title, children }: { number: string; title: string; 
 
 export default function InputDataPage() {
   const [selectedMarket, setSelectedMarket] = useState<string>('');
+  const [markets, setMarkets] = useState<Array<{ id: number; nama_pasar: string }>>([]);
   const [selectedCommodity, setSelectedCommodity] = useState<string>('');
+  const [commoditiesList, setCommoditiesList] = useState<Array<{ id: number; nama_komoditas: string }>>([]);
+  const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [price, setPrice] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [photo, setPhoto] = useState<File | null>(null);
@@ -76,6 +79,22 @@ export default function InputDataPage() {
   useEffect(() => {
     getLocation();
   }, []);
+
+  // load markets & commodities from backend
+  useEffect(() => {
+    fetch(`${API_BASE}/api/markets`, { credentials: 'include' }).then(r => r.json()).then(d => setMarkets(d?.rows || [])).catch(() => {});
+    fetch(`${API_BASE}/api/commodities`, { credentials: 'include' }).then(r => r.json()).then(d => setCommoditiesList(d?.rows || [])).catch(() => {});
+    try {
+      const au = JSON.parse(localStorage.getItem('auth_user') || 'null');
+      setIsAdmin(Boolean(au && au.role === 'admin'));
+    } catch {}
+  }, []);
+
+  const [addingMarket, setAddingMarket] = useState(false);
+  const [newMarketName, setNewMarketName] = useState('');
+  const [addingCommodity, setAddingCommodity] = useState(false);
+  const [newCommodityName, setNewCommodityName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   async function getLocation() {
     if ('geolocation' in navigator) {
@@ -158,8 +177,8 @@ export default function InputDataPage() {
     try {
       setLoading(true);
 
-      // Format payload seperti mobile app
-      const today = new Date().toISOString().split('T')[0];
+  // Format payload seperti mobile app
+  const today = date || new Date().toISOString().split('T')[0];
       const commodityData = KOMODITAS_LIST.find(k => k.value === selectedCommodity);
       
       // Gunakan FormData kalau ada foto
@@ -176,7 +195,7 @@ export default function InputDataPage() {
         formData.append('photo', photo);
 
         // Kirim dengan FormData
-        const response = await fetch('/m/reports', {
+        const response = await fetch(`${API_BASE}/m/reports`, {
           method: 'POST',
           credentials: 'include',
           body: formData,
@@ -245,18 +264,63 @@ export default function InputDataPage() {
         <StepCard number="1" title="Lokasi Pantauan">
           <div className="space-y-3">
             <Label htmlFor="market" className="text-sm sm:text-base font-medium">Pilih Lokasi Pasar</Label>
-            <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-              <SelectTrigger id="market" className="h-12 text-sm sm:text-base">
-                <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
-              </SelectTrigger>
-              <SelectContent>
-                {PASAR_LIST.map(pasar => (
-                  <SelectItem key={pasar.value} value={pasar.value} className="text-sm sm:text-base py-3">
-                    {pasar.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+                  <SelectTrigger id="market" className="h-12 text-sm sm:text-base">
+                    <SelectValue placeholder="-- Pilih Lokasi Pasar --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {markets.map(pasar => (
+                      <SelectItem key={pasar.id} value={String(pasar.nama_pasar)} className="text-sm sm:text-base py-3">
+                        {pasar.nama_pasar}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {isAdmin && (
+                <div className="mt-1">
+                  <button type="button" className="px-3 py-2 border rounded text-sm" onClick={() => { setAddingMarket((s) => !s); setNewMarketName(''); }}>
+                    + Pasar
+                  </button>
+                </div>
+              )}
+            </div>
+            {addingMarket && (
+              <div className="mt-3 flex gap-2 items-center">
+                <Input value={newMarketName} onChange={(e: any) => setNewMarketName(e.target.value)} placeholder="Nama pasar baru" className="flex-1" />
+                    <Button size="sm" onClick={async () => {
+                      if (!newMarketName.trim()) { setError('Nama pasar kosong'); return; }
+                      try {
+                        const res = await fetch(`${API_BASE}/api/markets`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nama_pasar: newMarketName.trim() }) });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data?.message || data?.error || 'Gagal menambah pasar');
+                        setMarkets((m) => [...m, data.row]);
+                        setSelectedMarket(data.row.nama_pasar);
+                        setAddingMarket(false);
+                        setNewMarketName('');
+                      } catch (err: any) { setError(err?.message || 'Gagal menambah pasar'); }
+                    }}>Simpan</Button>
+                <Button variant="outline" size="sm" onClick={() => { setAddingMarket(false); setNewMarketName(''); }}>Batal</Button>
+              </div>
+            )}
+          </div>
+        </StepCard>
+      </div>
+
+      {/* Step 2: Tanggal Laporan - dipisah dalam kotak sendiri */}
+      <div className="mx-2 sm:mx-0">
+        <StepCard number="2" title="Tanggal Laporan">
+          <div className="space-y-3">
+            <Label className="text-sm sm:text-base font-medium">Pilih Tanggal Laporan</Label>
+            <Input
+              id="tanggal"
+              type="date"
+              value={date}
+              onChange={(e: any) => setDate(e.target.value)}
+              className="h-12 w-full"
+            />
           </div>
         </StepCard>
       </div>
@@ -265,21 +329,48 @@ export default function InputDataPage() {
       <div className="mx-2 sm:mx-0">
         <StepCard number="2" title="Detail Harga Komoditas">
           <div className="space-y-4 sm:space-y-6">
-            <div className="space-y-3">
-              <Label htmlFor="commodity" className="text-sm sm:text-base font-medium">Pilih Komoditas</Label>
-              <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
-                <SelectTrigger id="commodity" className="h-12 text-sm sm:text-base">
-                  <SelectValue placeholder="-- Pilih Komoditas --" />
-                </SelectTrigger>
-                <SelectContent>
-                  {KOMODITAS_LIST.map(komoditas => (
-                    <SelectItem key={komoditas.value} value={komoditas.value} className="text-sm sm:text-base py-3">
-                      {komoditas.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-3">
+                <Label htmlFor="commodity" className="text-sm sm:text-base font-medium">Pilih Komoditas</Label>
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
+                      <SelectTrigger id="commodity" className="h-12 text-sm sm:text-base">
+                        <SelectValue placeholder="-- Pilih Komoditas --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {commoditiesList.map(k => (
+                          <SelectItem key={k.id} value={k.nama_komoditas} className="text-sm sm:text-base py-3">{k.nama_komoditas}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isAdmin && (
+                    <div className="mt-1">
+                      <button type="button" className="px-3 py-2 border rounded text-sm" onClick={() => { setAddingCommodity((s) => !s); setNewCommodityName(''); }}>
+                        + Komoditas
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {addingCommodity && (
+                  <div className="mt-3 flex gap-2 items-center">
+                    <Input value={newCommodityName} onChange={(e:any) => setNewCommodityName(e.target.value)} placeholder="Nama komoditas baru" className="flex-1" />
+                    <Button size="sm" onClick={async () => {
+                      if (!newCommodityName.trim()) { setError('Nama komoditas kosong'); return; }
+                      try {
+                        const res = await fetch(`${API_BASE}/api/commodities`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nama_komoditas: newCommodityName.trim() }) });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data?.message || data?.error || 'Gagal menambah komoditas');
+                        setCommoditiesList((c) => [...c, data.row]);
+                        setSelectedCommodity(data.row.nama_komoditas || '');
+                        setAddingCommodity(false);
+                        setNewCommodityName('');
+                      } catch (err:any) { setError(err?.message || 'Gagal menambah komoditas'); }
+                    }}>Simpan</Button>
+                    <Button variant="outline" size="sm" onClick={() => { setAddingCommodity(false); setNewCommodityName(''); }}>Batal</Button>
+                  </div>
+                )}
+              </div>
 
             <div className="space-y-3">
               <Label htmlFor="price" className="text-sm sm:text-base font-medium">

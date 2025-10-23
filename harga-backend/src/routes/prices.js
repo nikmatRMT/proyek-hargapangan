@@ -1,6 +1,6 @@
 // harga-backend/src/routes/prices.js
 import express from "express";
-import { collections } from "../tools/db.js";
+import { collections, logAudit } from "../tools/db.js";
 import XLSX from "xlsx";
 import { buildExampleWorkbook } from "../lib/excel.mjs";
 import { deleteFromBlob } from "../lib/blob.js";
@@ -112,13 +112,84 @@ router.get("/", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { price /*, note */ } = req.body || {};
-    const n = Number(price);
-    if (!Number.isFinite(n)) {
-      return res.status(400).json({ ok: false, error: "invalid price" });
+    const { price, tanggal, tanggal_lapor, market_id, komoditas_id } = req.body || {};
+    const update = { updated_at: new Date() };
+    if (price !== undefined) {
+      const n = Number(price);
+      if (!Number.isFinite(n)) {
+        return res.status(400).json({ ok: false, error: "invalid price" });
+      }
+      update.harga = n;
     }
+    // Support update tanggal
+    if (tanggal) update.tanggal_lapor = String(tanggal).slice(0, 10);
+    if (tanggal_lapor) update.tanggal_lapor = String(tanggal_lapor).slice(0, 10);
+    // Support update market_id and komoditas_id
+    if (market_id !== undefined) {
+      const m = Number(market_id);
+      if (!Number.isFinite(m)) return res.status(400).json({ ok: false, error: 'invalid market_id' });
+      update.market_id = m;
+    }
+    if (komoditas_id !== undefined) {
+      const k = Number(komoditas_id);
+      if (!Number.isFinite(k)) return res.status(400).json({ ok: false, error: 'invalid komoditas_id' });
+      update.komoditas_id = k;
+    }
+
+    if (!('harga' in update) && !('tanggal_lapor' in update) && !('market_id' in update) && !('komoditas_id' in update)) {
+      return res.status(400).json({ ok: false, error: "no valid fields to update" });
+    }
+
     const { laporan_harga } = collections();
-    await laporan_harga.updateOne({ id }, { $set: { harga: n, updated_at: new Date() } });
+    console.log('[PATCH /api/prices/:id] req.body:', req.body);
+    console.log('[PATCH /api/prices/:id] update:', update);
+
+    // Jika update memodifikasi kombinasi market_id+komoditas_id+tanggal_lapor,
+    // pastikan tidak ada dokumen lain yang sudah memiliki kombinasi tersebut.
+    if (('market_id' in update) || ('komoditas_id' in update) || ('tanggal_lapor' in update)) {
+      // ambil dokumen saat ini supaya kita bisa menggabungkan nilai yang tidak diubah
+      const current = await laporan_harga.findOne({ id }, { projection: { market_id: 1, komoditas_id: 1, tanggal_lapor: 1 } });
+      if (!current) {
+        return res.status(404).json({ ok: false, error: 'report not found' });
+      }
+
+      const candidateMarket = ('market_id' in update) ? update.market_id : current.market_id;
+      const candidateCommodity = ('komoditas_id' in update) ? update.komoditas_id : current.komoditas_id;
+      const candidateTanggal = ('tanggal_lapor' in update) ? update.tanggal_lapor : current.tanggal_lapor;
+
+      if (candidateMarket !== undefined && candidateCommodity !== undefined && candidateTanggal !== undefined) {
+        const conflict = await laporan_harga.findOne({
+          market_id: candidateMarket,
+          komoditas_id: candidateCommodity,
+          tanggal_lapor: candidateTanggal,
+          id: { $ne: id }
+        }, { projection: { id: 1 } });
+
+        if (conflict) {
+          console.warn('[PATCH /api/prices/:id] duplicate prevented:', { id, conflictId: conflict.id });
+          return res.status(409).json({ ok: false, error: 'duplicate_report', message: 'Sudah ada laporan untuk pasar, komoditas, dan tanggal yang sama', conflictId: conflict.id });
+        }
+      }
+    }
+
+    let updateResult;
+    try {
+      // capture before state for audit
+      const before = await laporan_harga.findOne({ id });
+      updateResult = await laporan_harga.updateOne({ id }, { $set: update });
+      // after state
+      const after = await laporan_harga.findOne({ id });
+      // write audit (non-blocking)
+      try { await logAudit({ collectionName: 'laporan_harga', documentId: id, action: 'update', user: req.user || null, before, after }); } catch (e) {}
+      console.log('[PATCH /api/prices/:id] updateOne result:', updateResult);
+    } catch (err) {
+      // Tangani duplicate-key dari MongoDB (E11000) lebih ramah
+      if (err && (err.code === 11000 || String(err.message || '').includes('E11000'))) {
+        console.error('[PATCH /api/prices/:id] duplicate key error:', err.message || err);
+        return res.status(409).json({ ok: false, error: 'duplicate_report', message: 'Perubahan akan membuat laporan duplikat (pasar+komoditas+tanggal)' });
+      }
+      throw err;
+    }
 
     const rows = await laporan_harga.aggregate([
       { $match: { id } },
@@ -328,6 +399,7 @@ router.delete("/bulk", async (req, res) => {
     }
     const previewTotal = await _countMonth(marketId, year, month);
     const deleted = await _deleteMonth(marketId, year, month);
+  try { await logAudit({ collectionName: 'laporan_harga', documentId: null, action: 'bulk_delete_month', user: req.user || null, note: `marketId=${marketId}, year=${year}, month=${month}, deleted=${deleted}` }); } catch (e) {}
     return res.json({ ok: true, requested: { marketId, year, month }, previewTotal, deleted });
   } catch (e) {
     console.error("[DELETE /api/prices/bulk] error:", e);

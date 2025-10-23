@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "pasar",
+    "seq": 4
+  },
+  {
+    "_id": "komoditas",
+    "seq": 21
+  },
+  {
+    "_id": "users",
+    "seq": 30
+  },
+  {
+    "_id": "laporan_harga",
+    "seq": 966
+  }
+]

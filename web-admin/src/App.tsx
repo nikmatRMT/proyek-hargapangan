@@ -5,6 +5,8 @@ import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Backup from "./pages/Backup";
 import InputData from "./pages/InputData";
+import Markets from "@/pages/Markets";
+import Commodities from "@/pages/Commodities";
 import Login from "./pages/Login";
 import { AppShell } from "./components/layout/AppShell";
 import { PetugasLayout } from "./components/layout/PetugasLayout";
@@ -101,6 +103,8 @@ const App = () => {
     <AppShell>
       {path === "/" && <Dashboard />}
       {path === "/input-data" && <InputData />}
+  {path === "/markets" && <Markets />}
+  {path === "/commodities" && <Commodities />}
       {path === "/users" && <Users />}
       {path === "/profile" && <Profile />}
       {path === "/backup" && <Backup />}

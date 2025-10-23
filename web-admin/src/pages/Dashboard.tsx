@@ -7,12 +7,16 @@ import {
   fetchReports,
   previewBulkDelete,
   bulkDeleteReports,
-  subscribePrices,         // ⬅️ tambahkan
+  subscribePrices,
+  getCommodities,
+  createCommodity,
 } from "../api"; // ✅ pastikan path benar
 import { useReports } from "../hooks/useReports";
 import { useReportStats } from "../hooks/useReportStats";
 import { formatCurrency } from "../utils/format";
 import { exportMarketExcel } from "../utils/exportExcel";
+import exportPreview from '../utils/exportPreview';
+import CreateMissingCommoditiesModal from '../components/CreateMissingCommoditiesModal';
 import LegacyDashboard from '@/pages/Dashboard';
 import { CommodityLineChart } from "../components/charts/CommodityLineChart";
 import { MarketPie } from "../components/charts/MarketPie";
@@ -260,6 +264,7 @@ export default function Dashboard() {
 
   // ====== Export Excel handler (ambil semua halaman) ======
   const [exporting, setExporting] = useState(false);
+  const [missingModalNames, setMissingModalNames] = useState<string[] | null>(null);
 
   async function fetchAllInRange(params: { from: string; to: string; marketId: number }) {
     const PAGE = 500;
@@ -315,6 +320,7 @@ export default function Dashboard() {
         marketId: Number(selectedMarketId),
       });
 
+      // Normalisasi data flat
       const flat = allRows.map((r: any) => ({
         tanggal: r.date || r.tanggal,
         pasar: r.market || r.pasar || r.marketName || r.market_name,
@@ -322,22 +328,60 @@ export default function Dashboard() {
         harga: Number(r.price ?? r.harga ?? 0),
       }));
 
-      const { rows, monthLabel } = buildRowsForExport(
-        flat,
-        selectedMarketName,
-        exportFrom,
-        exportTo
-      );
+      // Derive commodity headers dynamically from data (preserve order by appearance)
+      const headerSet = new Set<string>();
+      for (const r of flat) {
+        if (r.komoditas) headerSet.add(r.komoditas);
+      }
+      const headers = Array.from(headerSet);
+
+      // Check whether those commodity names exist in master list; if not open modal to create
+      try {
+        const kc = await getCommodities();
+        const list = Array.isArray((kc as any).rows) ? (kc as any).rows : Array.isArray(kc) ? (kc as any) : [];
+        const existingNames = new Set(list.map((k: any) => k.nama_komoditas || k.name || k.nama).filter(Boolean));
+        const missing = headers.filter((h) => !existingNames.has(h));
+        if (missing.length > 0) {
+          // open modal for review/create
+          setMissingModalNames(missing);
+          // wait for modal to handle creation; export will resume after modal triggers created (see onCreated)
+          return;
+        }
+      } catch (e) {
+        console.warn('[Export] check/create commodities failed', e);
+      }
+
+      // Build rows grouped by date with dynamic commodity keys
+      const byDate = new Map<string, any>();
+      for (const r of flat) {
+        const tanggal = r.tanggal;
+        if (!byDate.has(tanggal)) byDate.set(tanggal, { tanggal, byCommodity: {} });
+        const entry = byDate.get(tanggal);
+        entry.byCommodity[r.komoditas] = Number(r.harga || 0);
+      }
+      const builtRows = Array.from(byDate.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([, v]) => {
+          const date = v.tanggal;
+          const day = new Date(date).getDate();
+          const week = [1, 8, 15, 22, 29].includes(day) ? weekRomanForDay(day) : '';
+          const base: any = { week, day };
+          for (const h of headers) base[h] = Number(v.byCommodity[h] ?? 0);
+          return base;
+        });
+
+      const monthLabel = (builtRows[0] && builtRows[0].day) ? monthLabelFromISO((allRows[0]?.date || allRows[0]?.tanggal || exportFrom).slice(0,10)) : monthLabelFromISO(new Date().toISOString().slice(0,10));
+
+      // Default units (could be extended to fetch per-commodity units)
+      const units = headers.map(() => '(Rp/Kg)');
 
       await exportMarketExcel({
-        title: `Harga Pasar Bahan Pangan Tingkat Produsen di ${selectedMarketName} ${
-          monthLabel.split(" ")[1]
-        }`,
+        title: `Harga Pasar Bahan Pangan Tingkat Produsen di ${selectedMarketName} ${monthLabel.split(' ')[1]}`,
         monthLabel,
-        rows,
-        fileName: `${selectedMarketName
-          .toLowerCase()
-          .replace(/\s+/g, "-")}-${String(exportFrom).slice(0, 7)}.xlsx`,
+        rows: builtRows,
+        headers,
+        units,
+        fileName: `${selectedMarketName.toLowerCase().replace(/\s+/g, '-')}-${String(exportFrom).slice(0, 7)}.xlsx`,
       });
     } catch (e) {
       console.error("[Export] error:", e);
@@ -473,6 +517,64 @@ export default function Dashboard() {
             </button>
 
             <button
+              onClick={() => {
+                // preview -> reuse handleExportExcel's logic but only build data and open preview
+                (async () => {
+                  try {
+                    if (selectedMarketId === "all") return alert("Silakan pilih satu pasar dulu untuk preview.");
+
+                    // determine export date range same as handleExportExcel
+                    let exportFrom: string | undefined;
+                    let exportTo: string | undefined;
+
+                    if (!allDates && startDate && endDate) {
+                      exportFrom = startDate; exportTo = endDate;
+                    } else {
+                      const sample: any = sorted?.[0] ?? (reports as any)?.[0];
+                      const iso = (sample?.date || sample?.tanggal || "").slice(0, 10);
+                      if (!iso) return alert("Tidak ada data untuk dipreview pada filter saat ini.");
+                      const b = monthBoundsFromISO(iso);
+                      exportFrom = b.from; exportTo = b.to;
+                    }
+
+                    const allRows = await fetchAllInRange({ from: exportFrom!, to: exportTo!, marketId: Number(selectedMarketId) });
+                    const flat = allRows.map((r: any) => ({ tanggal: r.date || r.tanggal, pasar: r.market || r.pasar || r.marketName || r.market_name, komoditas: r.commodity || r.komoditas || r.commodityName || r.commodity_name, harga: Number(r.price ?? r.harga ?? 0) }));
+
+                    const headerSet = new Set<string>();
+                    for (const r of flat) if (r.komoditas) headerSet.add(r.komoditas);
+                    const headers = Array.from(headerSet);
+
+                    const byDate = new Map<string, any>();
+                    for (const r of flat) {
+                      const tanggal = r.tanggal;
+                      if (!byDate.has(tanggal)) byDate.set(tanggal, { tanggal, byCommodity: {} });
+                      const entry = byDate.get(tanggal);
+                      entry.byCommodity[r.komoditas] = Number(r.harga || 0);
+                    }
+                    const builtRows = Array.from(byDate.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([, v]) => {
+                      const date = v.tanggal; const day = new Date(date).getDate(); const week = [1,8,15,22,29].includes(day) ? weekRomanForDay(day) : '';
+                      const base: any = { week, day };
+                      for (const h of headers) base[h] = Number(v.byCommodity[h] ?? 0);
+                      return base;
+                    });
+
+                    const monthLabel = (builtRows[0] && builtRows[0].day) ? monthLabelFromISO((allRows[0]?.date || allRows[0]?.tanggal || exportFrom).slice(0,10)) : monthLabelFromISO(new Date().toISOString().slice(0,10));
+                    const units = headers.map(()=>'(Rp/Kg)');
+
+                    exportPreview({ title: `Preview Harga - ${selectedMarketName}`, monthLabel, headers, units, rows: builtRows });
+                  } catch (e) {
+                    console.error('[Preview] error', e);
+                    alert('Gagal membuat preview. Lihat console.');
+                  }
+                })();
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+              title="Preview export"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Preview
+            </button>
+
+            <button
               onClick={handleExportExcel}
               disabled={exporting}
               className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm disabled:opacity-60"
@@ -565,6 +667,23 @@ export default function Dashboard() {
           </>
         )}
       </section>
+
+      {/* Modal for creating missing commodities (used by export flow) */}
+      {missingModalNames && (
+        <CreateMissingCommoditiesModal
+          names={missingModalNames}
+          onClose={() => setMissingModalNames(null)}
+          onCreated={async (created) => {
+            // small wait then retry export
+            setMissingModalNames(null);
+            if (created && created.length > 0) {
+              await new Promise((r) => setTimeout(r, 300));
+              // retry export
+              handleExportExcel();
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

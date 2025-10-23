@@ -31,6 +31,8 @@ type MenuItem = {
 
 const MENU: MenuItem[] = [
   { title: 'Dashboard', url: '/', icon: Home, requiredRole: ['admin', 'super_admin'] },
+  { title: 'Pasar', url: '/markets', icon: Database, requiredRole: ['admin', 'super_admin'] },
+  { title: 'Komoditas', url: '/commodities', icon: BarChart3, requiredRole: ['admin', 'super_admin'] },
   { title: 'Input Data', url: '/input-data', icon: ClipboardList, requiredRole: ['petugas'] },
   { title: 'Kelola Petugas', url: '/users', icon: Users, requiredRole: ['admin', 'super_admin'] },
   { title: 'Backup & Storage', url: '/backup', icon: Database, requiredRole: ['admin', 'super_admin'] },
