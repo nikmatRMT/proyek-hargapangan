@@ -43,8 +43,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS - Support multiple domains
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:4000',
   'https://harpa-banua.vercel.app',
   process.env.FRONTEND_ORIGIN,
 ].filter(Boolean);
@@ -215,8 +213,11 @@ const PORT = Number(process.env.PORT || 4000);
 initMongo()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`✅ API running on http://localhost:${PORT}`);
-      console.log(`   Allowed origins: ${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}`);
+      const hostLog = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'https://harpa-banua.vercel.app';
+      console.log(`✅ API running on ${hostLog}`);
+      console.log(`   Allowed origins: ${process.env.FRONTEND_ORIGIN || 'https://harpa-banua.vercel.app'}`);
       // Mask credentials in URI for logs
       const masked = (() => {
         try {

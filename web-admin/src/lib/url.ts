@@ -1,6 +1,10 @@
 // src/lib/url.ts
 export const API_BASE =
+<<<<<<< HEAD
   (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+=======
+  (import.meta.env.VITE_API_URL || 'https://harpa-banua.vercel.app').replace(/\/$/, '');
+>>>>>>> da1f532 (chore: update production API URLs -> https://harpa-banua.vercel.app; add .gitignore)
 
 export function absUrl(path?: string | null) {
   if (!path) return '';

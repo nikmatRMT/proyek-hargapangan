@@ -20,11 +20,12 @@ export async function updateReportDate(id: number, tanggal: string, notes?: stri
 // Fallback order:
 // 1) window.location.origin (when running in browser)
 // 2) import.meta.env.VITE_API_URL (build-time env)
-// 3) http://localhost:4000
+<<<<<<< HEAD
+// 3) https://harpa-banua.vercel.app
 export const API_BASE = (
   (typeof window !== 'undefined' && window.location && window.location.origin)
-    || import.meta.env.VITE_API_URL
-    || 'http://localhost:4000'
+  || import.meta.env.VITE_API_URL
+  || 'https://harpa-banua.vercel.app'
 ).replace(/\/$/, '');
 
 function joinUrl(path: string) {
@@ -340,7 +341,11 @@ export async function uploadExcel(args: UploadExcelArgs) {
   let lastErr: unknown = null;
   for (const url of candidates) {
     try {
+<<<<<<< HEAD
       const res = await fetch(`${(import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/,'')}${url}`, {
+=======
+  const res = await fetch(`${(import.meta.env.VITE_API_URL || 'https://harpa-banua.vercel.app').replace(/\/$/,'')}${url}`, {
+>>>>>>> da1f532 (chore: update production API URLs -> https://harpa-banua.vercel.app; add .gitignore)
         method: 'POST',
         body: form,
         credentials: 'include',
@@ -545,7 +550,11 @@ export function subscribePrices(
   onEvent: (payload: any) => void,
   opts?: { marketId?: number }
 ) {
+<<<<<<< HEAD
   const base = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+=======
+  const base = (import.meta.env.VITE_API_URL || 'https://harpa-banua.vercel.app').replace(/\/$/, '');
+>>>>>>> da1f532 (chore: update production API URLs -> https://harpa-banua.vercel.app; add .gitignore)
   const url = `${base}/sse/prices${opts?.marketId ? `?marketId=${opts.marketId}` : ''}`;
 
   // @ts-ignore: support withCredentials
