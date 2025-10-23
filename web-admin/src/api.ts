@@ -15,8 +15,17 @@ export async function updateReportDate(id: number, tanggal: string, notes?: stri
 // =====================
 // Konfigurasi dasar
 // =====================
-export const API_BASE =
-  (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4000')).replace(/\/$/, '');
+// Prefer same-origin at runtime so preview builds automatically talk to the
+// same host that served the frontend (useful for Vercel preview URLs).
+// Fallback order:
+// 1) window.location.origin (when running in browser)
+// 2) import.meta.env.VITE_API_URL (build-time env)
+// 3) http://localhost:4000
+export const API_BASE = (
+  (typeof window !== 'undefined' && window.location && window.location.origin)
+    || import.meta.env.VITE_API_URL
+    || 'http://localhost:4000'
+).replace(/\/$/, '');
 
 function joinUrl(path: string) {
   // pastikan hanya satu slash
