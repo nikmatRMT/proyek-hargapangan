@@ -12,11 +12,7 @@ const verMap: Map<Key, number> = g.__avatarVerMap;
 // Base URL API (ambil dari Vite env, fallback ke localhost)
 export const API_BASE =
   ((import.meta as any)?.env?.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ||
-<<<<<<< HEAD
-  'http://localhost:4000';
-=======
   'https://harpa-banua.vercel.app';
->>>>>>> da1f532 (chore: update production API URLs -> https://harpa-banua.vercel.app; add .gitignore)
 
 // Jadikan path relatif → absolut ke API
 function ensureAbs(u?: string | null) {
