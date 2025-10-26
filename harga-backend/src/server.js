@@ -104,7 +104,7 @@ app.use(
       // are served from different preview domains on Vercel. Keep 'lax' in dev.
       sameSite: isProduction ? 'none' : 'lax',
       secure: isProduction, // true on HTTPS (Vercel)
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+  maxAge: 24 * 60 * 60 * 1000, // 1 hari
       path: '/',
       // NO domain setting - let browser set it automatically for current domain
       // This works for same-origin requests in Vercel
