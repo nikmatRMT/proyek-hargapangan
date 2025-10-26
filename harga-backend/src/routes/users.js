@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
     else if (role === 'petugas') filter.role = 'petugas';
 
     const rows = await users
-      .find(filter, { projection: { _id: 0 } })
+      .find(filter, { projection: { _id: 0, password: 0 } })
       .sort({ role: -1, created_at: -1 })
       .toArray();
     res.json({ data: rows || [] });
@@ -231,7 +231,7 @@ router.patch('/:id', async (req, res) => {
 
     const fields = Object.keys(patch);
     if (!fields.length) {
-      const row = await users.findOne({ id }, { projection: { _id: 0 } });
+  const row = await users.findOne({ id }, { projection: { _id: 0, password: 0 } });
       return res.json({ data: row });
     }
 
@@ -239,7 +239,7 @@ router.patch('/:id', async (req, res) => {
     if ('is_active' in setPatch) setPatch.is_active = setPatch.is_active ? 1 : 0;
     await users.updateOne({ id }, { $set: { ...setPatch, updated_at: new Date() } });
 
-    const row = await users.findOne({ id }, { projection: { _id: 0 } });
+  const row = await users.findOne({ id }, { projection: { _id: 0, password: 0 } });
     res.json({ data: row });
   } catch (e) {
     console.error('PATCH /api/users/:id', e);

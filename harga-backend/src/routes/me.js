@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   if (!s?.id) return res.status(401).json({ message: 'Unauthorized' });
 
   const { users } = collections();
-  const u = await users.findOne({ id: s.id }, { projection: { _id: 0 } });
+  const u = await users.findOne({ id: s.id }, { projection: { _id: 0, password: 0 } });
   if (!u) return res.status(401).json({ message: 'Sesi tidak valid' });
   return res.json({ user: u });
 });
@@ -26,13 +26,13 @@ router.patch('/', async (req, res) => {
 
   if (!Object.keys(patch).length) {
     const { users } = collections();
-    const u = await users.findOne({ id: s.id }, { projection: { _id: 0 } });
+  const u = await users.findOne({ id: s.id }, { projection: { _id: 0, password: 0 } });
     return res.json({ user: u });
   }
 
   const { users } = collections();
   await users.updateOne({ id: s.id }, { $set: { ...patch, updated_at: new Date() } });
-  const u = await users.findOne({ id: s.id }, { projection: { _id: 0 } });
+  const u = await users.findOne({ id: s.id }, { projection: { _id: 0, password: 0 } });
   return res.json({ user: u });
 });
 
