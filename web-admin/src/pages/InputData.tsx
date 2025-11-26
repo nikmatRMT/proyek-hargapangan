@@ -33,6 +33,10 @@ const KOMODITAS_LIST = [
   { label: 'Ikan Kembung/Pindang', value: 'Ikan Kembung/Pindang', unit: 'kg' },
 ];
 
+function getNumericString(v: string) {
+  return v.replace(/[^0-9]/g, '');
+}
+
 // Helper function untuk mengecek duplikat data
 async function checkExistingData(marketName: string, date: string, commodityNames: string[]) {
   try {
@@ -112,6 +116,16 @@ export default function InputDataPage() {
   const [gps, setGps] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [duplicateWarning, setDuplicateWarning] = useState<string>('');
 
+  // Normalisasi entri harga yang sudah diisi (mendukung single & multi mode)
+  function getValidEntries() {
+    if (inputMode === 'single') {
+      const clean = getNumericString(price);
+      if (!selectedCommodity || !clean || Number(clean) <= 0) return [];
+      return [[selectedCommodity, clean]] as Array<[string, string]>;
+    }
+    return Object.entries(commodityPrices).filter(([_, p]) => p && Number(p) > 0);
+  }
+
   useEffect(() => {
     getLocation();
   }, []);
@@ -134,7 +148,7 @@ export default function InputDataPage() {
         return;
       }
 
-      const validEntries = Object.entries(commodityPrices).filter(([_, price]) => price && Number(price) > 0);
+      const validEntries = getValidEntries();
       
       if (validEntries.length === 0) {
         setDuplicateWarning('');
@@ -166,7 +180,7 @@ export default function InputDataPage() {
     // Debounce check untuk mengurangi API calls
     const timeoutId = setTimeout(checkDuplicates, 500);
     return () => clearTimeout(timeoutId);
-  }, [selectedMarket, date, commodityPrices]);
+  }, [selectedMarket, date, commodityPrices, inputMode, selectedCommodity, price]);
 
   const [addingMarket, setAddingMarket] = useState(false);
   const [newMarketName, setNewMarketName] = useState('');
@@ -191,7 +205,7 @@ export default function InputDataPage() {
   }
 
   function formatRupiah(value: string) {
-    const number = value.replace(/[^0-9]/g, '');
+    const number = getNumericString(value);
     return number ? Number(number).toLocaleString('id-ID') : '';
   }
 
@@ -229,6 +243,9 @@ export default function InputDataPage() {
     setPhotoPreview('');
   }
 
+  const filledEntries = getValidEntries();
+  const filledCount = filledEntries.length;
+
   async function handleSubmit() {
     setError('');
     setSuccess('');
@@ -240,7 +257,7 @@ export default function InputDataPage() {
     }
 
     // Filter hanya komoditas yang ada harganya
-    const validEntries = Object.entries(commodityPrices).filter(([_, price]) => price && Number(price) > 0);
+    const validEntries = getValidEntries();
     
     if (validEntries.length === 0) {
       setError('Masukkan minimal satu harga komoditas');
@@ -303,6 +320,8 @@ export default function InputDataPage() {
       
       // Reset form
       setCommodityPrices({});
+      setSelectedCommodity('');
+      setPrice('');
       setNotes('');
       removePhoto();
 
@@ -568,7 +587,7 @@ export default function InputDataPage() {
               
               <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Total komoditas dengan harga:</strong> {Object.values(commodityPrices).filter(price => price && Number(price) > 0).length} dari {commoditiesList.length}
+                  <strong>Total komoditas dengan harga:</strong> {filledCount} dari {commoditiesList.length}
                 </p>
               </div>
             </div>
@@ -650,7 +669,7 @@ export default function InputDataPage() {
       <div className="pt-4 mx-2 sm:mx-0">
         <Button
           onClick={handleSubmit}
-          disabled={loading || !selectedMarket || Object.values(commodityPrices).filter(price => price && Number(price) > 0).length === 0 || duplicateWarning.length > 0}
+          disabled={loading || !selectedMarket || filledCount === 0 || duplicateWarning.length > 0}
           className="w-full h-12 sm:h-14 bg-green-600 hover:bg-green-700 text-base sm:text-lg font-semibold disabled:opacity-50 shadow-lg transition-all duration-200"
         >
           {loading ? (
@@ -668,7 +687,7 @@ export default function InputDataPage() {
           ) : (
             <>
               <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-              Kirim Semua Laporan ({Object.values(commodityPrices).filter(price => price && Number(price) > 0).length})
+              Kirim Semua Laporan ({filledCount})
             </>
           )}
         </Button>
