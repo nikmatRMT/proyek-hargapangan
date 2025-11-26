@@ -88,7 +88,25 @@ export async function getNextSeq(name) {
       }
     );
     
-    const nextId = result.seq;
+    // MongoDB driver bisa mengembalikan doc langsung atau di property value
+    const doc = result?.value ?? result;
+    let nextId = doc?.seq;
+
+    // Jika seq tidak valid, fallback paksa
+    if (!Number.isFinite(nextId)) {
+      throw new Error(`Invalid counter value for ${name}: ${JSON.stringify(doc)}`);
+    }
+
+    // Safety: jika counter tertinggal dari data aktual, loncat ke max+1
+    const collection = getDb().collection(name);
+    const maxDoc = await collection.find({}).project({ id: 1 }).sort({ id: -1 }).limit(1).toArray();
+    const maxId = maxDoc[0]?.id ?? 0;
+    if (nextId <= maxId) {
+      nextId = maxId + 1;
+      await counters.updateOne({ _id: name }, { $set: { seq: nextId } }, { upsert: true });
+      console.warn(`[getNextSeq] Counter for ${name} was behind. Bumped to ${nextId} (max was ${maxId})`);
+    }
+
     console.log(`[getNextSeq] ${name}:`, { nextId });
     return nextId;
   } catch (err) {
@@ -102,6 +120,9 @@ export async function getNextSeq(name) {
     const maxDoc = await collection.find({}).project({ id: 1 }).sort({ id: -1 }).limit(1).toArray();
     const maxId = maxDoc[0]?.id || 0;
     const nextId = maxId + 1;
+    
+    // Pastikan counter ikut dilompatkan supaya percobaan berikutnya aman
+    try { await counters.updateOne({ _id: name }, { $set: { seq: nextId } }, { upsert: true }); } catch (_) {}
     
     console.log(`[getNextSeq] ${name} fallback:`, { maxId, nextId, hasDoc: !!maxDoc[0] });
     return nextId;
