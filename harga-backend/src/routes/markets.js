@@ -1,3 +1,21 @@
+// PATCH: Tambahkan field alamat='' pada semua pasar lama yang belum punya field alamat
+import { getDb, initMongo } from '../tools/db.js';
+
+async function ensureAlamatFieldOnAllMarkets() {
+  const db = getDb();
+  const pasar = db.collection('pasar');
+  await pasar.updateMany(
+    { $or: [ { alamat: { $exists: false } }, { alamat: null } ] },
+    { $set: { alamat: '' } }
+  );
+}
+
+// Pastikan initMongo selesai sebelum patch dijalankan
+(async () => {
+  await initMongo();
+  await ensureAlamatFieldOnAllMarkets().catch(console.error);
+})();
+
 import express from "express";
 import { collections, getNextSeq } from "../tools/db.js";
 import requireAuth from '../middleware/requireAuth.js';
@@ -6,25 +24,29 @@ import { logAudit } from '../tools/db.js';
 
 const router = express.Router();
 
+// Ensure MongoDB is initialized
+await initMongo();
+
 /** GET /api/markets → { rows: [...] } */
 router.get("/", async (_req, res) => {
   const { pasar } = collections();
-  const rows = await pasar.find({}, { projection: { _id: 0, id: 1, nama_pasar: 1 } }).sort({ nama_pasar: 1 }).toArray();
+  const rows = await pasar.find({}, { projection: { _id: 0, id: 1, nama_pasar: 1, alamat: 1 } }).sort({ nama_pasar: 1 }).toArray();
   res.json({ rows });
 });
 
 // POST /api/markets  — tambah pasar baru
 router.post('/', requireAuth, requireRole('admin'), async (req, res) => {
   try {
-    const { nama_pasar, name } = req.body || {};
+    const { nama_pasar, name, alamat } = req.body || {};
     const nm = String(nama_pasar || name || '').trim();
+    const al = alamat !== undefined ? String(alamat).trim() : '';
     if (!nm) return res.status(400).json({ ok: false, error: 'nama_pasar wajib' });
 
     const { pasar } = collections();
     const id = await getNextSeq('pasar');
     try {
       const now = new Date();
-      const row = { id, nama_pasar: nm, created_at: now, updated_at: now };
+      const row = { id, nama_pasar: nm, alamat: al, created_at: now, updated_at: now };
       const ins = await pasar.insertOne(row);
       // Audit log: pasar created
       try { await logAudit({ collectionName: 'pasar', documentId: id, action: 'create', user: req.user || null, after: row }); } catch (e) {}
@@ -45,8 +67,9 @@ router.post('/', requireAuth, requireRole('admin'), async (req, res) => {
 router.put('/:id', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { nama_pasar, name } = req.body || {};
+    const { nama_pasar, name, alamat } = req.body || {};
     const nm = String(nama_pasar || name || '').trim();
+    const al = alamat !== undefined ? String(alamat).trim() : '';
     if (!nm) return res.status(400).json({ ok: false, error: 'nama_pasar wajib' });
 
     const { pasar } = collections();
@@ -55,10 +78,10 @@ router.put('/:id', requireAuth, requireRole('admin'), async (req, res) => {
     const conflict = await pasar.findOne({ nama_pasar: { $regex: `^${esc}$`, $options: 'i' }, id: { $ne: id } });
     if (conflict) return res.status(409).json({ ok: false, error: 'duplicate_market', message: 'Pasar dengan nama tersebut sudah ada', conflictId: conflict.id });
 
-  const before = await pasar.findOne({ id });
-  const now = new Date();
-  const r = await pasar.updateOne({ id }, { $set: { nama_pasar: nm, updated_at: now } });
-  const after = await pasar.findOne({ id });
+    const before = await pasar.findOne({ id });
+    const now = new Date();
+    const r = await pasar.updateOne({ id }, { $set: { nama_pasar: nm, alamat: al, updated_at: now } });
+    const after = await pasar.findOne({ id });
     try { await logAudit({ collectionName: 'pasar', documentId: id, action: 'update', user: req.user || null, before, after }); } catch (e) {}
     return res.json({ ok: true, row: after });
   } catch (e) {

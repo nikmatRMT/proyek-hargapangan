@@ -28,14 +28,20 @@ Avatar.displayName = 'Avatar';
 
 export type AvatarImageProps = React.ImgHTMLAttributes<HTMLImageElement>;
 export const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, alt = '', ...props }, ref) => (
-    <img
-      ref={ref}
-      alt={alt}
-      className={cn('aspect-square h-full w-full object-cover', className)}
-      {...props}
-    />
-  )
+  ({ className, alt = '', src, ...props }, ref) => {
+    // Don't render img if src is empty to avoid browser warning
+    if (!src) return null;
+
+    return (
+      <img
+        ref={ref}
+        src={src}
+        alt={alt}
+        className={cn('aspect-square h-full w-full object-cover', className)}
+        {...props}
+      />
+    );
+  }
 );
 AvatarImage.displayName = 'AvatarImage';
 

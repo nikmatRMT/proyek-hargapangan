@@ -16,7 +16,7 @@ import {
   SidebarFooter,
   SidebarInset,
 } from './sidebar';
-import { BarChart3, Users, Settings, Home, User as UserIcon, LogOut, Database, Sun, Moon, ClipboardList } from 'lucide-react';
+import { BarChart3, Users, Settings, Home, User as UserIcon, LogOut, Database, Sun, Moon, ClipboardList, FileSpreadsheet, History } from 'lucide-react';
 import { API_BASE, logoutWeb } from '@/api';
 import { withMeAvatar } from '@/lib/avatar';
 
@@ -33,7 +33,9 @@ const MENU: MenuItem[] = [
   { title: 'Dashboard', url: '/', icon: Home, requiredRole: ['admin', 'super_admin'] },
   { title: 'Pasar', url: '/markets', icon: Database, requiredRole: ['admin', 'super_admin'] },
   { title: 'Komoditas', url: '/commodities', icon: BarChart3, requiredRole: ['admin', 'super_admin'] },
+  { title: 'Output Manager', url: '/output-manager', icon: FileSpreadsheet, requiredRole: ['admin', 'super_admin'] },
   { title: 'Input Data', url: '/input-data', icon: ClipboardList, requiredRole: ['petugas'] },
+  { title: 'Riwayat Petugas', url: '/riwayat-petugas', icon: History, requiredRole: ['admin', 'super_admin'] },
   { title: 'Kelola Petugas', url: '/users', icon: Users, requiredRole: ['admin', 'super_admin'] },
   { title: 'Backup & Storage', url: '/backup', icon: Database, requiredRole: ['admin', 'super_admin'] },
   { title: 'Profil Saya', url: '/profile', icon: UserIcon },
@@ -100,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const fresh = await fetchMe();
         if (fresh && isMounted) {
           setMe(fresh);
-          try { localStorage.setItem('auth_user', JSON.stringify(fresh)); } catch {}
+          try { localStorage.setItem('auth_user', JSON.stringify(fresh)); } catch { }
           setTick((x) => x + 1); // refresh avatar ?v=
         }
       }
@@ -142,14 +144,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     role === 'super_admin'
       ? 'bg-red-100 text-red-800'
       : role === 'admin'
-      ? 'bg-blue-100 text-blue-800'
-      : 'bg-green-100 text-green-800';
+        ? 'bg-blue-100 text-blue-800'
+        : 'bg-green-100 text-green-800';
   const roleLabel =
     role === 'super_admin' ? 'Super Admin' : role === 'admin' ? 'Admin' : 'Petugas';
 
   async function doLogout() {
-    try { await logoutWeb(); } catch {}
-    try { localStorage.removeItem('auth_user'); } catch {}
+    try { await logoutWeb(); } catch { }
+    try { localStorage.removeItem('auth_user'); } catch { }
     window.location.href = '/login';
   }
 
@@ -160,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {sidebarOpen && (
           <Sidebar className={cn(
             "border-r shadow-lg transition-colors duration-300",
-            isDarkMode 
+            isDarkMode
               ? "border-gray-700 bg-gradient-to-b from-gray-800 to-gray-900 text-gray-100"
               : "border-green-200 bg-gradient-to-b from-green-600 to-green-700 text-white"
           )}>
@@ -189,7 +191,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
                     "rounded-md px-2 py-1 text-sm transition-colors",
-                    isDarkMode 
+                    isDarkMode
                       ? "text-gray-100 hover:bg-gray-700/50"
                       : "text-white hover:bg-green-500/30"
                   )}
@@ -225,8 +227,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             isDarkMode
                               ? 'text-gray-100 hover:bg-gray-700/50'
                               : 'text-white hover:bg-green-500/30',
-                            isActive(item.url) && (isDarkMode 
-                              ? 'bg-gray-700 font-medium' 
+                            isActive(item.url) && (isDarkMode
+                              ? 'bg-gray-700 font-medium'
                               : 'bg-green-500/50 font-medium')
                           )}
                         >
@@ -314,7 +316,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Header */}
           <header className={cn(
             "border-b transition-colors duration-300",
-            isDarkMode 
+            isDarkMode
               ? "bg-gray-800 border-gray-700"
               : "bg-white border-gray-200"
           )}>
@@ -323,8 +325,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 "text-sm transition-colors",
                 isDarkMode ? "text-gray-400" : "text-gray-600"
               )}>
-                <a 
-                  href="/" 
+                <a
+                  href="/"
                   className={cn(
                     "hover:text-green-600 transition-colors",
                     isDarkMode ? "text-gray-400 hover:text-green-400" : ""

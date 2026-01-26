@@ -23,12 +23,17 @@ import pricesRouter from './routes/prices.js';
 import importExcelRouter from './routes/importExcel.js';
 import importFlexRouter from './routes/importFlex.js';
 import usersRouter from './routes/users.js'; // ⬅️ SATU import saja
+import surveyHistoryRouter from './routes/surveyHistory.js';
 import mobileUsersRouter from './routes/mobileUsers.js';
 // (opsional) API Mobile
 import mobileAuthRouter from './routes/mobileAuth.js';
 import mobileReportsRouter from './routes/mobileReports.js';
+import exportPdfRouter from './routes/exportPdf.js';
+import exportPdfKomoditasRouter from './routes/exportPdfKomoditas.js';
+import exportPdfBackupAllRouter from './routes/exportPdfBackupAll.js';
 // Stats & Monitoring
 import statsRouter from './routes/stats.js';
+import exportExcelRouter from './routes/exportExcel.js';
 
 const app = express();
 
@@ -52,12 +57,12 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (same-origin, mobile apps, Postman)
       if (!origin) return callback(null, true);
-      
+
       // Check exact match or allow all Vercel domains (*.vercel.app)
       if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         return callback(null, true);
       }
-      
+
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
@@ -104,7 +109,7 @@ app.use(
       // are served from different preview domains on Vercel. Keep 'lax' in dev.
       sameSite: isProduction ? 'none' : 'lax',
       secure: isProduction, // true on HTTPS (Vercel)
-  maxAge: 24 * 60 * 60 * 1000, // 1 hari
+      maxAge: 24 * 60 * 60 * 1000, // 1 hari
       path: '/',
       // NO domain setting - let browser set it automatically for current domain
       // This works for same-origin requests in Vercel
@@ -155,7 +160,7 @@ app.get('/sse/prices', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  
+
   // Allow all origins in allowedOrigins list
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -199,39 +204,29 @@ app.use('/api/commodities', commoditiesRouter);
 app.use('/api/prices', pricesRouter);
 
 // Import Excel
+
 app.use('/api/import-excel', importExcelRouter);
 app.use('/api/importExcel', importExcelRouter); // alias kompat
 app.use('/api/import-flex', importFlexRouter);
 
+// PDF Export - mount komoditas-specific router first so it takes precedence
+app.use('/api', exportPdfKomoditasRouter);
+// Dedicated backup-all PDF router (special format for "Backup Semua Pasar")
+app.use('/api', exportPdfBackupAllRouter);
+// legacy/general export router (kept for other endpoints)
+app.use('/api', exportPdfRouter);
+app.use('/api', exportExcelRouter);
+
 // USERS
 // Gunakan hanya requireAuth di sini agar /api/users/me/avatar bisa diakses semua user yang login.
 // Cek role admin dilakukan di dalam routes/users.js pada endpoint tertentu (reset-password, delete, dll).
+// Cek role admin dilakukan di dalam routes/users.js pada endpoint tertentu (reset-password, delete, dll).
 app.use('/api/users', requireAuth, usersRouter);
+app.use('/api/survey-history', requireAuth, surveyHistoryRouter);
 
 /* ---------- Start ---------- */
-const PORT = Number(process.env.PORT || 4000);
-initMongo()
-  .then(() => {
-    app.listen(PORT, () => {
-      const hostLog = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'https://harpa-banua.vercel.app';
-      console.log(`✅ API running on ${hostLog}`);
-      console.log(`   Allowed origins: ${process.env.FRONTEND_ORIGIN || 'https://harpa-banua.vercel.app'}`);
-      // Mask credentials in URI for logs
-      const masked = (() => {
-        try {
-          const s = String(mongoUri);
-          const i = s.indexOf('://');
-          const j = s.indexOf('@');
-          if (i >= 0 && j > i) return s.slice(0, i + 3) + '***@' + s.slice(j + 1);
-          return s;
-        } catch { return mongoUri; }
-      })();
-      console.log(`   MongoDB: ${masked}/${mongoDbName}`);
-    });
-  })
-  .catch((e) => {
-    console.error('❌ Failed to initialize MongoDB', e);
-    process.exit(1);
-  });
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, async () => {
+  await initMongo();
+  console.log(`Server berjalan di port ${PORT}`);
+});

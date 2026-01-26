@@ -56,10 +56,10 @@ async function checkExistingData(marketName: string, date: string, commodityName
       const reportDate = report.date || report.tanggal;
       const reportMarket = report.market || report.market_name || report.pasar;
       const reportCommodity = report.commodity || report.commodity_name || report.komoditas;
-      
-      return reportDate === date && 
-             reportMarket === marketName && 
-             commodityNames.includes(reportCommodity);
+
+      return reportDate === date &&
+        reportMarket === marketName &&
+        commodityNames.includes(reportCommodity);
     });
 
     return existingData;
@@ -94,18 +94,18 @@ export default function InputDataPage() {
   const [markets, setMarkets] = useState<Array<{ id: number; nama_pasar: string }>>([]);
   const [commoditiesList, setCommoditiesList] = useState<Array<{ id: number; nama_komoditas: string }>>([]);
   const [date, setDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
-  
+
   // Single input states
   const [selectedCommodity, setSelectedCommodity] = useState<string>('');
   const [price, setPrice] = useState<string>('');
-  
+
   // Multi input states
   const [commodityPrices, setCommodityPrices] = useState<Record<string, string>>({});
-  
+
   const [notes, setNotes] = useState<string>('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -118,12 +118,12 @@ export default function InputDataPage() {
 
   // load markets & commodities from backend
   useEffect(() => {
-    fetch(`${API_BASE}/api/markets`, { credentials: 'include' }).then(r => r.json()).then(d => setMarkets(d?.rows || [])).catch(() => {});
-    fetch(`${API_BASE}/api/commodities`, { credentials: 'include' }).then(r => r.json()).then(d => setCommoditiesList(d?.rows || [])).catch(() => {});
+    fetch(`${API_BASE}/api/markets`, { credentials: 'include' }).then(r => r.json()).then(d => setMarkets(d?.rows || [])).catch(() => { });
+    fetch(`${API_BASE}/api/commodities`, { credentials: 'include' }).then(r => r.json()).then(d => setCommoditiesList(d?.rows || [])).catch(() => { });
     try {
       const au = JSON.parse(localStorage.getItem('auth_user') || 'null');
       setIsAdmin(Boolean(au && au.role === 'admin'));
-    } catch {}
+    } catch { }
   }, []);
 
   // Cek duplikat data saat pasar, tanggal, atau harga berubah
@@ -135,7 +135,7 @@ export default function InputDataPage() {
       }
 
       const validEntries = Object.entries(commodityPrices).filter(([_, price]) => price && Number(price) > 0);
-      
+
       if (validEntries.length === 0) {
         setDuplicateWarning('');
         return;
@@ -239,30 +239,50 @@ export default function InputDataPage() {
       return;
     }
 
-    // Filter hanya komoditas yang ada harganya
-    const validEntries = Object.entries(commodityPrices).filter(([_, price]) => price && Number(price) > 0);
-    
-    if (validEntries.length === 0) {
-      setError('Masukkan minimal satu harga komoditas');
-      return;
-    }
+    // Build valid entries based on input mode
+    let validEntries: [string, string][] = [];
 
-    // Validasi harga minimal
-    const invalidPrices = validEntries.filter(([_, price]) => Number(price) < 1000);
-    if (invalidPrices.length > 0) {
-      setError('Semua harga minimal Rp 1.000');
-      return;
+    if (inputMode === 'single') {
+      // Single mode: use selectedCommodity and price
+      if (!selectedCommodity) {
+        setError('Pilih komoditas terlebih dahulu');
+        return;
+      }
+      if (!price || Number(price) <= 0) {
+        setError('Masukkan harga komoditas');
+        return;
+      }
+      if (Number(price) < 1000) {
+        setError('Harga minimal Rp 1.000');
+        return;
+      }
+      validEntries = [[selectedCommodity, price]];
+    } else {
+      // Multi mode: filter commodityPrices
+      validEntries = Object.entries(commodityPrices).filter(([_, p]) => p && Number(p) > 0);
+
+      if (validEntries.length === 0) {
+        setError('Masukkan minimal satu harga komoditas');
+        return;
+      }
+
+      // Validasi harga minimal
+      const invalidPrices = validEntries.filter(([_, p]) => Number(p) < 1000);
+      if (invalidPrices.length > 0) {
+        setError('Semua harga minimal Rp 1.000');
+        return;
+      }
     }
 
     try {
       setLoading(true);
 
       const today = date || new Date().toISOString().split('T')[0];
-      
+
       // Kirim setiap komoditas sebagai request terpisah
       const promises = validEntries.map(async ([commodityName, price]) => {
         const commodityData = KOMODITAS_LIST.find(k => k.value === commodityName);
-        
+
         const payload = {
           date: today,
           market_name: selectedMarket,
@@ -300,9 +320,14 @@ export default function InputDataPage() {
       await Promise.all(promises);
 
       setSuccess(`Berhasil mengirim ${validEntries.length} laporan harga!`);
-      
+
       // Reset form
-      setCommodityPrices({});
+      if (inputMode === 'single') {
+        setPrice('');
+        setSelectedCommodity('');
+      } else {
+        setCommodityPrices({});
+      }
       setNotes('');
       removePhoto();
 
@@ -310,14 +335,14 @@ export default function InputDataPage() {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       console.error('Error submitting:', err);
-      
+
       // Handle duplicate error (409 Conflict)
       if (err.response?.status === 409) {
         const errorData = err.response?.data;
         if (errorData?.message) {
           // Tampilkan pesan duplikasi yang user-friendly
           setError(errorData.message);
-          
+
           // Tampilkan info data yang sudah ada
           if (errorData?.existing_data) {
             const existing = errorData.existing_data;
@@ -414,21 +439,19 @@ export default function InputDataPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setInputMode('single')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  inputMode === 'single'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'single'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
               >
                 Single Input
               </button>
               <button
                 onClick={() => setInputMode('multi')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  inputMode === 'multi'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'multi'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
               >
                 Multi Input
               </button>
@@ -535,7 +558,7 @@ export default function InputDataPage() {
                 {commoditiesList.map(commodity => {
                   const commodityData = KOMODITAS_LIST.find(k => k.value === commodity.nama_komoditas);
                   const currentPrice = commodityPrices[commodity.nama_komoditas] || '';
-                  
+
                   return (
                     <div key={commodity.id} className="space-y-2 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
                       <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -565,7 +588,7 @@ export default function InputDataPage() {
                   );
                 })}
               </div>
-              
+
               <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
                   <strong>Total komoditas dengan harga:</strong> {Object.values(commodityPrices).filter(price => price && Number(price) > 0).length} dari {commoditiesList.length}
@@ -599,8 +622,8 @@ export default function InputDataPage() {
             <div className="space-y-3">
               <Label htmlFor="photo" className="text-sm sm:text-base font-medium">Foto Bukti (Opsional)</Label>
               {!photoPreview ? (
-                <label 
-                  htmlFor="photo" 
+                <label
+                  htmlFor="photo"
                   className="flex flex-col items-center justify-center gap-2 sm:gap-3 w-full h-24 sm:h-32 px-3 sm:px-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors group"
                 >
                   <Camera className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 group-hover:text-green-500 transition-colors" />
@@ -618,9 +641,9 @@ export default function InputDataPage() {
                 </label>
               ) : (
                 <div className="relative bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg">
-                  <img 
-                    src={photoPreview} 
-                    alt="Preview" 
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
                     className="w-full h-48 sm:h-64 object-cover rounded-lg shadow-sm"
                   />
                   <button
@@ -650,7 +673,7 @@ export default function InputDataPage() {
       <div className="pt-4 mx-2 sm:mx-0">
         <Button
           onClick={handleSubmit}
-          disabled={loading || !selectedMarket || Object.values(commodityPrices).filter(price => price && Number(price) > 0).length === 0 || duplicateWarning.length > 0}
+          disabled={loading || !selectedMarket || (inputMode === 'single' ? (!selectedCommodity || !price || Number(price) <= 0) : Object.values(commodityPrices).filter(p => p && Number(p) > 0).length === 0) || duplicateWarning.length > 0}
           className="w-full h-12 sm:h-14 bg-green-600 hover:bg-green-700 text-base sm:text-lg font-semibold disabled:opacity-50 shadow-lg transition-all duration-200"
         >
           {loading ? (
@@ -668,11 +691,11 @@ export default function InputDataPage() {
           ) : (
             <>
               <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-              Kirim Semua Laporan ({Object.values(commodityPrices).filter(price => price && Number(price) > 0).length})
+              Kirim Laporan {inputMode === 'multi' ? `(${Object.values(commodityPrices).filter(p => p && Number(p) > 0).length})` : ''}
             </>
           )}
         </Button>
-        
+
         {duplicateWarning.length > 0 && (
           <div className="mt-3 p-3 bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 rounded-lg">
             <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 font-medium">

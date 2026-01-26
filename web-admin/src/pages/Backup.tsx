@@ -25,6 +25,63 @@ function monthLabelFromISO(dateISO: string) {
   return d.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 }
 
+// Build marketsArray: [{ name, tables: [{ title, monthLabel, headers, units, rows }] }]
+function buildMarketsArray(flat: any[], opts?: { year?: number }) {
+  const byMarket = new Map<string, any[]>();
+  for (const r of flat) {
+    const iso = String(r.tanggal || '').slice(0,10);
+    if (!iso) continue;
+    if (opts?.year) {
+      const y = Number(iso.slice(0,4));
+      if (y !== opts.year) continue;
+    }
+    const marketNameKey = String(r.pasar || (r as any).market || (r as any).marketName || (r as any).market_name || '').trim() || 'Unknown Market';
+    if (!byMarket.has(marketNameKey)) byMarket.set(marketNameKey, []);
+    byMarket.get(marketNameKey)!.push(r);
+  }
+
+  const result: Array<{ name: string; tables: any[] }> = [];
+  for (const [marketNameKey, itemsForMarket] of Array.from(byMarket.entries())) {
+    const monthsMap = new Map<string, any[]>();
+    for (const r of itemsForMarket) {
+      const iso = String(r.tanggal || '').slice(0,10);
+      if (!iso) continue;
+      const monthISO = iso.slice(0,7);
+      if (!monthsMap.has(monthISO)) monthsMap.set(monthISO, []);
+      monthsMap.get(monthISO)!.push(r);
+    }
+
+    const tables = Array.from(monthsMap.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([monthISO, items]) => {
+      const headerSet = new Set<string>();
+      for (const r of items) if (r.komoditas) headerSet.add(r.komoditas);
+      const headersLocal = Array.from(headerSet).sort();
+
+      const byDate = new Map<string, any>();
+      for (const r of items) {
+        const tanggal = r.tanggal;
+        if (!byDate.has(tanggal)) byDate.set(tanggal, { tanggal, byCommodity: {} });
+        const entry = byDate.get(tanggal);
+        entry.byCommodity[r.komoditas] = Number(r.harga || 0);
+      }
+
+      const builtRows = Array.from(byDate.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([, v]) => {
+        const date = v.tanggal; const day = new Date(date).getDate(); const week = [1,8,15,22,29].includes(day) ? weekRomanForDay(day) : '';
+        const base: any = { week, day };
+        for (const h of headersLocal) base[h] = Number(v.byCommodity[h] ?? 0);
+        return base;
+      });
+
+      const monthLabel = items[0] ? monthLabelFromISO(items[0].tanggal.slice(0,10)) : '';
+      const title = `${marketNameKey} — ${monthLabel}`;
+      return { title, monthLabel, rows: builtRows, headers: headersLocal, units: headersLocal.map(()=>'(Rp/Kg)') };
+    });
+
+    result.push({ name: marketNameKey, tables });
+  }
+
+  return result;
+}
+
 /** Pemetaan nama komoditas tampilan → key kolom Excel */
 const MAP: Record<string, string> = {
   Beras: "beras",
@@ -295,52 +352,11 @@ export default function Backup() {
 
       // If the fetched data contains multiple markets, export one sheet per market (match preview)
       try {
-        const marketsSeen = new Set(flat.map((r: any) => r.pasar || r.market || r.market_name || 'Unknown Market'));
-        if (marketsSeen.size > 1) {
-          const byMarket = new Map<string, any[]>();
-          for (const row of flat) {
-            const marketNameKey = row.pasar || 'Unknown Market';
-            if (!byMarket.has(marketNameKey)) byMarket.set(marketNameKey, []);
-            byMarket.get(marketNameKey)!.push(row);
-          }
-
-          const marketsArray = Array.from(byMarket.entries()).map(([marketNameKey, itemsForMarket]) => {
-            // group by month
-            const monthsMap = new Map<number, any[]>();
-            for (const r of itemsForMarket) {
-              const iso = String(r.tanggal || '').slice(0,10);
-              if (!iso) continue;
-              const mm = Number(iso.slice(5,7));
-              if (!monthsMap.has(mm)) monthsMap.set(mm, []);
-              monthsMap.get(mm)!.push(r);
-            }
-
-            const tables = Array.from(monthsMap.entries()).sort((a,b)=>a[0]-b[0]).map(([mm, items]) => {
-              const headerSet = new Set<string>();
-              for (const r of items) if (r.komoditas) headerSet.add(r.komoditas);
-              const headersLocal = Array.from(headerSet);
-
-              const byDate = new Map<string, any>();
-              for (const r of items) {
-                const tanggal = r.tanggal;
-                if (!byDate.has(tanggal)) byDate.set(tanggal, { tanggal, byCommodity: {} });
-                const entry = byDate.get(tanggal);
-                entry.byCommodity[r.komoditas] = Number(r.harga || 0);
-              }
-              const builtRows = Array.from(byDate.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([, v]) => {
-                const date = v.tanggal; const day = new Date(date).getDate(); const week = [1,8,15,22,29].includes(day) ? weekRomanForDay(day) : '';
-                const base: any = { week, day };
-                for (const h of headersLocal) base[h] = Number(v.byCommodity[h] ?? 0);
-                return base;
-              });
-
-              const monthLabel = items[0] ? monthLabelFromISO(items[0].tanggal.slice(0,10)) : '';
-              const title = `${marketNameKey} — ${monthLabel}`;
-              return { title, monthLabel, rows: builtRows, headers: headersLocal, units: headersLocal.map(() => '(Rp/Kg)') };
-            });
-
-            return { name: marketNameKey, tables };
-          });
+        const marketsArray = buildMarketsArray(flat);
+        if (marketsArray.length > 1) {
+          // Debug
+          console.log('[Backup Export] sample flat rows:', flat.slice(0, 6));
+          console.log('[Backup Export] built marketsArray (market keys):', marketsArray.map(m => m.name).slice(0, 20));
 
           // Check missing commodities across all headers
           const allHeaders = new Set<string>();
@@ -379,72 +395,10 @@ export default function Backup() {
         const endYear = params.endDate ? Number(String(params.endDate).slice(0,4)) : null;
         if (params.marketId === 'all' && startYear && endYear && startYear === endYear) {
           const year = startYear;
-          const tables: Array<{ title: string; monthLabel: string; rows: any[] }> = [];
+          const marketsArrayYear = buildMarketsArray(flat, { year });
+          if (marketsArrayYear.length === 0) { alert('Tidak ada data untuk tahun yang dipilih.'); return; }
 
-          // Use already-fetched `flat` to group by market and month (avoid re-fetch per market)
-          const byMarket = new Map<string, any[]>();
-          for (const row of flat) {
-            const iso = String(row.tanggal || '').slice(0,10);
-            if (!iso) continue;
-            const y = Number(iso.slice(0,4));
-            if (y !== year) continue;
-            const marketNameKey = row.pasar || 'Unknown Market';
-            if (!byMarket.has(marketNameKey)) byMarket.set(marketNameKey, []);
-            byMarket.get(marketNameKey).push(row);
-          }
-
-          for (const [marketNameKey, itemsForMarket] of Array.from(byMarket.entries())) {
-            // group itemsForMarket by month
-            const monthsMap = new Map<number, any[]>();
-            for (const r of itemsForMarket) {
-              const iso = String(r.tanggal || '').slice(0,10);
-              if (!iso) continue;
-              const mm = Number(iso.slice(5,7));
-              if (!monthsMap.has(mm)) monthsMap.set(mm, []);
-              monthsMap.get(mm).push(r);
-            }
-
-            for (const [mm, items] of Array.from(monthsMap.entries()).sort((a,b)=>a[0]-b[0])) {
-              const headerSet = new Set<string>();
-              for (const r of items) if (r.komoditas) headerSet.add(r.komoditas);
-              const headers = Array.from(headerSet);
-
-              const byDate = new Map<string, any>();
-              for (const r of items) {
-                const tanggal = r.tanggal;
-                if (!byDate.has(tanggal)) byDate.set(tanggal, { tanggal, byCommodity: {} });
-                const entry = byDate.get(tanggal);
-                entry.byCommodity[r.komoditas] = Number(r.harga || 0);
-              }
-              const builtRows = Array.from(byDate.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([, v]) => {
-                const date = v.tanggal; const day = new Date(date).getDate(); const week = [1,8,15,22,29].includes(day) ? weekRomanForDay(day) : '';
-                const base: any = { week, day };
-                for (const h of headers) base[h] = Number(v.byCommodity[h] ?? 0);
-                return base;
-              });
-
-              const monthLabel = monthLabelFromISO(items[0].tanggal.slice(0,10));
-              const title = `${marketNameKey} — ${monthLabel}`;
-              tables.push({ title, monthLabel, rows: builtRows });
-            }
-          }
-
-          if (tables.length === 0) {
-            alert('Tidak ada data untuk tahun yang dipilih.');
-            return;
-          }
-
-          // Convert collected tables (which are per-market-per-month) into markets structure
-          const marketsForExport = new Map<string, { name: string; tables: any[] }>();
-          for (const t of tables) {
-            const [marketName] = t.title.split(' — ');
-            if (!marketsForExport.has(marketName)) marketsForExport.set(marketName, { name: marketName, tables: [] });
-            marketsForExport.get(marketName)!.tables.push({ title: t.title, monthLabel: t.monthLabel, rows: t.rows });
-          }
-
-          const marketsArray = Array.from(marketsForExport.values());
-          // export one sheet per market
-          await exportMarketsMultiSheet({ markets: marketsArray, fileName: `semua-pasar-${year}.xlsx` });
+          await exportMarketsMultiSheet({ markets: marketsArrayYear, fileName: `semua-pasar-${year}.xlsx` });
           return;
         }
       } catch (err) {
@@ -496,6 +450,64 @@ export default function Backup() {
 
       setExportMessage('Mempersiapkan file Excel...');
       setExportProgress(80);
+
+      // DEBUG: forced multi-sheet export for testing — build marketsArray from `flat` and export
+      try {
+        const byMarketForced = new Map<string, any[]>();
+        for (const row of flat) {
+          const marketNameKey = String(row.pasar || (row as any).market || (row as any).marketName || (row as any).market_name || '').trim() || 'Unknown Market';
+          if (!byMarketForced.has(marketNameKey)) byMarketForced.set(marketNameKey, []);
+          byMarketForced.get(marketNameKey)!.push(row);
+        }
+        const marketsArrayForced = Array.from(byMarketForced.entries()).map(([marketNameKey, itemsForMarket]) => {
+          const monthsMap = new Map<string, any[]>();
+          for (const r of itemsForMarket) {
+            const iso = String(r.tanggal || '').slice(0,10);
+            if (!iso) continue;
+            const monthISO = iso.slice(0,7);
+            if (!monthsMap.has(monthISO)) monthsMap.set(monthISO, []);
+            monthsMap.get(monthISO)!.push(r);
+          }
+
+          const tables = Array.from(monthsMap.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([monthISO, items]) => {
+            const headerSet = new Set<string>();
+            for (const r of items) if (r.komoditas) headerSet.add(r.komoditas);
+            const headersLocal = Array.from(headerSet);
+
+            const byDate = new Map<string, any>();
+            for (const r of items) {
+              const tanggal = r.tanggal;
+              if (!byDate.has(tanggal)) byDate.set(tanggal, { tanggal, byCommodity: {} });
+              const entry = byDate.get(tanggal);
+              entry.byCommodity[r.komoditas] = Number(r.harga || 0);
+            }
+            const builtRows = Array.from(byDate.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([, v]) => {
+              const date = v.tanggal; const day = new Date(date).getDate(); const week = [1,8,15,22,29].includes(day) ? weekRomanForDay(day) : '';
+              const base: any = { week, day };
+              for (const h of headersLocal) base[h] = Number(v.byCommodity[h] ?? 0);
+              return base;
+            });
+
+            const monthLabel = items[0] ? monthLabelFromISO(items[0].tanggal.slice(0,10)) : '';
+            const title = `${marketNameKey} — ${monthLabel}`;
+            return { title, monthLabel, rows: builtRows, headers: headersLocal, units: headersLocal.map(()=>'(Rp/Kg)') };
+          });
+
+          return { name: marketNameKey, tables };
+        });
+
+        if (marketsArrayForced.length > 1) {
+          console.log('[Backup Export][FORCE] exporting multi-sheet, markets:', marketsArrayForced.map(m=>m.name));
+          await exportMarketsMultiSheet({ markets: marketsArrayForced, fileName: `semua-pasar-forced-${params.startDate ? params.startDate.slice(0,7) : 'all'}.xlsx` });
+          setExportProgress(100);
+          setExportMessage('Selesai. Memulai download (multi-sheet forced)...');
+          setTimeout(() => { setExporting(false); setExportProgress(0); setExportMessage(''); }, 1200);
+          return;
+        }
+      } catch (err) {
+        console.warn('[Backup Export][FORCE] forced multi-sheet export failed', err);
+      }
+
       await exportMarketExcel({
         title: `Harga Pasar Bahan Pangan Tingkat Produsen di ${marketName} ${monthLabel.split(' ')[1]}`,
         monthLabel,

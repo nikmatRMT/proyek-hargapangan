@@ -183,4 +183,52 @@ router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => 
   }
 });
 
+/**
+ * GET /api/reports
+ * Query Parameters:
+ *  - from (YYYY-MM-DD; tanggal awal)
+ *  - to (YYYY-MM-DD; tanggal akhir)
+ *  - marketId (ID pasar; opsional, kosong untuk semua pasar)
+ *  - sort (asc/desc; default: asc)
+ *  - page (nomor halaman; default: 1)
+ *  - pageSize (jumlah data per halaman; default: 100)
+ */
+router.get('/api/reports', async (req, res) => {
+  try {
+    const { from, to, marketId, sort = 'asc', page = 1, pageSize = 100 } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({ error: 'Parameter from dan to wajib diisi.' });
+    }
+
+    const { laporan_harga } = collections();
+
+    const query = {
+      tanggal_lapor: { $gte: from, $lte: to },
+    };
+
+    if (marketId) {
+      query.market_id = Number(marketId);
+    }
+
+    console.log('Parameter yang diterima:', { from, to, marketId, sort, page, pageSize });
+    console.log('Query yang dikirim ke database:', query);
+
+    const total = await laporan_harga.countDocuments(query);
+    const rows = await laporan_harga
+      .find(query)
+      .sort({ tanggal_lapor: sort === 'asc' ? 1 : -1 })
+      .skip((page - 1) * pageSize)
+      .limit(Number(pageSize))
+      .toArray();
+
+    console.log('Total data ditemukan:', total);
+
+    res.json({ total, rows });
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 export default router;

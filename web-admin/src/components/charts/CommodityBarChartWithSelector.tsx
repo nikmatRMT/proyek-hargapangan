@@ -22,15 +22,15 @@ export function CommodityBarChartWithSelector({
   // Filter data berdasarkan komoditas yang dipilih
   const filteredData = React.useMemo(() => {
     if (!selectedCommodity) return data;
-    
+
     // Untuk bar chart, kita filter data berdasarkan komoditas yang dipilih
     // lalu hitung rata-rata harga per pasar untuk komoditas tersebut
-    const filtered = allData.filter(item => 
+    const filtered = allData.filter(item =>
       item.commodity?.toLowerCase() === selectedCommodity.toLowerCase()
     );
-    
+
     if (filtered.length === 0) return [];
-    
+
     // Group by market dan hitung rata-rata
     const marketMap = new Map<string, { sum: number; count: number }>();
     filtered.forEach(item => {
@@ -43,13 +43,13 @@ export function CommodityBarChartWithSelector({
         marketMap.set(market, existing);
       }
     });
-    
+
     // Convert ke format yang diharapkan oleh CommodityBarChart
     const result = Array.from(marketMap.entries()).map(([market, stats]) => ({
       name: market,
       value: stats.count > 0 ? stats.sum / stats.count : 0,
     }));
-    
+
     return result.sort((a, b) => b.value - a.value);
   }, [selectedCommodity, allData, data]);
 
@@ -71,6 +71,94 @@ export function CommodityBarChartWithSelector({
               placeholder="Semua komoditas"
               className="w-48"
             />
+            {/* Export Actions */}
+            <div className="flex gap-1 ml-2">
+              <button
+                className="h-9 px-3 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm whitespace-nowrap"
+                title="Export Rata-rata Semua Pasar"
+                onClick={async () => {
+                  try {
+                    const { exportAveragePriceExcel } = await import('../../utils/exportExcel');
+                    // Calculate Avg per Commodity (All Markets)
+                    // We can reuse 'data' prop if it is correctly carrying the list, but robustly we recalc from allData.
+                    // Recalc logic:
+                    const map = new Map<string, { sum: number, count: number }>();
+                    allData.forEach(d => {
+                      // Normalize commodity name
+                      const comm = d.commodity || d.name || d.nama || 'Lainnya';
+                      const p = Number(d.price || d.harga || 0);
+                      if (p > 0) {
+                        const entry = map.get(comm) || { sum: 0, count: 0 };
+                        entry.sum += p;
+                        entry.count++;
+                        map.set(comm, entry);
+                      }
+                    });
+                    const processed = Array.from(map.entries()).map(([k, v]) => ({
+                      commodity: k,
+                      avg: Math.round(v.sum / v.count)
+                    })).sort((a, b) => b.avg - a.avg);
+
+                    await exportAveragePriceExcel({
+                      mode: 'all-markets',
+                      data: processed,
+                      title: 'Rata-rata Harga Komoditas (Semua Pasar)',
+                      fileName: 'rata-rata-semua-pasar.xlsx'
+                    });
+                  } catch (e) {
+                    console.error(e);
+                    alert('Gagal export');
+                  }
+                }}
+              >
+                Excel (Semua)
+              </button>
+              <button
+                className="h-9 px-3 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                title="Export Rata-rata Per Pasar"
+                onClick={async () => {
+                  try {
+                    const { exportAveragePriceExcel } = await import('../../utils/exportExcel');
+                    // Calculate Avg per Commodity per Market
+                    const map = new Map<string, { sum: number, count: number }>();
+                    allData.forEach(d => {
+                      const comm = d.commodity || d.name || d.nama || 'Lainnya';
+                      const mkt = d.market || d.pasar || d.marketName || 'Lainnya';
+                      const p = Number(d.price || d.harga || 0);
+                      if (p > 0) {
+                        const key = `${comm}###${mkt}`;
+                        const entry = map.get(key) || { sum: 0, count: 0 };
+                        entry.sum += p;
+                        entry.count++;
+                        map.set(key, entry);
+                      }
+                    });
+
+                    const processed: any[] = [];
+                    map.forEach((v, k) => {
+                      const [commodity, market] = k.split('###');
+                      processed.push({
+                        commodity,
+                        market,
+                        avg: Math.round(v.sum / v.count)
+                      });
+                    });
+
+                    await exportAveragePriceExcel({
+                      mode: 'per-market',
+                      data: processed,
+                      title: 'Rata-rata Harga Komoditas Per Pasar',
+                      fileName: 'rata-rata-per-pasar.xlsx'
+                    });
+                  } catch (e) {
+                    console.error(e);
+                    alert('Gagal export');
+                  }
+                }}
+              >
+                Excel (Per Pasar)
+              </button>
+            </div>
           </div>
         </div>
       </div>

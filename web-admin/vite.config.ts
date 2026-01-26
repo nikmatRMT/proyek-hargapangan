@@ -20,6 +20,13 @@ export default defineConfig({
     // kalau nanti pakai Cloudflare Tunnel, boleh aktifkan baris di bawah:
     // allowedHosts: ['.trycloudflare.com', 'headphones-gmt-render-load.trycloudflare.com'],
     hmr: { host: 'localhost', protocol: 'ws' },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   optimizeDeps: { include: ['exceljs'] },
   build: { commonjsOptions: { transformMixedEsModules: true } },

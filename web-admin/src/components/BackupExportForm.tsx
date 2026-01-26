@@ -200,6 +200,63 @@ export default function BackupExportForm({ markets, onExport, onPreview }: Backu
           <FileSpreadsheet className="w-4 h-4 mr-2" />
           {exporting ? 'Mengekspor...' : 'Export ke Excel'}
         </Button>
+
+        <Button
+          onClick={async () => {
+            if (!allDates && (!startDate || !endDate)) {
+              alert('Pilih rentang tanggal atau centang "Semua tanggal"');
+              return;
+            }
+            if (!allDates && new Date(startDate) > new Date(endDate)) {
+              alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir');
+              return;
+            }
+            setExporting(true);
+            try {
+              const params = {
+                from: allDates ? '' : startDate,
+                to: allDates ? '' : endDate,
+                market: marketId,
+              };
+              // Use dedicated backup-all endpoint when 'Semua Pasar' selected
+              const urlBase = marketId === 'all' ? '/api/export-pdf-backup-all' : '/api/export-pdf';
+              const url = `${urlBase}?from=${params.from}&to=${params.to}&market=${params.market}`;
+              const response = await fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Accept': 'application/pdf' },
+              });
+              if (!response.ok) {
+                let errorMsg = `HTTP error! status: ${response.status}`;
+                try {
+                  const errorData = await response.json();
+                  if (errorData.error) errorMsg = errorData.error;
+                } catch (e) {}
+                throw new Error(errorMsg);
+              }
+              const blob = await response.blob();
+              const downloadUrl = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = downloadUrl;
+              a.download = `backup-${marketId}-${params.from || 'all'}-${params.to || 'all'}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(downloadUrl);
+              document.body.removeChild(a);
+            } catch (error: any) {
+              console.error('[Backup PDF] Error:', error);
+              alert('Gagal export PDF: ' + (error?.message || error));
+            } finally {
+              setExporting(false);
+            }
+          }}
+          disabled={exporting}
+          className="flex-1"
+          size="lg"
+          variant="outline"
+        >
+          <FileSpreadsheet className="w-4 h-4 mr-2" /> Export ke PDF
+        </Button>
       </div>
     </div>
   );

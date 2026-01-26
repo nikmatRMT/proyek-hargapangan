@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.panel {
+  @apply bg-white border border-gray-200 rounded-lg;
+}
+.panel-header {
+  @apply px-6 py-4 border-b border-gray-200;
+}
+.panel-body {
+  @apply p-6;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-lg p-6 shadow-sm;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-lg text-sm transition-colors;
+}
+.btn-ghost {
+  @apply btn border border-gray-300 hover:bg-gray-50;
+}
+.btn-primary {
+  @apply btn text-white bg-blue-600 hover:bg-blue-700;
+}
+.btn-success {
+  @apply btn text-white bg-green-600 hover:bg-green-700;
+}

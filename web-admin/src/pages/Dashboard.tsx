@@ -9,7 +9,6 @@ import {
   bulkDeleteReports,
   subscribePrices,
   getCommodities,
-  createCommodity,
 } from "../api"; // ✅ pastikan path benar
 import { useReports } from "../hooks/useReports";
 import { useReportStats } from "../hooks/useReportStats";
@@ -17,11 +16,11 @@ import { formatCurrency } from "../utils/format";
 import { exportMarketExcel } from "../utils/exportExcel";
 import exportPreview from '../utils/exportPreview';
 import CreateMissingCommoditiesModal from '../components/CreateMissingCommoditiesModal';
-import LegacyDashboard from '@/pages/Dashboard';
-import { CommodityLineChart } from "../components/charts/CommodityLineChart";
-import { MarketPie } from "../components/charts/MarketPie";
-import { CommodityBarChart } from "../components/charts/CommodityBar";
-import { CommoditySelector } from "../components/CommoditySelector";
+// import LegacyDashboard from '@/pages/Dashboard';
+// import { CommodityLineChart } from "../components/charts/CommodityLineChart";
+// import { MarketPie } from "../components/charts/MarketPie";
+// import { CommodityBarChart } from "../components/charts/CommodityBar";
+// import { CommoditySelector } from "../components/CommoditySelector";
 import { CommodityLineChartWithSelector } from "../components/charts/CommodityLineChartWithSelector";
 import { MarketPieWithSelector } from "../components/charts/MarketPieWithSelector";
 import { CommodityBarChartWithSelector } from "../components/charts/CommodityBarChartWithSelector";
@@ -198,7 +197,7 @@ export default function Dashboard() {
   const [showDelete, setShowDelete] = useState(false);
 
   // ====== Daftar pasar (dipakai dropdown & ImportExcel) ======
-  const [markets, setMarkets] = useState<Array<{ id: number; nama_pasar: string }>>([]);
+  const [markets, setMarkets] = useState<Array<{ id: number; nama_pasar: string; alamat?: string }>>([]);
   const [selectedMarketId, setSelectedMarketId] = useState<number | "all">("all");
 
   // ====== State untuk pemilihan komoditas di chart ======
@@ -212,10 +211,18 @@ export default function Dashboard() {
       try {
         const res = await getMarkets(); // {rows:[...]} ATAU array
         const list = Array.isArray((res as any).rows)
-          ? (res as any).rows
+          ? (res as any).rows.map((m: any) => ({
+            id: m.id,
+            nama_pasar: m.nama_pasar,
+            alamat: m.alamat || ''
+          }))
           : Array.isArray(res)
-          ? (res as any)
-          : [];
+            ? (res as any).map((m: any) => ({
+              id: m.id,
+              nama_pasar: m.nama_pasar,
+              alamat: m.alamat || ''
+            }))
+            : [];
         if (!alive) return;
         setMarkets(list);
       } catch (e) {
@@ -239,7 +246,7 @@ export default function Dashboard() {
   const sortDir: "asc" | "desc" =
     sort === "date_asc" || (sort as any) === "asc" ? "asc" : "desc";
 
-  const { data: reports, loading, error, refetch } = useReports({
+  const { data: reports, loading, error } = useReports({
     from: allDates ? undefined : startDate || undefined,
     to: allDates ? undefined : endDate || undefined,
     market: selectedMarketId === "all" ? "all" : Number(selectedMarketId),
@@ -279,7 +286,7 @@ export default function Dashboard() {
     const PAGE = 500;
     let page = 1;
     let acc: any[] = [];
-    for (;;) {
+    for (; ;) {
       const res = await fetchReports({
         from: params.from,
         to: params.to,
@@ -379,11 +386,21 @@ export default function Dashboard() {
           return base;
         });
 
-      const monthLabel = (builtRows[0] && builtRows[0].day) ? monthLabelFromISO((allRows[0]?.date || allRows[0]?.tanggal || exportFrom).slice(0,10)) : monthLabelFromISO(new Date().toISOString().slice(0,10));
+      const monthLabel = (builtRows[0] && builtRows[0].day) ? monthLabelFromISO((allRows[0]?.date || allRows[0]?.tanggal || exportFrom).slice(0, 10)) : monthLabelFromISO(new Date().toISOString().slice(0, 10));
 
       // Default units (could be extended to fetch per-commodity units)
       const units = headers.map(() => '(Rp/Kg)');
 
+      // Ambil alamat pasar dari state markets
+      let selectedMarketAddress = '';
+      if (String(selectedMarketId) !== 'all') {
+        const foundMarket = markets.find(m => m.id === Number(selectedMarketId));
+        selectedMarketAddress = (foundMarket && typeof foundMarket.alamat !== 'undefined') ? foundMarket.alamat : '-';
+      } else {
+        selectedMarketAddress = '-';
+      }
+      console.log("Alamat yang dikirim ke export:", selectedMarketAddress);
+      alert("Alamat yang dikirim ke export: " + selectedMarketAddress);
       await exportMarketExcel({
         title: `Harga Pasar Bahan Pangan Tingkat Produsen di ${selectedMarketName} ${monthLabel.split(' ')[1]}`,
         monthLabel,
@@ -391,6 +408,8 @@ export default function Dashboard() {
         headers,
         units,
         fileName: `${selectedMarketName.toLowerCase().replace(/\s+/g, '-')}-${String(exportFrom).slice(0, 7)}.xlsx`,
+        marketName: selectedMarketName,
+        marketAddress: selectedMarketAddress,
       });
     } catch (e) {
       console.error("[Export] error:", e);
@@ -418,17 +437,19 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              className={`px-4 py-2 text-sm rounded-lg border ${
-                tab === "summary" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 dark:border-gray-600"
-              }`}
+              className={`h-10 px-4 text-sm font-medium rounded-lg border transition-colors ${tab === "summary"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                  : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                }`}
               onClick={() => setTab("summary")}
             >
               Ringkasan & Grafik
             </button>
             <button
-              className={`px-4 py-2 text-sm rounded-lg border ${
-                tab === "table" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 dark:border-gray-600"
-              }`}
+              className={`h-10 px-4 text-sm font-medium rounded-lg border transition-colors ${tab === "table"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                  : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                }`}
               onClick={() => setTab("table")}
             >
               Tabel
@@ -461,11 +482,7 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* Kolom 2: Filter */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="inline-flex items-center gap-2">
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={allDates}
@@ -502,6 +519,7 @@ export default function Dashboard() {
               }}
               className="px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
               aria-label="Pilih pasar"
+              title="Pilih pasar untuk filter"
             >
               <option value="all">Semua Pasar</option>
               {markets.map((m) => (
@@ -519,12 +537,83 @@ export default function Dashboard() {
                 setShowImport(!showImport);
                 setShowDelete(false); // Tutup Delete section
               }}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+              className="h-10 flex items-center gap-2 px-4 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
               title="Import data Excel ke database"
             >
               <FileSpreadsheet className="w-4 h-4" /> Import Data
             </button>
 
+            {/* Export PDF Button */}
+            <button
+              onClick={async () => {
+                if (selectedMarketId === "all") {
+                  alert("Silakan pilih satu pasar dulu untuk export PDF.");
+                  return;
+                }
+                // Check if there's data to export
+                if (sorted.length === 0) {
+                  alert("Tidak ada data untuk di-export pada filter saat ini. Silakan ubah filter tanggal atau pasar.");
+                  return;
+                }
+                try {
+                  // Determine date range
+                  let exportFrom: string | undefined;
+                  let exportTo: string | undefined;
+                  if (!allDates && startDate && endDate) {
+                    exportFrom = startDate;
+                    exportTo = endDate;
+                  } else {
+                    const sample: any = sorted?.[0] ?? (reports as any)?.[0];
+                    const iso = (sample?.date || sample?.tanggal || "").slice(0, 10);
+                    if (!iso) {
+                      alert("Tidak ada data untuk diexport pada filter saat ini.");
+                      return;
+                    }
+                    const b = monthBoundsFromISO(iso);
+                    exportFrom = b.from;
+                    exportTo = b.to;
+                  }
+                  const url = `/api/export-pdf?from=${exportFrom}&to=${exportTo}&market=${selectedMarketId}`;
+                  const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                      'Accept': 'application/pdf',
+                    },
+                  });
+                  if (!response.ok) {
+                    let errorMsg = `HTTP error! status: ${response.status}`;
+                    try {
+                      const errorData = await response.json();
+                      if (errorData.error) {
+                        errorMsg = errorData.error;
+                      }
+                    } catch (e) {
+                      // log error jika ada
+                      console.error(e);
+                    }
+                    throw new Error(errorMsg);
+                  }
+                  const blob = await response.blob();
+                  const downloadUrl = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = downloadUrl;
+                  a.download = `${selectedMarketName.toLowerCase().replace(/\s+/g, '-')}-${exportFrom?.slice(0, 7)}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(downloadUrl);
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error('Error downloading PDF:', error);
+                  alert('Gagal mendownload PDF. Silakan coba lagi.');
+                }
+              }}
+              className="h-10 flex items-center gap-2 px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors shadow-sm"
+              title="Download PDF"
+            >
+              {/* Gunakan icon FileSpreadsheet atau FileDown jika ada */}
+              <FileSpreadsheet className="w-4 h-4" /> Export PDF
+            </button>
             <button
               onClick={() => {
                 // preview -> reuse handleExportExcel's logic but only build data and open preview
@@ -560,15 +649,15 @@ export default function Dashboard() {
                       const entry = byDate.get(tanggal);
                       entry.byCommodity[r.komoditas] = Number(r.harga || 0);
                     }
-                    const builtRows = Array.from(byDate.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([, v]) => {
-                      const date = v.tanggal; const day = new Date(date).getDate(); const week = [1,8,15,22,29].includes(day) ? weekRomanForDay(day) : '';
+                    const builtRows = Array.from(byDate.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => {
+                      const date = v.tanggal; const day = new Date(date).getDate(); const week = [1, 8, 15, 22, 29].includes(day) ? weekRomanForDay(day) : '';
                       const base: any = { week, day };
                       for (const h of headers) base[h] = Number(v.byCommodity[h] ?? 0);
                       return base;
                     });
 
-                    const monthLabel = (builtRows[0] && builtRows[0].day) ? monthLabelFromISO((allRows[0]?.date || allRows[0]?.tanggal || exportFrom).slice(0,10)) : monthLabelFromISO(new Date().toISOString().slice(0,10));
-                    const units = headers.map(()=>'(Rp/Kg)');
+                    const monthLabel = (builtRows[0] && builtRows[0].day) ? monthLabelFromISO((allRows[0]?.date || allRows[0]?.tanggal || exportFrom).slice(0, 10)) : monthLabelFromISO(new Date().toISOString().slice(0, 10));
+                    const units = headers.map(() => '(Rp/Kg)');
 
                     exportPreview({ title: `Preview Harga - ${selectedMarketName}`, monthLabel, headers, units, rows: builtRows });
                   } catch (e) {
@@ -577,7 +666,7 @@ export default function Dashboard() {
                   }
                 })();
               }}
-              className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+              className="h-10 flex items-center gap-2 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
               title="Preview export"
             >
               <FileSpreadsheet className="w-4 h-4" /> Preview
@@ -586,7 +675,7 @@ export default function Dashboard() {
             <button
               onClick={handleExportExcel}
               disabled={exporting}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm disabled:opacity-60"
+              className="h-10 flex items-center gap-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors shadow-sm"
               title="Export Excel"
             >
               <FileSpreadsheet className="w-4 h-4" /> {exporting ? "Mengekspor..." : "Export Excel"}
@@ -604,7 +693,7 @@ export default function Dashboard() {
                   }
                 }, 100);
               }}
-              className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+              className="h-10 flex items-center gap-2 px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors shadow-sm"
               title="Hapus data bulanan"
             >
               <Trash2 className="w-4 h-4" /> Delete
@@ -656,6 +745,9 @@ export default function Dashboard() {
                 selectedCommodity={selectedCommodity1}
                 onCommodityChange={setSelectedCommodity1}
                 placeholder="Pilih komoditas"
+                marketId={selectedMarketId}
+                marketName={selectedMarketName}
+                marketAddress={markets.find(m => m.id === (selectedMarketId === 'all' ? -1 : Number(selectedMarketId)))?.alamat}
               />
               <CommodityLineChartWithSelector
                 title="Grafik Harga Komoditas 2"
@@ -664,6 +756,9 @@ export default function Dashboard() {
                 onCommodityChange={setSelectedCommodity2}
                 stroke="#dc2626"
                 placeholder="Pilih komoditas"
+                marketId={selectedMarketId}
+                marketName={selectedMarketName}
+                marketAddress={markets.find(m => m.id === (selectedMarketId === 'all' ? -1 : Number(selectedMarketId)))?.alamat}
               />
             </div>
 
@@ -801,6 +896,7 @@ function DangerBulkDelete({
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
           className="px-3 py-2 border rounded-lg text-sm w-28 bg-white dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+          title="Input tahun laporan"
         />
       </div>
 
@@ -818,11 +914,11 @@ function DangerBulkDelete({
         disabled={loading || selectedMarketId === "all" || (preview !== null && preview === 0)}
         className="px-3 py-2 rounded-lg text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
         title={
-          selectedMarketId === "all" 
-            ? "Pilih 1 pasar tertentu dulu" 
-            : preview === 0 
-            ? "Tidak ada data untuk dihapus pada bulan & pasar terpilih" 
-            : "Hapus semua data untuk bulan & pasar terpilih"
+          selectedMarketId === "all"
+            ? "Pilih 1 pasar tertentu dulu"
+            : preview === 0
+              ? "Tidak ada data untuk dihapus pada bulan & pasar terpilih"
+              : "Hapus semua data untuk bulan & pasar terpilih"
         }
       >
         Hapus Bulan Ini

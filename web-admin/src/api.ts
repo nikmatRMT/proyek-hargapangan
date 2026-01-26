@@ -103,7 +103,7 @@ export function del(path: string) {
 // =====================
 // Tipe ringan untuk dashboard
 // =====================
-export type Market = { id: number; nama?: string; name?: string; nama_pasar?: string };
+export type Market = { id: number; nama?: string; name?: string; nama_pasar?: string; alamat?: string };
 export type Commodity = { id: number; nama?: string; name?: string; nama_komoditas?: string };
 
 export type PriceRow = {
@@ -141,21 +141,21 @@ export function getCommodities() {
 }
 
 // === CRUD helper untuk Markets ===
-export async function createMarket(nama_pasar: string) {
+export async function createMarket(nama_pasar: string, alamat?: string) {
   // Try multiple endpoint names used across different backends
   const candidates = ['/api/markets', '/api/pasar'];
   let lastErr: any = null;
   for (const p of candidates) {
-    try { return await post(p, { nama_pasar }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+    try { return await post(p, { nama_pasar, alamat }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
   }
   throw lastErr || new Error('createMarket: endpoint tidak ditemukan');
 }
 
-export async function updateMarket(id: number, nama_pasar: string) {
+export async function updateMarket(id: number, nama_pasar: string, alamat?: string) {
   const candidates = [`/api/markets/${id}`, `/api/pasar/${id}`];
   let lastErr: any = null;
   for (const p of candidates) {
-    try { return await put(p, { nama_pasar }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
+    try { return await put(p, { nama_pasar, alamat }); } catch (e: any) { lastErr = e; if (e?.status !== 404) throw e; }
   }
   throw lastErr || new Error('updateMarket: endpoint tidak ditemukan');
 }
@@ -316,14 +316,14 @@ export async function uploadExcel(args: UploadExcelArgs) {
   // 🔧 KUNCI FIX: urutan kandidat tergantung mode
   const candidates = bulk
     ? [
-        `${base}/bulk?truncate=${truncate ? 1 : 0}`,   // coba BULK dulu
-        `${base}?truncate=${truncate ? 1 : 0}`,
-        `${base}/upload?truncate=${truncate ? 1 : 0}`,
-      ]
+      `${base}/bulk?truncate=${truncate ? 1 : 0}`,   // coba BULK dulu
+      `${base}?truncate=${truncate ? 1 : 0}`,
+      `${base}/upload?truncate=${truncate ? 1 : 0}`,
+    ]
     : [
-        `${base}/upload?truncate=${truncate ? 1 : 0}`, // single-bulan: /upload dulu
-        `${base}?truncate=${truncate ? 1 : 0}`,
-      ];
+      `${base}/upload?truncate=${truncate ? 1 : 0}`, // single-bulan: /upload dulu
+      `${base}?truncate=${truncate ? 1 : 0}`,
+    ];
 
   // helper untuk baca JSON aman
   async function readJsonResponseInner(res: Response) {
@@ -339,7 +339,7 @@ export async function uploadExcel(args: UploadExcelArgs) {
   let lastErr: unknown = null;
   for (const url of candidates) {
     try {
-  const res = await fetch(`${(import.meta.env.VITE_API_URL || 'https://harpa-banua.vercel.app').replace(/\/$/,'')}${url}`, {
+      const res = await fetch(`${(import.meta.env.VITE_API_URL || 'https://harpa-banua.vercel.app').replace(/\/$/, '')}${url}`, {
         method: 'POST',
         body: form,
         credentials: 'include',
@@ -381,9 +381,9 @@ export async function uploadExcel(args: UploadExcelArgs) {
 type UpdatePriceArgs =
   | { id: number; price: number; unit?: string; notes?: string } // by id (paling umum)
   | {
-      date: string; market_id: number; commodity_id: number;
-      price: number; unit?: string; notes?: string;
-    }; // by key (kombinasi)
+    date: string; market_id: number; commodity_id: number;
+    price: number; unit?: string; notes?: string;
+  }; // by key (kombinasi)
 
 export async function updateReportPrice(args: UpdatePriceArgs) {
   // Normalisasi payload
@@ -475,7 +475,7 @@ export async function previewBulkDelete({ marketId, year, month }: BulkArgs) {
   const candidates: Array<{ method: 'POST' | 'GET'; path: string; body?: any }> = [
     { method: 'POST', path: '/api/prices/bulk-delete/preview', body: payload },
     { method: 'POST', path: '/api/reports/bulk-delete/preview', body: payload },
-    { method: 'GET',  path: `/api/prices/bulk-delete/preview?marketId=${payload.marketId}&year=${payload.year}&month=${payload.month}` },
+    { method: 'GET', path: `/api/prices/bulk-delete/preview?marketId=${payload.marketId}&year=${payload.year}&month=${payload.month}` },
     { method: 'POST', path: '/api/prices/preview-bulk-delete', body: payload },
     { method: 'POST', path: '/api/prices/delete/preview', body: payload },
   ];
@@ -510,9 +510,9 @@ export async function bulkDeleteReports({ marketId, year, month }: BulkArgs) {
   const payload = { marketId: Number(marketId), year: Number(year), month: Number(month) };
 
   const candidates: Array<{ method: 'POST' | 'DELETE'; path: string; body?: any }> = [
-    { method: 'POST',   path: '/api/prices/bulk-delete', body: payload },
+    { method: 'POST', path: '/api/prices/bulk-delete', body: payload },
     { method: 'DELETE', path: '/api/prices/bulk-delete', body: payload }, // sebagian backend menerima body di DELETE
-    { method: 'POST',   path: '/api/reports/bulk-delete', body: payload },
+    { method: 'POST', path: '/api/reports/bulk-delete', body: payload },
     { method: 'DELETE', path: `/api/prices?marketId=${payload.marketId}&year=${payload.year}&month=${payload.month}&scope=month` },
   ];
 
@@ -551,7 +551,7 @@ export function subscribePrices(
   const es = new EventSource(url, { withCredentials: true });
 
   es.addEventListener('prices', (ev: MessageEvent) => {
-    try { onEvent(JSON.parse(ev.data)); } catch {}
+    try { onEvent(JSON.parse(ev.data)); } catch { }
   });
 
   // optional:
@@ -592,7 +592,7 @@ export async function apiUploadAvatar(file: File) {
 
   // coba ambil id user dari localStorage agar bisa pakai endpoint /api/users/:id/photo
   let uid: number | null = null;
-  try { uid = JSON.parse(localStorage.getItem('auth_user') || 'null')?.id ?? null; } catch {}
+  try { uid = JSON.parse(localStorage.getItem('auth_user') || 'null')?.id ?? null; } catch { }
 
   // Endpoint kandidat yang sering dipakai di berbagai backend
   const endpoints = [
@@ -686,4 +686,15 @@ export async function apiUploadAvatar(file: File) {
   }
 
   throw (lastErr instanceof Error ? lastErr : new Error('Upload gagal: tidak ada endpoint yang cocok.'));
+}
+
+// =====================
+// Riwayat Survey Petugas
+// =====================
+export function apiGetSurveyHistory(params?: Record<string, string | number | boolean | undefined>) {
+  const q = new URLSearchParams();
+  Object.entries(params || {}).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') q.append(k, String(v));
+  });
+  return http(`/api/survey-history?${q.toString()}`, { credentials: 'include' });
 }

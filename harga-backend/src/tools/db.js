@@ -17,7 +17,18 @@ export async function initMongo() {
     maxPoolSize: 20,
     minPoolSize: 0,
   });
-  await client.connect();
+  
+  // Tambahkan log untuk debug koneksi MongoDB
+  console.log('Menginisialisasi MongoDB dengan URI:', MONGO_URI);
+  console.log('Nama database:', MONGO_DB_NAME);
+  try {
+    await client.connect();
+    console.log('Koneksi MongoDB berhasil');
+  } catch (error) {
+    console.error('Error saat menghubungkan ke MongoDB:', error);
+    throw error;
+  }
+  
   db = client.db(MONGO_DB_NAME);
 
   // Ensure collections & indexes

@@ -9,8 +9,7 @@ Aplikasi terintegrasi untuk monitoring, pelaporan, dan analisis harga pangan di 
 ```
 proyek-hargapangan/
 ├── web-admin/           # Dashboard Admin (React + Vite + TypeScript)
-├── harga-backend/       # API Backend (Express.js + MongoDB)
-└── aplikasi-mobile/     # Aplikasi Mobile (React Native + Expo)
+└── harga-backend/       # API Backend (Express.js + MongoDB)
 ```
 
 ## 🚀 Deployment
@@ -25,7 +24,6 @@ proyek-hargapangan/
 - ✅ Import data harga dari Excel
 - ✅ Manajemen user & pasar
 - ✅ Laporan harga per komoditas
-- ✅ API untuk aplikasi mobile
 - ✅ Autentikasi berbasis session
 
 ## 🛠️ Tech Stack

@@ -11,6 +11,9 @@ import Login from "./pages/Login";
 import { AppShell } from "./components/layout/AppShell";
 import { PetugasLayout } from "./components/layout/PetugasLayout";
 import { bumpMe } from "./lib/avatar"; // ⬅️ tambah
+import OutputManager from './pages/OutputManager';
+import SurveyHistory from "./pages/SurveyHistory"; // ⬅️ tambah
+
 
 const App = () => {
   const [path, setPath] = useState(window.location.pathname);
@@ -46,7 +49,7 @@ const App = () => {
             bumpMe(); // ⬅️ kunci: hanya avatar "me" yang dibump
           }
         }
-      } catch {}
+      } catch { }
     }, 300);
     return () => clearInterval(id);
   }, [authUser]);
@@ -65,7 +68,7 @@ const App = () => {
     if (authUser && path === "/login") {
       // Redirect berdasarkan role
       let dest = sessionStorage.getItem('post_login_redirect') || "/";
-      
+
       // Jika tidak ada redirect tujuan, redirect ke halaman default sesuai role
       if (dest === "/" || dest === "/login") {
         if (authUser.role === 'petugas') {
@@ -74,7 +77,7 @@ const App = () => {
           dest = "/"; // admin & super_admin ke dashboard
         }
       }
-      
+
       sessionStorage.removeItem('post_login_redirect');
       window.history.replaceState({}, "", dest);
       setPath(dest);
@@ -102,13 +105,13 @@ const App = () => {
   return (
     <AppShell>
       {path === "/" && <Dashboard />}
-      {/* Input data hanya untuk petugas */}
-      {/* {path === "/input-data" && <InputData />} */}
-  {path === "/markets" && <Markets />}
-  {path === "/commodities" && <Commodities />}
+      {path === "/markets" && <Markets />}
+      {path === "/commodities" && <Commodities />}
       {path === "/users" && <Users />}
       {path === "/profile" && <Profile />}
+      {path === "/riwayat-petugas" && <SurveyHistory />}
       {path === "/backup" && <Backup />}
+      {path === "/output-manager" && <OutputManager />}
     </AppShell>
   );
 };

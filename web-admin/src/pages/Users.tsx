@@ -17,8 +17,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import {
   Search, UserPlus, Edit, Trash2, Key, Shield, UserCheck, UserX,
-  AlertCircle, Filter, Download, RefreshCw, Eye, Ban, Check, Users,
+  AlertCircle, Filter, RefreshCw, Eye, Ban, Check, Users, FileSpreadsheet, FileText,
 } from 'lucide-react';
+
+import { exportSimpleTable } from '../utils/exportExcel';
 
 // ▶️ Tambahan untuk avatar absolut + cache-busting
 import { withUserAvatar, onAvatarBumped } from '@/lib/avatar';
@@ -126,21 +128,88 @@ export default function UsersPage() {
   const totalFiltered = filteredUsers.length;
 
   // Handlers
-  const handleExportData = () => {
-    const csv = [
-      ['NIP','Nama','Username','No. HP','Role','Status','Tanggal Bergabung'],
-      ...filteredUsers.map(u => [
-        u.nip ?? '-', u.name, u.username, u.phone ?? '-', getRoleLabel(u.role),
-        u.is_active ? 'Aktif' : 'Tidak Aktif', formatDate(u.created_at)
-      ])
-    ].map(r => r.join(',')).join('\n');
+  // Export Excel
+  const handleExportExcel = async () => {
+    if (filteredUsers.length === 0) return;
+    setLoading(true);
+    try {
+      const dataToExport = filteredUsers.map((u, i) => ({
+        No: i + 1,
+        Nama: u.name,
+        Username: u.username,
+        NIP: u.nip ?? '-',
+        Role: getRoleLabel(u.role),
+        Status: u.is_active ? 'Aktif' : 'Tidak Aktif',
+        'Tanggal Bergabung': formatDate(u.created_at)
+      }));
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `data_pengguna_${new Date().toISOString().slice(0,10)}.csv`; a.click();
-    URL.revokeObjectURL(url);
-    setSuccess('Data berhasil diekspor'); setTimeout(()=>setSuccess(''),2000);
+      await exportSimpleTable({
+        title: 'Daftar Petugas / Pengguna',
+        headers: ['No', 'Nama', 'Username', 'NIP', 'Role', 'Status', 'Tanggal Bergabung'],
+        data: dataToExport.map(Object.values),
+        fileName: `Daftar_Petugas_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        columns: [
+          { width: 5, alignment: { horizontal: 'center' } },
+          { width: 25 }, // Nama
+          { width: 15 }, // Username
+          { width: 20 }, // NIP
+          { width: 10, alignment: { horizontal: 'center' } }, // Role
+          { width: 10, alignment: { horizontal: 'center' } }, // Status
+          { width: 15, alignment: { horizontal: 'center' } } // Tgl
+        ]
+      });
+      setSuccess('Export Excel berhasil'); setTimeout(() => setSuccess(''), 2000);
+    } catch (e: any) {
+      setError('Gagal export Excel');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Export PDF
+  const handleExportPDF = async () => {
+    if (filteredUsers.length === 0) return;
+    setLoading(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFontSize(16);
+      doc.text('Daftar Petugas HARPA', 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Total: ${filteredUsers.length} pengguna`, 14, 22);
+
+      // Table
+      const headers = [['No', 'Nama', 'Username', 'NIP', 'Role', 'Status', 'Bergabung']];
+      const data = filteredUsers.map((u, i) => [
+        i + 1,
+        u.name,
+        u.username,
+        u.nip ?? '-',
+        getRoleLabel(u.role),
+        u.is_active ? 'Aktif' : 'Non-Aktif',
+        formatDate(u.created_at)
+      ]);
+
+      (autoTable as any)(doc, {
+        startY: 25,
+        head: headers,
+        body: data,
+        theme: 'grid',
+        headStyles: { fillColor: [22, 163, 74] }, // Green-600 to match theme
+        styles: { fontSize: 9 },
+      });
+
+      doc.save(`Daftar_Petugas_${new Date().toISOString().slice(0, 10)}.pdf`);
+      setSuccess('Export PDF berhasil'); setTimeout(() => setSuccess(''), 2000);
+    } catch (e: any) {
+      setError('Gagal export PDF');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRefresh = async () => {
@@ -148,7 +217,7 @@ export default function UsersPage() {
     try {
       await refresh();
       setSuccess('Data berhasil diperbarui');
-      setTimeout(()=>setSuccess(''),1500);
+      setTimeout(() => setSuccess(''), 1500);
     } finally {
       setLoading(false);
     }
@@ -158,17 +227,17 @@ export default function UsersPage() {
     e.preventDefault();
     setFormError('');
     if (!createForm.username || !createForm.name) { setFormError('Nama & username wajib diisi'); return; }
-    
+
     // Validasi NIP: wajib 18 digit angka
     if (!createForm.nip || createForm.nip.trim() === '') {
-      setFormError('NIP wajib diisi'); 
+      setFormError('NIP wajib diisi');
       return;
     }
     if (!/^\d{18}$/.test(createForm.nip.trim())) {
-      setFormError('NIP harus 18 digit angka'); 
+      setFormError('NIP harus 18 digit angka');
       return;
     }
-    
+
     const password = createForm.password?.trim() || 'password';
 
     setFormLoading(true);
@@ -183,10 +252,10 @@ export default function UsersPage() {
         role: createForm.role,
       });
       setIsCreateDialogOpen(false);
-      setCreateForm({ nip:'', username:'', name:'', phone:'', role:'petugas', email:'', alamat:'', password:'' });
-      setSuccess('Pengguna berhasil ditambahkan'); setTimeout(()=>setSuccess(''),2000);
+      setCreateForm({ nip: '', username: '', name: '', phone: '', role: 'petugas', email: '', alamat: '', password: '' });
+      setSuccess('Pengguna berhasil ditambahkan'); setTimeout(() => setSuccess(''), 2000);
       await refresh();
-    } catch (e:any) {
+    } catch (e: any) {
       setFormError(e?.message || 'Gagal menambah pengguna');
     } finally {
       setFormLoading(false);
@@ -205,14 +274,14 @@ export default function UsersPage() {
     setFormError('');
     if (!selectedUser) return;
     if (!editForm.name) { setFormError('Nama wajib diisi'); return; }
-    
+
     // Validasi NIP: wajib 18 digit angka
     if (!editForm.nip || (editForm.nip as string).trim() === '') {
-      setFormError('NIP wajib diisi'); 
+      setFormError('NIP wajib diisi');
       return;
     }
     if (!/^\d{18}$/.test((editForm.nip as string).trim())) {
-      setFormError('NIP harus 18 digit angka'); 
+      setFormError('NIP harus 18 digit angka');
       return;
     }
 
@@ -226,9 +295,9 @@ export default function UsersPage() {
         nip: ((editForm.nip as string) ?? '').trim(),
       });
       setIsEditDialogOpen(false); setSelectedUser(null); setEditForm({});
-      setSuccess('Data pengguna berhasil diperbarui'); setTimeout(()=>setSuccess(''),2000);
+      setSuccess('Data pengguna berhasil diperbarui'); setTimeout(() => setSuccess(''), 2000);
       await refresh();
-    } catch (e:any) {
+    } catch (e: any) {
       setFormError(e?.message || 'Gagal memperbarui pengguna');
     } finally {
       setFormLoading(false);
@@ -260,8 +329,8 @@ export default function UsersPage() {
     try {
       await usersService.resetPassword(selectedUser.id, pwdForm.new_password);
       setIsPasswordDialogOpen(false);
-      setSuccess('Password berhasil direset'); setTimeout(()=>setSuccess(''), 2000);
-    } catch (err:any) {
+      setSuccess('Password berhasil direset'); setTimeout(() => setSuccess(''), 2000);
+    } catch (err: any) {
       setPwdError(err?.message || 'Gagal reset password');
     } finally {
       setPwdLoading(false);
@@ -272,7 +341,7 @@ export default function UsersPage() {
     const u = users.find(x => x.id === id); if (!u) return;
     const to = u.is_active ? 0 : 1;
     if (!confirm(`Yakin ingin ${to ? 'mengaktifkan' : 'menonaktifkan'} "${u.name}"?`)) return;
-    await usersService.update(id, { is_active: to as 0|1 });
+    await usersService.update(id, { is_active: to as 0 | 1 });
     await refresh();
   };
 
@@ -305,13 +374,26 @@ export default function UsersPage() {
           <p className="text-gray-600 mt-1">Manajemen pengguna sistem Harpa Banua</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExportData} className="gap-2">
-            <Download className="h-4 w-4" /> Export
+          <Button
+            variant="outline"
+            onClick={handleExportExcel}
+            className="gap-2 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+            title="Export ke Excel"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> Excel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            className="gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+            title="Export ke PDF"
+          >
+            <FileText className="h-4 w-4" /> PDF
           </Button>
           <Button onClick={handleRefresh} variant="outline" className="gap-2">
             <RefreshCw className="h-4 w-4" /> Refresh
           </Button>
-          <Button onClick={()=>setIsCreateDialogOpen(true)} className="bg-green-600 hover:bg-green-700 gap-2">
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-600 hover:bg-green-700 gap-2">
             <UserPlus className="h-4 w-4" /> Tambah Petugas
           </Button>
         </div>
@@ -341,13 +423,13 @@ export default function UsersPage() {
                 <Input
                   placeholder="Cari nama, username, NIP, atau no. HP..."
                   value={filters.search}
-                  onChange={(e)=>setFilters(p=>({...p, search:e.target.value}))}
+                  onChange={(e) => setFilters(p => ({ ...p, search: e.target.value }))}
                   className="pl-10"
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              <Select value={filters.role} onValueChange={(v: any)=>setFilters(p=>({...p, role:v}))}>
+              <Select value={filters.role} onValueChange={(v: any) => setFilters(p => ({ ...p, role: v }))}>
                 <SelectTrigger className="w-[140px]">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Role" />
@@ -358,7 +440,7 @@ export default function UsersPage() {
                   <SelectItem value="petugas">Petugas</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={filters.status} onValueChange={(v: any)=>setFilters(p=>({...p, status:v}))}>
+              <Select value={filters.status} onValueChange={(v: any) => setFilters(p => ({ ...p, status: v }))}>
                 <SelectTrigger className="w-[120px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -433,12 +515,12 @@ export default function UsersPage() {
                         <TableCell><div className="text-sm">{formatDate(u.created_at)}</div></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={()=>openViewDialog(u)} className="h-8 w-8 p-0"><Eye className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={()=>openEditDialog(u)} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => openViewDialog(u)} className="h-8 w-8 p-0"><Eye className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => openEditDialog(u)} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={()=>openChangePasswordDialogFor(u)}
+                              onClick={() => openChangePasswordDialogFor(u)}
                               className="h-8 w-8 p-0"
                               title="Reset Password"
                             >
@@ -447,7 +529,7 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={()=>handleToggleStatus(u.id)}
+                              onClick={() => handleToggleStatus(u.id)}
                               className={`h-8 w-8 p-0 ${u.is_active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
                             >
                               {u.is_active ? <Ban className="h-4 w-4" /> : <Check className="h-4 w-4" />}
@@ -455,7 +537,7 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={()=>handleDeleteUser(u.id)}
+                              onClick={() => handleDeleteUser(u.id)}
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -498,39 +580,39 @@ export default function UsersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="crt-name">Nama Lengkap <span className="text-red-500">*</span></Label>
-                <Input id="crt-name" value={createForm.name} onChange={(e)=>setCreateForm(p=>({...p, name:e.target.value}))} placeholder="Nama lengkap" required />
+                <Input id="crt-name" value={createForm.name} onChange={(e) => setCreateForm(p => ({ ...p, name: e.target.value }))} placeholder="Nama lengkap" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="crt-username">Username <span className="text-red-500">*</span></Label>
-                <Input id="crt-username" value={createForm.username} onChange={(e)=>setCreateForm(p=>({...p, username:e.target.value}))} placeholder="username unik" autoComplete="off" required />
+                <Input id="crt-username" value={createForm.username} onChange={(e) => setCreateForm(p => ({ ...p, username: e.target.value }))} placeholder="username unik" autoComplete="off" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="crt-nip">NIP <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="crt-nip" 
-                  value={createForm.nip} 
-                  onChange={(e)=>{
+                <Input
+                  id="crt-nip"
+                  value={createForm.nip}
+                  onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, ''); // Hanya angka
-                    if (val.length <= 18) setCreateForm(p=>({...p, nip:val}));
-                  }} 
-                  placeholder="18 digit angka (contoh: 199001012020011001)" 
+                    if (val.length <= 18) setCreateForm(p => ({ ...p, nip: val }));
+                  }}
+                  placeholder="18 digit angka (contoh: 199001012020011001)"
                   maxLength={18}
                   pattern="\d{18}"
-                  required 
+                  required
                 />
                 <p className="text-xs text-gray-500">Wajib 18 digit angka</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="crt-phone">No. HP (opsional)</Label>
-                <Input id="crt-phone" value={createForm.phone} onChange={(e)=>setCreateForm(p=>({...p, phone:e.target.value}))} placeholder="08..." />
+                <Input id="crt-phone" value={createForm.phone} onChange={(e) => setCreateForm(p => ({ ...p, phone: e.target.value }))} placeholder="08..." />
               </div>
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="crt-alamat">Alamat (opsional)</Label>
-                <Input id="crt-alamat" value={createForm.alamat} onChange={(e)=>setCreateForm(p=>({...p, alamat:e.target.value}))} placeholder="Alamat" />
+                <Input id="crt-alamat" value={createForm.alamat} onChange={(e) => setCreateForm(p => ({ ...p, alamat: e.target.value }))} placeholder="Alamat" />
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={createForm.role} onValueChange={(v: any)=>setCreateForm(p=>({...p, role: v as Role}))}>
+                <Select value={createForm.role} onValueChange={(v: any) => setCreateForm(p => ({ ...p, role: v as Role }))}>
                   <SelectTrigger><SelectValue placeholder="Pilih role" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="petugas">Petugas</SelectItem>
@@ -540,12 +622,12 @@ export default function UsersPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="crt-password">Password awal (opsional)</Label>
-                <Input id="crt-password" type="password" value={createForm.password} onChange={(e)=>setCreateForm(p=>({...p, password:e.target.value}))} placeholder="(kosongkan → default server)" />
+                <Input id="crt-password" type="password" value={createForm.password} onChange={(e) => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="(kosongkan → default server)" />
               </div>
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={()=>setIsCreateDialogOpen(false)}>Batal</Button>
+              <Button type="button" variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>Batal</Button>
               <Button type="submit" disabled={formLoading} className="bg-green-600 hover:bg-green-700">
                 {formLoading ? (
                   <span className="inline-flex items-center gap-2">
@@ -637,18 +719,18 @@ export default function UsersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Nama Lengkap <span className="text-red-500">*</span></Label>
-                  <Input id="edit-name" value={String(editForm.name ?? '')} onChange={(e)=>setEditForm(p=>({...p, name:e.target.value}))} placeholder="Masukkan nama lengkap" required />
+                  <Input id="edit-name" value={String(editForm.name ?? '')} onChange={(e) => setEditForm(p => ({ ...p, name: e.target.value }))} placeholder="Masukkan nama lengkap" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-phone">No. HP</Label>
-                  <Input id="edit-phone" value={String(editForm.phone ?? '')} onChange={(e)=>setEditForm(p=>({...p, phone:e.target.value}))} placeholder="Masukkan nomor HP" />
+                  <Input id="edit-phone" value={String(editForm.phone ?? '')} onChange={(e) => setEditForm(p => ({ ...p, phone: e.target.value }))} placeholder="Masukkan nomor HP" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={(editForm.role as Role) ?? ''} onValueChange={(v: Role)=>setEditForm(p=>({...p, role:v}))}>
+                  <Select value={(editForm.role as Role) ?? ''} onValueChange={(v: Role) => setEditForm(p => ({ ...p, role: v }))}>
                     <SelectTrigger><SelectValue placeholder="Pilih role" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="petugas">Petugas</SelectItem>
@@ -658,7 +740,7 @@ export default function UsersPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select value={editForm.is_active !== undefined ? String(editForm.is_active) : ''} onValueChange={(v)=>setEditForm(p=>({...p, is_active: parseInt(v) as 0|1}))}>
+                  <Select value={editForm.is_active !== undefined ? String(editForm.is_active) : ''} onValueChange={(v) => setEditForm(p => ({ ...p, is_active: parseInt(v) as 0 | 1 }))}>
                     <SelectTrigger><SelectValue placeholder="Pilih status" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1">Aktif</SelectItem>
@@ -670,17 +752,17 @@ export default function UsersPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-nip">NIP <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="edit-nip" 
-                  value={String(editForm.nip ?? '')} 
-                  onChange={(e)=>{
+                <Input
+                  id="edit-nip"
+                  value={String(editForm.nip ?? '')}
+                  onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, ''); // Hanya angka
-                    if (val.length <= 18) setEditForm(p=>({...p, nip:val}));
-                  }} 
-                  placeholder="18 digit angka (contoh: 199001012020011001)" 
+                    if (val.length <= 18) setEditForm(p => ({ ...p, nip: val }));
+                  }}
+                  placeholder="18 digit angka (contoh: 199001012020011001)"
                   maxLength={18}
                   pattern="\d{18}"
-                  required 
+                  required
                 />
                 <p className="text-xs text-gray-500">Wajib 18 digit angka</p>
               </div>
@@ -731,11 +813,11 @@ export default function UsersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pwd-new">Password Baru</Label>
-                <Input id="pwd-new" type="password" value={pwdForm.new_password} onChange={(e)=>setPwdForm(p=>({...p, new_password:e.target.value}))} placeholder="Min. 6 karakter" required />
+                <Input id="pwd-new" type="password" value={pwdForm.new_password} onChange={(e) => setPwdForm(p => ({ ...p, new_password: e.target.value }))} placeholder="Min. 6 karakter" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pwd-confirm">Konfirmasi Password Baru</Label>
-                <Input id="pwd-confirm" type="password" value={pwdForm.new_password_confirm} onChange={(e)=>setPwdForm(p=>({...p, new_password_confirm:e.target.value}))} placeholder="Ulangi password baru" required />
+                <Input id="pwd-confirm" type="password" value={pwdForm.new_password_confirm} onChange={(e) => setPwdForm(p => ({ ...p, new_password_confirm: e.target.value }))} placeholder="Ulangi password baru" required />
               </div>
             </div>
 
