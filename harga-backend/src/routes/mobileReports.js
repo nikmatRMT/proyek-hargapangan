@@ -129,34 +129,25 @@ router.post('/', requireMobileAuth, upload.single('photo'), async (req, res) => 
       });
     }
 
-    const oldFotoUrl = existing?.foto_url || null;
-
+    // Insert new data (no upsert since we already checked for duplicates)
     const newId = await getNextSeq('laporan_harga');
-    await laporan_harga.updateOne(
-      { market_id: marketId, komoditas_id: komoditas.id, tanggal_lapor: tanggal },
-      {
-        $set: {
-          user_id: req.mobileUser?.id ?? null,
-          harga: price,
-          keterangan: notes,
-          foto_url: fotoUrl,
-          gps_url: gpsUrl,
-          latitude: lat,
-          longitude: lng,
-          status: 'verified',
-          updated_at: new Date(),
-        },
-        $setOnInsert: { id: newId, created_at: new Date() },
-      },
-      { upsert: true }
-    );
+    await laporan_harga.insertOne({
+      id: newId,
+      market_id: marketId,
+      komoditas_id: komoditas.id,
+      tanggal_lapor: tanggal,
+      user_id: req.mobileUser?.id ?? null,
+      harga: price,
+      keterangan: notes,
+      foto_url: fotoUrl,
+      gps_url: gpsUrl,
+      latitude: lat,
+      longitude: lng,
+      status: 'verified',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
 
-    // Hapus foto lama dari Vercel Blob (jika ada dan beda dengan foto baru)
-    if (oldFotoUrl && oldFotoUrl !== fotoUrl && fotoUrl) {
-      await deleteFromBlob(oldFotoUrl).catch(err => {
-        console.warn('[Mobile Report] Failed to delete old foto from Blob:', err.message);
-      });
-    }
 
     // 🔔 broadcast ke klien (dashboard)
     bus.emit('prices:changed', {
