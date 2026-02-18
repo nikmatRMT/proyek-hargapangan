@@ -36,8 +36,17 @@ export function formatNumber(value: unknown, fallback = "—"): string {
     typeof value === "number"
       ? value
       : typeof value === "string"
-      ? Number(value.replace(/[^\d.-]/g, ""))
-      : NaN;
+        ? Number(value.replace(/[^\d.-]/g, ""))
+        : NaN;
   if (!Number.isFinite(n)) return fallback;
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.round(n));
+}
+
+export function formatDate(iso: string) {
+  if (!iso) return '-';
+  try {
+    return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return iso;
+  }
 }

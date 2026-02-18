@@ -69,18 +69,18 @@ async function checkExistingData(marketName: string, date: string, commodityName
   }
 }
 
-// Step Card Component
+// Step Card Component - Modernized
 function StepCard({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
   return (
-    <Card className="shadow-sm">
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 flex items-center justify-center font-bold text-lg border-2 border-green-200 dark:border-green-700">
+    <Card className="border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-800 bg-white dark:bg-gray-900/50 backdrop-blur-sm">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-green-100 dark:ring-green-900">
             {number}
           </div>
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 pt-1 sm:pt-2">{title}</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 tracking-tight">{title}</h3>
         </div>
-        <div className="space-y-4 sm:space-y-6 pl-0 sm:pl-16">
+        <div className="space-y-5">
           {children}
         </div>
       </CardContent>
@@ -431,33 +431,29 @@ export default function InputDataPage() {
         </StepCard>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="mx-2 sm:mx-0 mb-4">
-        <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border rounded-lg shadow-sm">
-          <div className="flex items-center gap-3">
-            <Label className="text-sm font-medium">Mode Input:</Label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setInputMode('single')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'single'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-              >
-                Single Input
-              </button>
-              <button
-                onClick={() => setInputMode('multi')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${inputMode === 'multi'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-              >
-                Multi Input
-              </button>
-            </div>
+      <div className="mx-2 sm:mx-0 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
+          <div className="flex p-1 gap-1 flex-1 sm:flex-none bg-gray-200/50 dark:bg-gray-800 rounded-lg">
+            <button
+              onClick={() => setInputMode('single')}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-md text-sm font-semibold transition-all shadow-sm ${inputMode === 'single'
+                ? 'bg-white dark:bg-gray-700 text-green-700 dark:text-green-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 shadow-none'
+                }`}
+            >
+              Single Input
+            </button>
+            <button
+              onClick={() => setInputMode('multi')}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-md text-sm font-semibold transition-all shadow-sm ${inputMode === 'multi'
+                ? 'bg-white dark:bg-gray-700 text-green-700 dark:text-green-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 shadow-none'
+                }`}
+            >
+              Multi Input
+            </button>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs font-medium text-gray-500 px-2 text-center sm:text-right">
             {inputMode === 'single' ? 'Input satu komoditas per laporan' : 'Input banyak komoditas sekaligus'}
           </div>
         </div>

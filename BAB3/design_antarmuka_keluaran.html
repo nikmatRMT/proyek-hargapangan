@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desain Antarmuka Keluaran - HARPA BANUA</title>
+    <style>
+        /* Shared Style for Lo-Fi Wireframe */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background: #fff;
+            padding: 40px;
+            color: #000;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 50px;
+            font-size: 24px;
+            text-transform: uppercase;
+            border-bottom: 3px solid #000;
+            padding-bottom: 15px;
+        }
+
+        .wireframe-section {
+            margin-bottom: 80px;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-decoration: underline;
+        }
+
+        .wireframe-container {
+            width: 1000px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 5px;
+        }
+
+        .screen {
+            width: 100%;
+            border: 1px solid #000;
+            background: #fff;
+            padding: 30px;
+            position: relative;
+        }
+
+        .caption {
+            margin-top: 10px;
+            font-style: italic;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Layout Elements */
+        .sidebar {
+            width: 200px;
+            border-right: 1px solid #000;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            padding: 20px;
+        }
+
+        .main {
+            margin-left: 200px;
+            padding-left: 20px;
+        }
+
+        .header {
+            border-bottom: 1px solid #000;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        /* Output Components */
+        .card {
+            border: 1px solid #000;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-val {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        th {
+            border-bottom: 2px solid #000;
+            text-align: left;
+            padding: 5px;
+            background: #eee;
+        }
+
+        td {
+            border-bottom: 1px solid #ccc;
+            padding: 5px;
+        }
+
+        /* Report Paper */
+        .paper {
+            border: 1px solid #000;
+            width: 600px;
+            height: 700px;
+            margin: 0 auto;
+            padding: 40px;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Perancangan Antarmuka Keluaran (Output Design)</h1>
+
+    <!-- 1. DASHBOARD OVERVIEW -->
+    <div class="wireframe-section">
+        <h2>1. Rancangan Dashboard (Informasi Statistik)</h2>
+        <div class="wireframe-container">
+            <div class="screen" style="height: 500px;">
+                <div class="sidebar">
+                    <div
+                        style="font-weight: bold; margin-bottom: 20px; border: 2px solid #000; padding: 5px; text-align: center;">
+                        MENU</div>
+                    <div>Dashboard</div>
+                    <div>Laporan</div>
+                </div>
+                <div class="main">
+                    <div class="header">
+                        <b>DASHBOARD UTAMA</b>
+                        <span>Admin</span>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <div class="card" style="flex: 1; text-align: center;">
+                            <div class="stat-label">Total Survey</div>
+                            <div class="stat-val">1,250</div>
+                        </div>
+                        <div class="card" style="flex: 1; text-align: center;">
+                            <div class="stat-label">Harga Tertinggi</div>
+                            <div class="stat-val">Rp 150k</div>
+                        </div>
+                        <div class="card" style="flex: 1; text-align: center;">
+                            <div class="stat-label">Pasar Aktif</div>
+                            <div class="stat-val">5</div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Output -->
+                    <div class="card" style="height: 250px; position: relative;">
+                        <div style="font-weight: bold; border-bottom: 1px solid #000; margin-bottom: 10px;">GRAFIK TREN
+                            HARGA (OUTPUT VISUAL)</div>
+                        <div
+                            style="height: 180px; border-left: 2px solid #000; border-bottom: 2px solid #000; position: relative;">
+                            <!-- Mockup Line Chart -->
+                            <svg width="100%" height="100%" style="position: absolute;">
+                                <polyline points="10,150 100,120 200,60 300,100 400,40"
+                                    style="fill:none;stroke:black;stroke-width:2" />
+                            </svg>
+                            <div
+                                style="position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 10px;">
+                                PERIODE WAKTU</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="caption">Gambar 3.5 Rancangan Output Dashboard & Grafik</p>
+    </div>
+
+    <!-- 2. TABEL DATA HARGA -->
+    <div class="wireframe-section">
+        <h2>2. Rancangan Tabel Data Harga (Output List)</h2>
+        <div class="wireframe-container">
+            <div class="screen">
+                <div class="header">
+                    <b>DATA HARGA TERKINI</b>
+                    <button style="border: 1px solid #000; background: #fff; cursor: pointer;">Print Data</button>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>NO</th>
+                                <th>KOMODITAS</th>
+                                <th>PASAR</th>
+                                <th>TANGGAL</th>
+                                <th style="text-align: right;">HARGA (RP)</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Beras Premium</td>
+                                <td>Pasar Bauntung</td>
+                                <td>29/01/2026</td>
+                                <td style="text-align: right;">15,000</td>
+                                <td>[STABIL]</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Daging Sapi</td>
+                                <td>Pasar Bauntung</td>
+                                <td>29/01/2026</td>
+                                <td style="text-align: right;">140,000</td>
+                                <td>[NAIK]</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Telur Ayam</td>
+                                <td>Pasar Kemuning</td>
+                                <td>29/01/2026</td>
+                                <td style="text-align: right;">28,000</td>
+                                <td>[TURUN]</td>
+                            </tr>
+                            <!-- More rows mockup -->
+                            <tr>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td style="text-align: right;">...</td>
+                                <td>...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 10px; font-size: 10px;">Menampilkan 3 dari 1,250 data</div>
+                </div>
+            </div>
+        </div>
+        <p class="caption">Gambar 3.6 Rancangan Output Tabel Data</p>
+    </div>
+
+    <!-- 3. FORMAT LAPORAN CETAK (PDF) -->
+    <div class="wireframe-section">
+        <h2>3. Rancangan Laporan Cetak (Output PDF)</h2>
+        <div class="wireframe-container">
+            <div style="background: #ccc; padding: 20px;">
+                <div class="paper" style="background: #fff; font-family: 'Times New Roman', Times, serif;">
+                    <!-- Report Header -->
+                    <div
+                        style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h3 style="font-family: 'Times New Roman'; font-size: 16px;">DINAS KETAHANAN PANGAN<br>KOTA
+                            BANJARBARU</h3>
+                        <div style="font-size: 11px;">Jl. Basuki Rahmat No. 1, Banjarbaru</div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <b style="text-decoration: underline; font-family: 'Times New Roman';">LAPORAN HARGA PANGAN
+                            HARIAN</b>
+                        <div style="font-size: 11px;">Periode: Januari 2026</div>
+                    </div>
+
+                    <!-- Report Table -->
+                    <table style="border: 1px solid #000; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #000; background: #fff;">No</th>
+                                <th style="border: 1px solid #000; background: #fff;">Nama Komoditas</th>
+                                <th style="border: 1px solid #000; background: #fff;">Satuan</th>
+                                <th style="border: 1px solid #000; background: #fff;">Rata-rata Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #000;">1</td>
+                                <td style="border: 1px solid #000;">Beras Premium</td>
+                                <td style="border: 1px solid #000; text-align: center;">Kg</td>
+                                <td style="border: 1px solid #000; text-align: right;">Rp 15.250</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000;">2</td>
+                                <td style="border: 1px solid #000;">Cabai Rawit</td>
+                                <td style="border: 1px solid #000; text-align: center;">Kg</td>
+                                <td style="border: 1px solid #000; text-align: right;">Rp 85.000</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #000;">3</td>
+                                <td style="border: 1px solid #000;">Minyak Goreng</td>
+                                <td style="border: 1px solid #000; text-align: center;">Liter</td>
+                                <td style="border: 1px solid #000; text-align: right;">Rp 17.500</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Signature Area -->
+                    <div style="margin-top: 50px; text-align: right;">
+                        <div style="margin-bottom: 50px;">Banjarbaru, 29 Januari 2026<br>Kepala Dinas,</div>
+                        <div>( ..................................... )</div>
+                        <div>NIP. 19800101 200012 1 001</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="caption">Gambar 3.7 Rancangan Output Laporan Cetak (PDF)</p>
+    </div>
+
+</body>
+
+</html>

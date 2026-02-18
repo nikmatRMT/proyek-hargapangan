@@ -1,62 +1,43 @@
-<<<<<<< HEAD
-=======
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
 dist/
 build/
+coverage/
+
+# Environment variables (SENSITIVE)
 .env
 .env.local
 .env.*.local
-/.parcel-cache
+
+# Framework/Tooling caches
 .vercel/
-/.next/
-/.expo/
+.next/
+.expo/
+.parcel-cache
+.eslintcache
+tsconfig.tsbuildinfo
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
 .DS_Store
-coverage/
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-/.idea/
-.vscode/
-/.envnode_modules/
->>>>>>> da1f532 (chore: update production API URLs -> https://harpa-banua.vercel.app; add .gitignore)
 *.log
-.DS_Store
-.env
-.env.local
-dist/
-build/
-.vercel
+
+# Project specific
+tmp/
 tmp/uploads/
 aplikasi-mobile/node_modules/
 web-admin/node_modules/
 harga-backend/node_modules/
 
-node_modules/
-dist/
-build/
-.env
-.env.local
-.env.*.local
-/.parcel-cache
-.vercel/
-.next/
-.expo/
-.DS_Store
-coverage/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-/.idea/
-.vscode/
-*.log
-.DS_Store
-.env
-.env.local
-dist/
-build/
-.vercel
-tmp/uploads/
-aplikasi-mobile/node_modules/
-web-admin/node_modules/
-harga-backend/node_modules/

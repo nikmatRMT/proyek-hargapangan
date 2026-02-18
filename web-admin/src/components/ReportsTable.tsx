@@ -107,19 +107,19 @@ function InlineDropdown({
     <div ref={ref} className="relative inline-block">
       <button
         type="button"
-        className="px-2 py-1 border rounded text-sm bg-white flex items-center gap-2 min-w-[160px] justify-between"
+        className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-foreground flex items-center gap-2 min-w-[160px] justify-between shadow-sm hover:border-green-500 transition-colors"
         onClick={() => setOpen((s) => !s)}
       >
         <span className="truncate">{selected ? selected.label : (placeholder ?? '-- Pilih --')}</span>
-        <svg className="w-3 h-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 011.08 1.04l-4.25 4.25a.75.75 0 01-1.06 0L5.25 8.27a.75.75 0 01-.02-1.06z"/></svg>
+        <svg className="w-3 h-3 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 011.08 1.04l-4.25 4.25a.75.75 0 01-1.06 0L5.25 8.27a.75.75 0 01-.02-1.06z" /></svg>
       </button>
 
       {open && (
-        <div className="absolute left-0 mt-1 w-[240px] max-h-48 overflow-auto rounded border bg-white shadow-lg z-50">
+        <div className="absolute left-0 mt-1 w-[240px] max-h-48 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl z-50">
           {options.map((o) => (
             <div
               key={o.value}
-              className={`px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer ${String(o.value) === String(value) ? 'bg-gray-100 font-medium' : ''}`}
+              className={`px-3 py-2 text-sm cursor-pointer transition-colors ${String(o.value) === String(value) ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium' : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-foreground'}`}
               onClick={() => { onChange(o.value); setOpen(false); }}
             >
               {o.label}
@@ -253,7 +253,7 @@ export default function ReportsTable({
     })();
 
     return () => { mounted = false; };
-  // re-run when rows/data change
+    // re-run when rows/data change
   }, [data, rows]);
 
   async function submitEdit(row: ReportRow) {
@@ -317,11 +317,11 @@ export default function ReportsTable({
             ))}
           </colgroup>
 
-          <thead className="sticky top-0 z-10 bg-white/90 backdrop-blur">
+          <thead className="sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur shadow-sm">
             <tr>
               {columns.map((c, idx) => (
                 <Th key={c.key}>
-                  <div className={`relative flex items-center group ${dragging?.key === c.key ? 'bg-gray-50' : ''}`}>
+                  <div className={`relative flex items-center group ${dragging?.key === c.key ? 'bg-gray-50 dark:bg-gray-800' : ''}`}>
                     <span className="flex-1">{c.label}</span>
                     {idx < columns.length - 1 && (
                       <div
@@ -347,10 +347,10 @@ export default function ReportsTable({
           <tbody>
             {pageData.length === 0 ? (
               <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
-                    Tidak ada data untuk ditampilkan.
-                  </td>
-                </tr>
+                <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
+                  Tidak ada data untuk ditampilkan.
+                </td>
+              </tr>
             ) : (
               pageData.map((r, i) => {
                 const tanggal = pick<string>(r.tanggal, r.date);
@@ -376,182 +376,182 @@ export default function ReportsTable({
                 const isEditing = editId === (r.id ?? `${i}-${tanggal}-${komoditas}`);
 
                 return (
-                  <tr key={key} data-row-id={r.id} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100/60">
+                  <tr key={key} data-row-id={r.id} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800/50 hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors">
                     <Td>
                       <div className="flex items-center min-w-[210px] gap-2">
-                          {editDateId === r.id ? (
-                            <div
-                              style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'flex-start',
-                                gap: 6,
-                                minWidth: 0,
-                                padding: 0,
-                                background: '#fff',
-                                borderRadius: 6,
-                                border: '1px solid #e5e7eb',
-                                position: 'static',
-                                zIndex: 1,
-                              }}
-                            >
-                              <DatePicker
-                                selected={editDateVal}
-                                onChange={(date: Date | null) => setEditDateVal(date)}
-                                dateFormat="dd/MM/yyyy"
-                                customInput={<input style={{ width: 120, fontSize: 15, padding: '6px 10px', borderRadius: 6, border: '1.5px solid #d1d5db', outline: 'none', transition: 'border 0.2s' }} />}
-                                popperPlacement="bottom-start"
-                                showPopperArrow={false}
-                                wrapperClassName="date-picker-wrapper"
-                              />
-                              <div className="flex flex-row gap-1 w-full mt-1 justify-center items-center">
-                                <button
-                                  className="flex items-center gap-0.5 px-1.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors"
-                                  style={{ minWidth: 0, lineHeight: 1.1 }}
-                                  onClick={() => submitEditDate(r)}
-                                  type="button"
-                                >
-                                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z"/></svg>
-                                  Simpan
-                                </button>
-                                <button
-                                  className="flex items-center gap-0.5 px-1.5 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 transition-colors"
-                                  style={{ minWidth: 0, lineHeight: 1.1 }}
-                                  onClick={() => setEditDateId(null)}
-                                  type="button"
-                                >
-                                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z"/></svg>
-                                  Batal
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="flex items-center gap-2">
-                              {fmtDate(tanggal)}
+                        {editDateId === r.id ? (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              gap: 6,
+                              minWidth: 0,
+                              padding: 0,
+                              background: '#fff',
+                              borderRadius: 6,
+                              border: '1px solid #e5e7eb',
+                              position: 'static',
+                              zIndex: 1,
+                            }}
+                          >
+                            <DatePicker
+                              selected={editDateVal}
+                              onChange={(date: Date | null) => setEditDateVal(date)}
+                              dateFormat="dd/MM/yyyy"
+                              customInput={<input style={{ width: 120, fontSize: 15, padding: '6px 10px', borderRadius: 6, border: '1.5px solid #d1d5db', outline: 'none', transition: 'border 0.2s' }} />}
+                              popperPlacement="bottom-start"
+                              showPopperArrow={false}
+                              wrapperClassName="date-picker-wrapper"
+                            />
+                            <div className="flex flex-row gap-1 w-full mt-1 justify-center items-center">
                               <button
-                                className="ml-2 inline-flex items-center justify-center p-1 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-                                onClick={() => {
-                                    // open date editor only, close other editors
-                                    setEditId(null);
-                                    setEditMarketRowId(null);
-                                    setEditCommodityRowId(null);
-                                    setEditDateId(r.id!);
-                                    setEditDateVal(tanggal ? new Date(tanggal) : new Date());
-                                  }}
-                                title="Edit tanggal"
-                                aria-label="Edit tanggal"
+                                className="flex items-center gap-0.5 px-1.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors"
+                                style={{ minWidth: 0, lineHeight: 1.1 }}
+                                onClick={() => submitEditDate(r)}
+                                type="button"
                               >
-                                <Pencil size={15} />
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z" /></svg>
+                                Simpan
                               </button>
-                            </span>
-                          )}
+                              <button
+                                className="flex items-center gap-0.5 px-1.5 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 transition-colors"
+                                style={{ minWidth: 0, lineHeight: 1.1 }}
+                                onClick={() => setEditDateId(null)}
+                                type="button"
+                              >
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z" /></svg>
+                                Batal
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            {fmtDate(tanggal)}
+                            <button
+                              className="ml-2 inline-flex items-center justify-center p-1 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                              onClick={() => {
+                                // open date editor only, close other editors
+                                setEditId(null);
+                                setEditMarketRowId(null);
+                                setEditCommodityRowId(null);
+                                setEditDateId(r.id!);
+                                setEditDateVal(tanggal ? new Date(tanggal) : new Date());
+                              }}
+                              title="Edit tanggal"
+                              aria-label="Edit tanggal"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          </span>
+                        )}
                       </div>
                     </Td>
                     <Td>
-                          <div style={{ paddingLeft: editDateId === r.id ? 56 : 0, transition: 'padding 0.2s' }}>
-                            {editMarketRowId === r.id ? (
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-start',
-                                  gap: 6,
-                                  minWidth: 0,
-                                  padding: 0,
-                                  background: '#fff',
-                                  borderRadius: 6,
-                                  border: '1px solid #e5e7eb',
-                                  position: 'static',
-                                  zIndex: 1,
-                                }}
-                              >
-                                <InlineDropdown
-                                  value={editMarketVal ?? ""}
-                                  options={[{ value: '', label: '-- Pilih Pasar --' }, ...marketsOptions]}
-                                  onChange={(v) => setEditMarketVal(v)}
-                                />
+                      <div style={{ paddingLeft: editDateId === r.id ? 56 : 0, transition: 'padding 0.2s' }}>
+                        {editMarketRowId === r.id ? (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              gap: 6,
+                              minWidth: 0,
+                              padding: 0,
+                              background: '#fff',
+                              borderRadius: 6,
+                              border: '1px solid #e5e7eb',
+                              position: 'static',
+                              zIndex: 1,
+                            }}
+                          >
+                            <InlineDropdown
+                              value={editMarketVal ?? ""}
+                              options={[{ value: '', label: '-- Pilih Pasar --' }, ...marketsOptions]}
+                              onChange={(v) => setEditMarketVal(v)}
+                            />
 
-                                <div className="flex flex-row gap-1 w-full mt-1 justify-center items-center">
-                                  <button
-                                    className="flex items-center gap-0.5 px-1.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors"
-                                    style={{ minWidth: 0, lineHeight: 1.1 }}
-                                    onClick={async () => {
-                                        setSaving(true);
-                                        setErrMsg(null);
-                                        setConflictId(null);
-                                        try {
-                                          const mid = editMarketVal ? Number(editMarketVal) : undefined;
-                                          await patchPriceById(Number(r.id), { market_id: mid });
-                                          r.market_id = mid ?? r.market_id;
-                                          const sel = marketsOptions.find(m => String(m.value) === String(mid));
-                                          if (sel) r.market = sel.label;
-                                          setEditMarketRowId(null);
-                                          onEdited?.(r);
-                                        } catch (e:any) {
-                                          // enhanced error object from api.ts includes status and data
-                                          if (e?.status === 409 && e?.data) {
-                                            setErrMsg(e.data?.message || 'Ada konflik data');
-                                            setConflictId(Number(e.data?.conflictId) || null);
-                                          } else {
-                                            setErrMsg(e?.message || 'Gagal menyimpan');
-                                          }
-                                        } finally { setSaving(false); }
-                                    }}
-                                    type="button"
-                                      disabled={saving}
-                                    >
-                                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z"/></svg>
-                                    Simpan
-                                  </button>
-                                  <button
-                                    className="flex items-center gap-0.5 px-1.5 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 transition-colors"
-                                    style={{ minWidth: 0, lineHeight: 1.1 }}
-                                    onClick={() => setEditMarketRowId(null)}
-                                    type="button"
-                                  >
-                                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z"/></svg>
-                                    Batal
-                                  </button>
-                                </div>
-                                  {errMsg && editMarketRowId === r.id && (
-                                    <div className="mt-1 text-xs text-red-600 flex items-center gap-2">
-                                      <span>{errMsg}</span>
-                                      {conflictId && (
-                                        <button
-                                          type="button"
-                                          className="text-xs underline text-blue-600 hover:text-blue-800"
-                                          onClick={() => {
-                                            const el = document.querySelector(`[data-row-id=\"${conflictId}\"]`) as HTMLElement | null;
-                                            if (el) {
-                                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                              el.classList.add('ring-2', 'ring-red-300');
-                                              setTimeout(() => el.classList.remove('ring-2', 'ring-red-300'), 2500);
-                                            }
-                                          }}
-                                        >
-                                          Buka yang sudah ada
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="flex-1">{pasar ?? "—"}</span>
-                                <button className="inline-flex items-center justify-center p-1 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50" title="Edit pasar" onClick={() => {
-                                  // open market editor for this row; close other editors
-                                  setEditId(null);
-                                  setEditDateId(null);
-                                  setEditCommodityRowId(null);
-                                  setEditMarketRowId(r.id ?? key);
-                                  setEditMarketVal(r.market_id ?? r.marketId ?? "");
+                            <div className="flex flex-row gap-1 w-full mt-1 justify-center items-center">
+                              <button
+                                className="flex items-center gap-0.5 px-1.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors"
+                                style={{ minWidth: 0, lineHeight: 1.1 }}
+                                onClick={async () => {
+                                  setSaving(true);
                                   setErrMsg(null);
-                                }} aria-label="Edit pasar">
-                                  <Pencil size={14} />
-                                </button>
+                                  setConflictId(null);
+                                  try {
+                                    const mid = editMarketVal ? Number(editMarketVal) : undefined;
+                                    await patchPriceById(Number(r.id), { market_id: mid });
+                                    r.market_id = mid ?? r.market_id;
+                                    const sel = marketsOptions.find(m => String(m.value) === String(mid));
+                                    if (sel) r.market = sel.label;
+                                    setEditMarketRowId(null);
+                                    onEdited?.(r);
+                                  } catch (e: any) {
+                                    // enhanced error object from api.ts includes status and data
+                                    if (e?.status === 409 && e?.data) {
+                                      setErrMsg(e.data?.message || 'Ada konflik data');
+                                      setConflictId(Number(e.data?.conflictId) || null);
+                                    } else {
+                                      setErrMsg(e?.message || 'Gagal menyimpan');
+                                    }
+                                  } finally { setSaving(false); }
+                                }}
+                                type="button"
+                                disabled={saving}
+                              >
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z" /></svg>
+                                Simpan
+                              </button>
+                              <button
+                                className="flex items-center gap-0.5 px-1.5 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 transition-colors"
+                                style={{ minWidth: 0, lineHeight: 1.1 }}
+                                onClick={() => setEditMarketRowId(null)}
+                                type="button"
+                              >
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z" /></svg>
+                                Batal
+                              </button>
+                            </div>
+                            {errMsg && editMarketRowId === r.id && (
+                              <div className="mt-1 text-xs text-red-600 flex items-center gap-2">
+                                <span>{errMsg}</span>
+                                {conflictId && (
+                                  <button
+                                    type="button"
+                                    className="text-xs underline text-blue-600 hover:text-blue-800"
+                                    onClick={() => {
+                                      const el = document.querySelector(`[data-row-id=\"${conflictId}\"]`) as HTMLElement | null;
+                                      if (el) {
+                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        el.classList.add('ring-2', 'ring-red-300');
+                                        setTimeout(() => el.classList.remove('ring-2', 'ring-red-300'), 2500);
+                                      }
+                                    }}
+                                  >
+                                    Buka yang sudah ada
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">{pasar ?? "—"}</span>
+                            <button className="inline-flex items-center justify-center p-1 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-50" title="Edit pasar" onClick={() => {
+                              // open market editor for this row; close other editors
+                              setEditId(null);
+                              setEditDateId(null);
+                              setEditCommodityRowId(null);
+                              setEditMarketRowId(r.id ?? key);
+                              setEditMarketVal(r.market_id ?? r.marketId ?? "");
+                              setErrMsg(null);
+                            }} aria-label="Edit pasar">
+                              <Pencil size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </Td>
                     <Td>
                       <div style={{ paddingLeft: editDateId === r.id ? 56 : 0, transition: 'padding 0.2s' }}>
@@ -582,29 +582,29 @@ export default function ReportsTable({
                                 className="flex items-center gap-0.5 px-1.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors"
                                 style={{ minWidth: 0, lineHeight: 1.1 }}
                                 onClick={async () => {
-                                    setSaving(true);
-                                    setErrMsg(null);
-                                    setConflictId(null);
-                                    try {
-                                      const kid = editCommodityVal ? Number(editCommodityVal) : undefined;
-                                      await patchPriceById(Number(r.id), { komoditas_id: kid });
-                                      r.komoditas_id = kid ?? r.komoditas_id;
-                                      const sel = commoditiesOptions.find(k => String(k.value) === String(kid));
-                                      if (sel) r.komoditas = sel.label;
-                                      setEditCommodityRowId(null);
-                                      onEdited?.(r);
-                                    } catch (e:any) {
-                                      if (e?.status === 409 && e?.data) {
-                                        setErrMsg(e.data?.message || 'Ada konflik data');
-                                        setConflictId(Number(e.data?.conflictId) || null);
-                                      } else {
-                                        setErrMsg(e?.message || 'Gagal menyimpan');
-                                      }
-                                    } finally { setSaving(false); }
+                                  setSaving(true);
+                                  setErrMsg(null);
+                                  setConflictId(null);
+                                  try {
+                                    const kid = editCommodityVal ? Number(editCommodityVal) : undefined;
+                                    await patchPriceById(Number(r.id), { komoditas_id: kid });
+                                    r.komoditas_id = kid ?? r.komoditas_id;
+                                    const sel = commoditiesOptions.find(k => String(k.value) === String(kid));
+                                    if (sel) r.komoditas = sel.label;
+                                    setEditCommodityRowId(null);
+                                    onEdited?.(r);
+                                  } catch (e: any) {
+                                    if (e?.status === 409 && e?.data) {
+                                      setErrMsg(e.data?.message || 'Ada konflik data');
+                                      setConflictId(Number(e.data?.conflictId) || null);
+                                    } else {
+                                      setErrMsg(e?.message || 'Gagal menyimpan');
+                                    }
+                                  } finally { setSaving(false); }
                                 }}
                                 type="button"
                               >
-                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z"/></svg>
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z" /></svg>
                                 Simpan
                               </button>
                               <button
@@ -613,31 +613,31 @@ export default function ReportsTable({
                                 onClick={() => setEditCommodityRowId(null)}
                                 type="button"
                               >
-                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z"/></svg>
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z" /></svg>
                                 Batal
                               </button>
                             </div>
-                    {errMsg && editCommodityRowId === r.id && (
-                      <div className="mt-1 text-xs text-red-600 flex items-center gap-2">
-                        <span>{errMsg}</span>
-                        {conflictId && (
-                          <button
-                            type="button"
-                            className="text-xs underline text-blue-600 hover:text-blue-800"
-                            onClick={() => {
-                              const el = document.querySelector(`[data-row-id=\"${conflictId}\"]`) as HTMLElement | null;
-                              if (el) {
-                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                el.classList.add('ring-2', 'ring-red-300');
-                                setTimeout(() => el.classList.remove('ring-2', 'ring-red-300'), 2500);
-                              }
-                            }}
-                          >
-                            Buka yang sudah ada
-                          </button>
-                        )}
-                      </div>
-                    )}
+                            {errMsg && editCommodityRowId === r.id && (
+                              <div className="mt-1 text-xs text-red-600 flex items-center gap-2">
+                                <span>{errMsg}</span>
+                                {conflictId && (
+                                  <button
+                                    type="button"
+                                    className="text-xs underline text-blue-600 hover:text-blue-800"
+                                    onClick={() => {
+                                      const el = document.querySelector(`[data-row-id=\"${conflictId}\"]`) as HTMLElement | null;
+                                      if (el) {
+                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        el.classList.add('ring-2', 'ring-red-300');
+                                        setTimeout(() => el.classList.remove('ring-2', 'ring-red-300'), 2500);
+                                      }
+                                    }}
+                                  >
+                                    Buka yang sudah ada
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
@@ -718,39 +718,39 @@ export default function ReportsTable({
                               <button
                                 className="flex items-center gap-0.5 px-1.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-60"
                                 style={{ minWidth: 0, lineHeight: 1.1 }}
-                                  onClick={async () => {
-                                    setSaving(true);
-                                    setConflictId(null);
-                                    try {
-                                      const parsed = parseRupiahSafe(editVal);
-                                      if (parsed.value == null) throw new Error('Harga tidak valid');
-                                      if (Math.abs(Math.trunc(parsed.value)) > 9999999) {
-                                        setErrMsg('Harga terlalu besar (lebih dari 7 digit)');
-                                        setSaving(false);
-                                        return;
-                                      }
-                                      await patchPriceById(Number(r.id), { price: parsed.value });
-                                      // reflect locally
-                                      r.price = parsed.value;
-                                      r.harga = parsed.value;
-                                      setEditId(null);
-                                      setErrMsg(null);
-                                      onEdited?.(r);
-                                    } catch (e: any) {
-                                      if (e?.status === 409 && e?.data) {
-                                        setErrMsg(e.data?.message || 'Ada konflik data');
-                                        setConflictId(Number(e.data?.conflictId) || null);
-                                      } else {
-                                        setErrMsg(e?.message || 'Gagal menyimpan');
-                                      }
-                                    } finally {
+                                onClick={async () => {
+                                  setSaving(true);
+                                  setConflictId(null);
+                                  try {
+                                    const parsed = parseRupiahSafe(editVal);
+                                    if (parsed.value == null) throw new Error('Harga tidak valid');
+                                    if (Math.abs(Math.trunc(parsed.value)) > 9999999) {
+                                      setErrMsg('Harga terlalu besar (lebih dari 7 digit)');
                                       setSaving(false);
+                                      return;
                                     }
-                                  }}
+                                    await patchPriceById(Number(r.id), { price: parsed.value });
+                                    // reflect locally
+                                    r.price = parsed.value;
+                                    r.harga = parsed.value;
+                                    setEditId(null);
+                                    setErrMsg(null);
+                                    onEdited?.(r);
+                                  } catch (e: any) {
+                                    if (e?.status === 409 && e?.data) {
+                                      setErrMsg(e.data?.message || 'Ada konflik data');
+                                      setConflictId(Number(e.data?.conflictId) || null);
+                                    } else {
+                                      setErrMsg(e?.message || 'Gagal menyimpan');
+                                    }
+                                  } finally {
+                                    setSaving(false);
+                                  }
+                                }}
                                 disabled={saving || ((): boolean => { const p = parseRupiahSafe(editVal); return p.value == null || Math.abs(Math.trunc(p.value)) > 9999999; })()}
                                 type="button"
                               >
-                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z"/></svg>
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M9.293 16.293a1 1 0 0 0 1.414 0l7-7a1 1 0 1 0-1.414-1.414L10 13.586l-2.293-2.293a1 1 0 1 0-1.414 1.414l3 3Z" /></svg>
                                 Simpan
                               </button>
 
@@ -760,7 +760,7 @@ export default function ReportsTable({
                                 onClick={() => { setEditId(null); setErrMsg(null); }}
                                 type="button"
                               >
-                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z"/></svg>
+                                <svg width="11" height="11" fill="none" viewBox="0 0 24 24"><path fill="#fff" d="M6.225 6.225a1 1 0 0 1 1.414 0L12 10.586l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 12l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 1 1-1.414-1.414L10.586 12 6.225 7.639a1 1 0 0 1 0-1.414Z" /></svg>
                                 Batal
                               </button>
 

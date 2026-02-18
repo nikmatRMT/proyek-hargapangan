@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Daftar Antarmuka Sistem HARPA BANUA</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            padding: 40px;
+            line-height: 1.6;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .note {
+            font-style: italic;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 style="text-align: center;">DAFTAR ANTARMUKA SISTEM HARPA BANUA</h1>
+    <p style="text-align: center;">(Berdasarkan Struktur Proyek & Implementasi Bab 3)</p>
+
+    <h2>A. Antarmuka Masukan Sistem (Input Interfaces)</h2>
+    <p>Antarmuka ini berfungsi sebagai media bagi pengguna (Admin/Petugas) untuk memasukkan perintah atau data ke dalam
+        sistem.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="25%">Nama Antarmuka</th>
+                <th width="50%">Deskripsi Fungsi</th>
+                <th width="20%">Pengguna</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Halaman Login</td>
+                <td>Form untuk memasukkan <i>username</i> dan <i>password</i> guna otentikasi akses sistem.</td>
+                <td>Admin, Petugas</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Form Input Data Harga</td>
+                <td>Antarmuka utama untuk petugas lapangan memasukkan data harga harian (memilih pasar, komoditas, dan
+                    input nominal harga).</td>
+                <td>Admin, Petugas</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Modal Tambah Pasar</td>
+                <td>Formulir <i>pop-up</i> untuk menambahkan data pasar baru (Nama Pasar, Alamat, Koordinat/Foto).</td>
+                <td>Admin</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Modal Tambah Petugas</td>
+                <td>Formulir <i>pop-up</i> untuk mendaftarkan akun petugas baru (NIP, Nama, Username, Password, Role).
+                </td>
+                <td>Admin</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>Modal Tambah Komoditas</td>
+                <td>Formulir <i>pop-up</i> untuk menambah jenis komoditas baru yang akan disurvei.</td>
+                <td>Admin</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>Form Edit Profil</td>
+                <td>Antarmuka untuk mengubah data diri pengguna, termasuk mengganti foto profil dan mengubah kata sandi.
+                </td>
+                <td>Admin, Petugas</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>Filter Output Manager</td>
+                <td>Panel kontrol untuk memilih parameter laporan yang akan dicetak (Rentang Tanggal, Pilihan Pasar,
+                    Jenis Komoditas).</td>
+                <td>Admin</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>Form Edit Data (Master)</td>
+                <td>Formulir untuk memperbarui/mengoreksi data master (Pasar/Petugas/Komoditas) yang sudah ada.</td>
+                <td>Admin</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <br>
+
+    <h2>B. Antarmuka Keluaran Sistem (Output Interfaces)</h2>
+    <p>Antarmuka ini berfungsi untuk menyajikan informasi, laporan, atau hasil pemrosesan data kepada pengguna.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="25%">Nama Antarmuka</th>
+                <th width="50%">Deskripsi Fungsi</th>
+                <th width="20%">Format Keluaran</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Dashboard Statistik</td>
+                <td>Halaman utama yang menampilkan ringkasan data: Total Survei, Harga Tertinggi/Terendah, dan Grafik
+                    Tren Harga.</td>
+                <td>Visual (Grafik & Kartu)</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Tabel Data Harga Terkini</td>
+                <td>Daftar harga pangan terbaru yang masuk hari ini, dilengkapi indikator naik/turun (warna).</td>
+                <td>Tabel Interaktif</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Daftar Data Master</td>
+                <td>Tampilan data referensi sistem (Tabel Pasar, Tabel Petugas, Tabel Komoditas) dengan fitur pencarian.
+                </td>
+                <td>Tabel Interaktif</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Laporan Umum (Harian)</td>
+                <td>Laporan rekapitulasi harga pangan per hari dalam periode satu bulan.</td>
+                <td>File PDF & Excel</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>Laporan Spesifik</td>
+                <td>Laporan detail pergerakan harga untuk satu jenis komoditas tertentu di pasar tertentu.</td>
+                <td>File PDF & Excel</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>Laporan Rata-rata</td>
+                <td>Laporan yang menyajikan harga rata-rata pangan di seluruh pasar atau per pasar.</td>
+                <td>File Excel</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>Daftar & Riwayat Petugas</td>
+                <td>Laporan cetak data petugas dan log aktivitas survei yang telah dilakukan.</td>
+                <td>File PDF</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>Backup Data Sistem</td>
+                <td>Fitur untuk mengunduh arsip lengkap data harga untuk keperluan cadangan (<i>backup</i>).</td>
+                <td>File PDF/Database</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>Notifikasi Sistem</td>
+                <td>Pesan <i>pop-up</i> (Toast) yang muncul memberikan status keberhasilan aksi (misal: "Data Berhasil
+                    Disimpan").</td>
+                <td>Visual (Pop-up)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        * Dokumen ini dapat di-copy paste langsung ke Microsoft Word.
+    </div>
+
+</body>
+
+</html>

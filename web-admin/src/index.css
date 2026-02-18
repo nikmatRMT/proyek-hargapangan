@@ -1,128 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Tokens untuk komponen Sidebar */
-:root{
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 222.2 84% 4.9%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-  --sidebar-ring: 215 20.2% 65.1%;
-  --sidebar-border: 214.3 31.8% 91.4%;
-  
-  /* Shadcn UI tokens */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 142 76% 36%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 142 76% 36%;
-  --radius: 0.5rem;
-}
+@layer base {
+  :root {
+    /* Brand Colors - Modern Green Gradient */
+    --brand-50: 236 253 245;
+    --brand-100: 209 250 229;
+    --brand-200: 167 243 208;
+    --brand-300: 110 231 183;
+    --brand-400: 52 211 153;
+    --brand-500: 16 185 129;
+    /* Primary */
+    --brand-600: 5 150 105;
+    --brand-700: 4 120 87;
+    --brand-800: 6 95 70;
+    --brand-900: 6 78 59;
 
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 142 76% 36%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 142 76% 36%;
-}
+    /* Accent Blue */
+    --accent-50: 239 246 255;
+    --accent-500: 59 130 246;
+    --accent-600: 37 99 235;
 
-.bg-sidebar{ background-color: hsl(var(--sidebar)); }
-.text-sidebar-foreground{ color: hsl(var(--sidebar-foreground)); }
-.bg-sidebar-accent{ background-color: hsl(var(--sidebar-accent)); }
-.text-sidebar-accent-foreground{ color: hsl(var(--sidebar-accent-foreground)); }
-.ring-sidebar-ring{ --tw-ring-color: hsl(var(--sidebar-ring)); }
-.border-sidebar-border{ border-color: hsl(var(--sidebar-border)); }
-.border-sidebar-border{ border-color: hsl(var(--sidebar-border)); }
+    /* Base Colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-/* Dark Mode Styles */
-.dark-mode {
-  /* Cards */
-  & .bg-white {
-    background-color: rgb(31, 41, 55) !important; /* gray-800 */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --card-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 150 90% 35%;
+    /* Deep Green */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 150 90% 35%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar Tokens */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 240 5.9% 10%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
-  
-  & .text-gray-900 {
-    color: rgb(243, 244, 246) !important; /* gray-100 */
-  }
-  
-  & .text-gray-600 {
-    color: rgb(156, 163, 175) !important; /* gray-400 */
-  }
-  
-  & .text-gray-500 {
-    color: rgb(156, 163, 175) !important; /* gray-400 */
-  }
-  
-  & .border-gray-200 {
-    border-color: rgb(55, 65, 81) !important; /* gray-700 */
-  }
-  
-  & .bg-gray-100 {
-    background-color: rgb(31, 41, 55) !important; /* gray-800 */
-  }
-  
-  & .hover\:bg-gray-50:hover {
-    background-color: rgb(55, 65, 81) !important; /* gray-700 */
-  }
-  
-  /* Tables */
-  & table tbody tr {
-    border-color: rgb(55, 65, 81) !important;
-  }
-  
-  & table tbody tr:hover {
-    background-color: rgb(55, 65, 81) !important;
-  }
-  
-  /* Inputs */
-  & input, & select, & textarea {
-    background-color: rgb(55, 65, 81) !important;
-    border-color: rgb(75, 85, 99) !important;
-    color: rgb(243, 244, 246) !important;
-  }
-  
-  & input::placeholder, & select::placeholder, & textarea::placeholder {
-    color: rgb(156, 163, 175) !important;
+
+  .dark {
+    /* Dark Mode Brand Adjustments */
+    --brand-500: 16 185 129;
+    --brand-600: 5 150 105;
+
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --card-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.8));
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 150 90% 45%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 150 90% 45%;
+
+    /* Sidebar Dark Tokens */
+    --sidebar: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
-/* Membuka lebar container bawaan Tailwind/komponen lama hanya di dalam AppShell */
-.app-shell-full .container {
-  max-width: 100% !important;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Outfit', sans-serif;
+  }
 }
 
-/* Opsional: rapatkan grid kartu agar muat lebih banyak di layar lebar */
-.app-shell-full .grid-cols-responsive {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+/* Glassmorphism Utilities */
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-800/50;
+  }
+
+  .glass-card {
+    background: var(--card-gradient);
+    @apply backdrop-blur-xl border border-white/40 dark:border-gray-700/50 shadow-sm rounded-xl transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    @apply shadow-md transform -translate-y-[2px];
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400;
+  }
+
+  /* Animated Background */
+  .bg-grid-pattern {
+    background-size: 40px 40px;
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  }
+
+  .dark .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  }
 }

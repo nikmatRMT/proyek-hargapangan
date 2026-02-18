@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gambar 3.2 Use Case Diagram - HARPA BANUA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: white;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            position: relative;
+            width: 850px;
+            height: 580px;
+        }
+
+        /* Stickman Actor */
+        .actor {
+            position: absolute;
+            text-align: center;
+            width: 80px;
+        }
+
+        .stickman {
+            width: 50px;
+            height: 80px;
+            margin: 0 auto;
+        }
+
+        .stickman .head {
+            width: 20px;
+            height: 20px;
+            border: 2px solid black;
+            border-radius: 50%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        .stickman .body {
+            width: 2px;
+            height: 25px;
+            background: black;
+            margin: 0 auto;
+        }
+
+        .stickman .arms {
+            width: 30px;
+            height: 2px;
+            background: black;
+            margin: -20px auto 0;
+        }
+
+        .stickman .legs {
+            width: 30px;
+            height: 25px;
+            border-left: 2px solid black;
+            border-right: 2px solid black;
+            margin: 0 auto;
+        }
+
+        .actor-name {
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* System Box */
+        .system-box {
+            position: absolute;
+            left: 180px;
+            top: 20px;
+            width: 640px;
+            height: 510px;
+            border: 2px solid black;
+        }
+
+        .system-title {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: white;
+            padding: 0 10px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        /* Use Case Ellipse */
+        .usecase {
+            position: absolute;
+            width: 130px;
+            height: 40px;
+            border: 2px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 11px;
+            background: #ffe4c4;
+            z-index: 10;
+        }
+
+        /* Shared use case - different color */
+        .usecase.shared {
+            background: #c4e4ff;
+        }
+
+        .caption {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .legend {
+            margin-top: 10px;
+            font-size: 11px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-box {
+            width: 25px;
+            height: 18px;
+            border: 1px solid black;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- System Boundary -->
+        <div class="system-box">
+            <div class="system-title">Aplikasi HARPA BANUA - Sistem Informasi Harga Pangan</div>
+        </div>
+
+        <!-- Actor: Admin (top left) -->
+        <div class="actor" style="left: 40px; top: 80px;">
+            <div class="stickman">
+                <div class="head"></div>
+                <div class="body"></div>
+                <div class="arms"></div>
+                <div class="legs"></div>
+            </div>
+            <div class="actor-name">Admin</div>
+        </div>
+
+        <!-- Actor: Petugas (bottom left) -->
+        <div class="actor" style="left: 40px; top: 380px;">
+            <div class="stickman">
+                <div class="head"></div>
+                <div class="body"></div>
+                <div class="arms"></div>
+                <div class="legs"></div>
+            </div>
+            <div class="actor-name">Petugas</div>
+        </div>
+
+        <!-- ============ ADMIN ONLY Use Cases (Top Section) ============ -->
+        <!-- Row 1 -->
+        <div class="usecase" style="left: 220px; top: 50px;">Kelola Pasar</div>
+        <div class="usecase" style="left: 400px; top: 50px;">Kelola Komoditas</div>
+        <div class="usecase" style="left: 580px; top: 50px;">Kelola Pengguna</div>
+
+        <!-- Row 2 -->
+        <div class="usecase" style="left: 220px; top: 120px;">Edit Harga</div>
+        <div class="usecase" style="left: 400px; top: 120px;">Hapus Harga</div>
+        <div class="usecase" style="left: 580px; top: 120px;">Lihat Dashboard</div>
+
+        <!-- Row 3 -->
+        <div class="usecase" style="left: 310px; top: 190px;">Export Excel</div>
+        <div class="usecase" style="left: 490px; top: 190px;">Export PDF</div>
+
+        <!-- ============ SHARED Use Cases (Bottom Section) ============ -->
+        <!-- Row 4 -->
+        <div class="usecase shared" style="left: 220px; top: 320px;">Login</div>
+        <div class="usecase shared" style="left: 400px; top: 320px;">Input Harga</div>
+        <div class="usecase shared" style="left: 580px; top: 320px;">Ubah Profil</div>
+
+        <!-- Row 5 -->
+        <div class="usecase shared" style="left: 400px; top: 400px;">Riwayat Survey</div>
+
+        <!-- Lines - SVG behind use cases -->
+        <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1;">
+            <!-- ========== ADMIN LINES ========== -->
+            <!-- Admin to Admin-only Row 1 -->
+            <line x1="120" y1="110" x2="220" y2="70" stroke="black" stroke-width="1" />
+            <line x1="120" y1="110" x2="400" y2="70" stroke="black" stroke-width="1" />
+            <line x1="120" y1="110" x2="580" y2="70" stroke="black" stroke-width="1" />
+
+            <!-- Admin to Admin-only Row 2 -->
+            <line x1="120" y1="130" x2="220" y2="140" stroke="black" stroke-width="1" />
+            <line x1="120" y1="130" x2="400" y2="140" stroke="black" stroke-width="1" />
+            <line x1="120" y1="130" x2="580" y2="140" stroke="black" stroke-width="1" />
+
+            <!-- Admin to Admin-only Row 3 -->
+            <line x1="120" y1="150" x2="310" y2="210" stroke="black" stroke-width="1" />
+            <line x1="120" y1="150" x2="490" y2="210" stroke="black" stroke-width="1" />
+
+            <!-- Admin to Shared use cases -->
+            <line x1="120" y1="170" x2="220" y2="340" stroke="black" stroke-width="1" />
+            <line x1="120" y1="170" x2="400" y2="340" stroke="black" stroke-width="1" />
+            <line x1="120" y1="170" x2="580" y2="340" stroke="black" stroke-width="1" />
+            <line x1="120" y1="170" x2="400" y2="420" stroke="black" stroke-width="1" />
+
+            <!-- ========== PETUGAS LINES ========== -->
+            <!-- Petugas to Shared use cases only -->
+            <line x1="120" y1="420" x2="220" y2="340" stroke="black" stroke-width="1" />
+            <line x1="120" y1="420" x2="400" y2="340" stroke="black" stroke-width="1" />
+            <line x1="120" y1="420" x2="580" y2="340" stroke="black" stroke-width="1" />
+            <line x1="120" y1="420" x2="400" y2="420" stroke="black" stroke-width="1" />
+        </svg>
+    </div>
+
+    <p class="caption"><b>Gambar 3.2</b> Use Case Diagram Sistem Usulan</p>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box" style="background: #ffe4c4;"></div>
+            <span>Hanya Admin</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background: #c4e4ff;"></div>
+            <span>Admin & Petugas</span>
+        </div>
+    </div>
+
+</body>
+
+</html>

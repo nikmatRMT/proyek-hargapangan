@@ -257,10 +257,21 @@ export function getPrices(params?: Record<string, string | number | boolean | un
   return http(`/api/prices${qs ? `?${qs}` : ''}`, { credentials: 'include' });
 }
 /** Compat: beberapa hook lama mengharapkan 'fetchReports' */
+
 export function fetchReports(
   params?: Record<string, string | number | boolean | undefined>
 ) {
   return getPrices(params);
+}
+
+export function getLatestReports(limit = 100) {
+  // Use existing getPrices with sort and limit
+  // Backend expects 'pageSize', not 'limit'
+  return getPrices({ pageSize: limit, sort: 'date_desc' });
+}
+
+export function getReportsByDateRange(startDate: string, endDate: string) {
+  return getPrices({ startDate, endDate });
 }
 
 // =====================

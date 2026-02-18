@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>3.3.1 Entity Relationship Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Times New Roman, serif;
+            font-size: 11pt;
+            margin: 30px;
+            line-height: 1.5;
+        }
+
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+        }
+
+        p {
+            text-align: justify;
+            margin: 8px 0;
+        }
+
+        .diagram-container {
+            background: #fff;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .caption {
+            text-align: center;
+            font-size: 10pt;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>3.3.1 Entity Relationship Diagram (ERD)</h2>
+
+    <p>Entity Relationship Diagram (ERD) menggambarkan hubungan antar entitas dalam database sistem HARPA BANUA. Diagram
+        berikut menunjukkan struktur koleksi utama dan relasinya:</p>
+
+    <div class="diagram-container">
+        <pre class="mermaid">
+erDiagram
+    users ||--o{ laporan_harga : "membuat"
+    users ||--o{ sessions : "memiliki"
+    pasar ||--o{ laporan_harga : "memiliki"
+    komoditas ||--o{ laporan_harga : "memiliki"
+
+    users {
+        int id PK
+        string nip UK
+        string nama_lengkap
+        string username UK
+        string password
+        string role
+        int is_active
+        string phone
+        string alamat
+        string foto
+        Date created_at
+        Date updated_at
+    }
+
+    pasar {
+        int id PK
+        string nama_pasar UK
+        string alamat
+        Date created_at
+        Date updated_at
+    }
+
+    komoditas {
+        int id PK
+        string nama_komoditas UK
+        string unit
+        Date created_at
+        Date updated_at
+    }
+
+    laporan_harga {
+        int id PK
+        string tanggal_lapor
+        int market_id FK
+        int komoditas_id FK
+        int user_id FK
+        int harga
+        string keterangan
+        string foto_url
+        string gps_url
+        Date created_at
+        Date updated_at
+    }
+
+    sessions {
+        string _id PK
+        object session
+        Date expires
+    }
+    </pre>
+    </div>
+
+    <p class="caption">Gambar 3.7 Entity Relationship Diagram Database HARPA BANUA</p>
+
+    <p><b>Keterangan relasi:</b></p>
+    <ul style="margin-left: 20px;">
+        <li><b>users → laporan_harga:</b> Satu user dapat membuat banyak laporan harga (one-to-many)</li>
+        <li><b>users → sessions:</b> Satu user dapat memiliki banyak session login aktif (one-to-many)</li>
+        <li><b>pasar → laporan_harga:</b> Satu pasar dapat memiliki banyak laporan harga (one-to-many)</li>
+        <li><b>komoditas → laporan_harga:</b> Satu komoditas dapat memiliki banyak laporan harga (one-to-many)</li>
+    </ul>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+
+</body>
+
+</html>

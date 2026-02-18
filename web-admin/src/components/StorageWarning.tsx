@@ -32,8 +32,13 @@ export function StorageWarning() {
       if (res.ok && res.storage) {
         setStorage(res.storage);
       }
-    } catch (e) {
-      console.error('[Storage Warning] Failed to fetch:', e);
+    } catch (e: any) {
+      // Suppress 401/403 errors to avoid console noise for non-admin users
+      const msg = String(e?.message || e || '');
+      if (e?.status === 401 || e?.status === 403 || msg.includes('Unauthorized') || msg.includes('401')) {
+        return;
+      }
+      console.warn('[Storage Warning] Failed to fetch:', e);
     } finally {
       setLoading(false);
     }
@@ -59,8 +64,8 @@ export function StorageWarning() {
     <Alert variant={variant} className="relative mb-4">
       <Icon className="h-5 w-5" />
       <div className="font-semibold mb-2">
-        {storage.critical 
-          ? '⚠️ Storage Almost Full!' 
+        {storage.critical
+          ? '⚠️ Storage Almost Full!'
           : '⚠️ Storage Warning'
         }
       </div>
