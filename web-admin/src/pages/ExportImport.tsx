@@ -14,7 +14,14 @@ const OutputManager = () => {
   const handleExportExcel = async () => {
     setLoading(true);
     try {
-      await exportMarketExcel();
+      await exportMarketExcel({
+        title: 'Contoh Laporan',
+        monthLabel: 'Januari 2026',
+        rows: [],
+        marketName: 'Pasar Contoh',
+        marketAddress: 'Alamat Contoh',
+        fileName: 'contoh-export.xlsx'
+      });
       alert('Export Excel berhasil!');
     } catch (error) {
       console.error('Error saat export Excel:', error);

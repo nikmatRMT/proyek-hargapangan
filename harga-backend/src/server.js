@@ -225,8 +225,13 @@ app.use('/api/users', requireAuth, usersRouter);
 app.use('/api/survey-history', requireAuth, surveyHistoryRouter);
 
 /* ---------- Start ---------- */
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, async () => {
-  await initMongo();
-  console.log(`Server berjalan di port ${PORT}`);
-});
+// Start server only if not running in Vercel (or explicitly asked to)
+if (process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, async () => {
+    await initMongo();
+    console.log(`Server berjalan di port ${PORT}`);
+  });
+}
+
+export default app;
